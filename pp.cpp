@@ -9,13 +9,6 @@
 
 #include "data_buff.h"
 
-#ifdef _PLOT_
-#include "../matplotlib-cpp/matplotlibcpp.h"
-
-using namespace std;
-namespace plt = matplotlibcpp;
-#endif
-
 #ifndef MAX_BUF_LEN
 #define MAX_BUF_LEN (1200)
 #endif
@@ -60,19 +53,20 @@ typedef struct
 	int loc[MAXFIELD];
 }a1buff_t;
 
-#define GPS_HEADER "Time_s,Lat_Deg,Lon_Deg,Alt ellipsoid_m,Speed_m/s,Heading_Deg,Hacc_m,Vacc_m,PDOP,FixType,NumSats,Speed Acc_m/s,Hdg Acc_Deg,RTK Status,T_Sync_s,GPS Time_s,Alt msl_m\n"
-#define INS_HEADER "Time_s,Lat_Deg,Lon_Deg,Height_m,VN_m/s,VE_m/s,VD_m/s,Roll_Deg,Pitch_Deg,Heading_Deg,Status,ZUPT,T_Sync,PPS MCU Time_s\n"
-#define IMU_HEADER "Time_s,AX_g,AY_g,AZ_g,WX_Deg/s,WY_Deg/s,WZ_Deg/s,WZ_FOG_eg/s,ODO_m/s,ODO TIME_s,Temp_C,T_Sync_s\n"
-#define HDG_HEADER "Time_s,relPosN_m,relPosE_m,relPosD_m,relPosLength_m,relPosHeading_Deg,relPosLen Accuracy_m,relPosHeading Accuracy_Deg,GPS Seconds_s,Status flags,gnssFixOK,diffSoln,relPosValid,carrSoln,isMoving,refPosMiss,refObsMiss,relPosHeading Valid,relPos Normalized,GPS_Time_s\n"
-
 static int input_a1_data(a1buff_t* a1, uint8_t data)
 {
 	int ret = 0, i = 0;
 	if (a1->nbyte >= MAX_BUF_LEN) a1->nbyte = 0;
 	/* $G , #AP, 0xD3 */
+#ifndef NO_GGA
 	if (a1->nbyte == 0 && !(data == '#' || data == '$' || data == 0xD3)) { a1->nbyte = 0; return 0; }
 	if (a1->nbyte == 1 && !((data == 'A' && a1->buf[0] == '#') || (data == 'G' && a1->buf[0] == '$') || a1->buf[0] == 0xD3)) { a1->nbyte = 0; return 0; }
 	if (a1->nbyte == 2 && !((data == 'P' && a1->buf[1] == 'A' && a1->buf[0] == '#') || (a1->buf[1] == '$' && a1->buf[0] == 'G') || a1->buf[0] == 0xD3)) { a1->nbyte = 0; return 0; }
+#else
+	if (a1->nbyte == 0 && !(data == '#' || data == 0xD3)) { a1->nbyte = 0; return 0; }
+	if (a1->nbyte == 1 && !((data == 'A' && a1->buf[0] == '#') || a1->buf[0] == 0xD3)) { a1->nbyte = 0; return 0; }
+	if (a1->nbyte == 2 && !((data == 'P' && a1->buf[1] == 'A' && a1->buf[0] == '#') || a1->buf[0] == 0xD3)) { a1->nbyte = 0; return 0; }
+#endif
 	if (a1->nbyte == 0) memset(a1, 0, sizeof(a1buff_t));
 	if (a1->nbyte < 3) { a1->buf[a1->nbyte++] = data; return 0; }
 	if (a1->buf[0]!= 0xD3)
@@ -82,12 +76,14 @@ static int input_a1_data(a1buff_t* a1, uint8_t data)
 			a1->loc[a1->nseg++] = a1->nbyte;
 			if (a1->nseg == 2)
 			{
+#ifndef NO_GGA
 				if (strstr((char*)a1->buf, "APANT") != NULL || strstr((char*)a1->buf, "APRTK") != NULL)
 				{
 					uint8_t* temp = a1->buf + (a1->loc[0]) + 1;
 					a1->nlen = (int)atof((char*)temp);
 				}
 				else
+#endif
 				{
 					a1->nlen = 0;
 				}
@@ -107,6 +103,7 @@ static int input_a1_data(a1buff_t* a1, uint8_t data)
 				}
 			}
 		}
+#ifndef NO_GGA
 		else
 		{
 			/* check message end for binary message ,binary msg\r\n */
@@ -120,6 +117,7 @@ static int input_a1_data(a1buff_t* a1, uint8_t data)
 					ret = 4;
 			}
 		}
+#endif
 	}
 	else
 	{
@@ -1077,7 +1075,8 @@ static void process_imu(double* imu, FILE* fIMU)
 {
 	if (fIMU)
 	{
-		fprintf(fIMU, "%10.3f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f\n", imu[0], imu[1], imu[2], imu[3], imu[4], imu[5], imu[6], imu[7], imu[8], imu[9], imu[10], imu[11]);
+		//                0      1      2      3      4     5       6      7     8      9       10
+		fprintf(fIMU, "%10.3f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f", imu[0], imu[1], imu[2], imu[3], imu[4], imu[5], imu[6], imu[7], imu[8], imu[9], imu[10], imu[11]);
 	}
 #ifndef NO_GGA
 	imu_t cur_imu = { 0 };
