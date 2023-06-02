@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <cstdlib>
+#include <fstream>
 
 #include "data_buff.h"
 
@@ -15,6 +16,15 @@
 #ifndef NO_GGA
 #define NO_GGA
 #endif
+using namespace std;
+
+typedef struct
+{
+	int n_used;					//how many bytes have been put through the decoded
+	int nbytes;					//how many bytes are stored in the buffer
+	char buff[MAX_BUF_LEN];		//buffer from file
+} file_read_buf_t;
+
 
 typedef struct
 {
@@ -270,11 +280,37 @@ static void process_ins(double* ins, FILE *fCSV)
 	}
 }
 
+static bool is_file_buff_all_used(file_read_buf_t *buf)
+{
+	return buf->n_used == buf->nbytes; 
+}
+
+static char file_buff_get_c (FILE *fp, file_read_buf_t *file_buf)
+{
+	if (is_file_buff_all_used(file_buf))
+	{
+		file_buf->nbytes = fread(file_buf->buff, sizeof(char), MAX_BUF_LEN, fp);
+		file_buf->n_used = 0;
+
+		// if no bytes are read
+		if (file_buf->nbytes == 0)
+		{
+			return EOF;
+		}
+	} 
+
+	file_buf->n_used++;
+	return file_buf->buff[file_buf->n_used-1];
+}
+
 static int process_log(const char* fname)
 {
 	FILE* fLOG = fopen(fname, "rb"); if (!fLOG) return 0;
+	file_read_buf_t file_read_buf = { 0 };
+
 	int data = 0;
 	char* val[MAXFIELD];
+	bool checksum_passed;
 
 	FILE* fCSV = NULL;
 	FILE* fIMU = NULL;
@@ -296,7 +332,11 @@ static int process_log(const char* fname)
 	rtcm_aphdr_t rtcm_aphdr = { 0 };
 	rtcm_apins_t rtcm_apins = { 0 };
 
+#ifndef NO_GGA
 	while (fLOG != NULL && !feof(fLOG) && (data = fgetc(fLOG)) != EOF)
+#else
+	while ((data = file_buff_get_c(fLOG, &file_read_buf)) != EOF)
+#endif
 	{
 		int ret = input_a1_data(&a1buff, data);
 		if (ret)
@@ -305,7 +345,17 @@ static int process_log(const char* fname)
 			int num = 0;
 			if (ret == 1)
 			{
-				num = parse_fields((char*)a1buff.buf, val);
+				checksum_passed = checksum(a1buff.buf, a1buff.nbyte);
+
+				if (checksum_passed)
+				{
+					num = parse_fields((char*)a1buff.buf, val);
+				}
+				else
+				{
+					printf("Checksum Fail:");
+					num = 0;
+				}
 			}
 			else if (ret == 5) /* rtcm */
 			{

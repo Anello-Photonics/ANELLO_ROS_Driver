@@ -3,6 +3,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <iostream>
+#include <iomanip>
+#include <sstream>
 
 #include <math.h>
 
@@ -79,12 +82,22 @@ extern int getbits(const unsigned char *buff, int pos, int len)
 
 /* checksum ------------------------------------------------------------------*/
 extern int checksum(unsigned char* buff, int len) {
-	unsigned char cka = 0, ckb = 0;
+	unsigned char ck_sum = 0, cka, ckb;
 	int i;
+    std::stringstream ck;
+    std::string hexstring;
 
-	for (i = 2; i < len - 2; i++) {
-		cka += buff[i];
-		ckb += cka;
+	for (i = 1; i < len - 4; i++) {
+        ck_sum  ^= buff[i];
 	}
-	return cka == buff[len - 2] && ckb == buff[len - 1];
+    // Convert number to hex string with width 2
+    ck << std::hex << std::setw(2) << std::setfill('0') << (int)ck_sum;
+    hexstring = ck.str();
+
+    // string stream creates lower case values
+    // convert those letters to upper case to match with anello messaging protocols
+    cka = std::toupper(hexstring[0]);
+    ckb = std::toupper(hexstring[1]);
+
+    return (cka == buff[len-3]) && (ckb == buff[len-2]);
 }

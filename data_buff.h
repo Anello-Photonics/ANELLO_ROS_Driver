@@ -12,6 +12,7 @@ unsigned int crc24q(const unsigned char* buff, int len);
 void setbitu(unsigned char* buff, int pos, int len, unsigned int data);
 unsigned int getbitu(const unsigned char* buff, int pos, int len);
 int getbits(const unsigned char *buff, int pos, int len);
+int checksum(unsigned char* buff, int len); 
 
 #ifndef MAX_BUF_LEN
 #define MAX_BUF_LEN (1200)
