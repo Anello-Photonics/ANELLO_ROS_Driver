@@ -4,19 +4,36 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
+
         {
-            "name": "C++ Launch",
+            "name": "(gdb) Launch",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceRoot}/decoder.exe",
-            // "args": ["C:\\Users\\APLabs Seven\\OneDrive - anellophotonics.com\\driveData\\Ethernet_DMA_validation\\drive_test_main\\temp\\output_date_2023_05_19_time_11_37_20_SN_202300000102.txt","a1-log"],
-            "args": ["C:\\Users\\APLabs Seven\\OneDrive - anellophotonics.com\\driveData\\Ethernet_DMA_validation\\drive_test_main\\temp\\output_date_2023_3_31_time_14_42_59_SN_202100000024.txt","a1-log"],
+            "program": "${workspaceRoot}/src/comm/a.out",
+            "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],
             "externalConsole": false,
             "MIMode": "gdb",
-            "miDebuggerPath": "C:\\MinGW\\bin\\gdb.exe"
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Set Disassembly Flavor to Intel",
+                    "text": "-gdb-set disassembly-flavor intel",
+                    "ignoreFailures": true
+                }
+            ]
+            
+        },
+        {
+            "name": "ROS: Attach",
+            "type": "ros",
+            "request": "attach"
         }
-    ],
+    ]
 }
