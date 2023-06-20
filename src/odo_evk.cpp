@@ -1,3 +1,12 @@
+/*
+* Sample file from previous project
+*
+*DELETE THIS FILE ONCE FINISHED
+*
+*/
+
+
+
 #include "ros/ros.h"
 #include "nav_msgs/Odometry.h"
 #include "odo_evk.h"

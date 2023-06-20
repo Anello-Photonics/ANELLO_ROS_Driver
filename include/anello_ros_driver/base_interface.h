@@ -4,7 +4,7 @@
 class base_interface {
 
 public:
-    virtual int read_data(char *buf);
+    virtual size_t get_data(char *buf, size_t buf_len) { return 0; }
 };
 
 

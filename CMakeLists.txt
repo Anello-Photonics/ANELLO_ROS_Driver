@@ -136,7 +136,7 @@ include_directories(
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 # add_executable(${PROJECT_NAME}_node src/anello_ros_driver_node.cpp)
-add_executable(anello_ros_driver src/comm/serial_interface.cpp)
+add_executable(anello_ros_driver src/decoder.cpp src/bit_tools.cpp src/comm/serial_interface.cpp)
 # add_executable(${PROJECT_NAME}_node src/anello_ros_driver_node.cpp)
 
 ## Rename C++ executable without prefix

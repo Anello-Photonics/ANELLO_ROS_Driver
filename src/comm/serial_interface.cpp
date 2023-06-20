@@ -7,6 +7,7 @@
 *
 */
 
+#include <ros/ros.h>
 
 #include <fcntl.h>
 #include <termios.h>
@@ -15,7 +16,6 @@
 
 #include "serial_interface.h"
 
-#include <ros/ros.h>
 
 #define EVK_SERIAL_DATA_PORT "/dev/ttyUSB0"
 #define EVK_SERIAL_CONFIG_PORT "/dev/ttyUSB3"
@@ -26,30 +26,6 @@
 // static int setup_serial(const char *portname);
 // static int read_serial_data(int fd, char *buff, size_t buf_len);
 
-int main (int argc, char *argv[]){
-    uint32_t read_count = 0;
-    int bytes_read;
-    char ser_buff[MAX_BUF_LEN];
-
-
-    ros::init(argc, argv, "anello_ros_driver");
-
-    std::string str_config(EVK_SERIAL_DATA_PORT);
-    const char *data_port_str = str_config.c_str();
-
-    serial_interface data_port(data_port_str);
-
-    while (MAX_READ_NUM > read_count)
-    {
-        bytes_read = data_port.get_data(ser_buff, MAX_BUF_LEN);
-        if (bytes_read > 0)
-        {
-            printf("%s", ser_buff);
-            read_count++;
-        }
-
-    }
-}
 
 serial_interface::serial_interface ()
 {
