@@ -17,8 +17,6 @@
 #include "serial_interface.h"
 
 
-#define EVK_SERIAL_DATA_PORT "/dev/ttyUSB0"
-#define EVK_SERIAL_CONFIG_PORT "/dev/ttyUSB3"
 #define DEBUG 0
 #define MAX_READ_NUM 1000
 #define MAX_BUF_LEN 128
