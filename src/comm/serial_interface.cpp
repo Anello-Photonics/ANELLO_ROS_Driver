@@ -69,7 +69,8 @@ size_t serial_interface::get_data (char *buf, size_t buf_len)
 {
     if (this->usb_fd < 0)
     {
-        ROS_ERROR("Anell ros driver serial port file escriptor not defined");
+        ROS_ERROR("Anello ros driver serial port file escriptor not defined");
+        exit(1);
     }
     size_t bytes_read = read(this->usb_fd, buf, (buf_len * sizeof(char)) - 1);
     buf[bytes_read] = '\0';

@@ -29,6 +29,10 @@
 #define PRINT_VALUES 0
 #endif
 
+#ifndef DEBUG
+#define debug 0
+#endif
+
 using namespace std;
 
 typedef struct
@@ -56,12 +60,20 @@ static int input_a1_data (a1buff_t* a1, uint8_t data)
 	int ret = 0, i = 0;
 	if (a1->nbyte >= MAX_BUF_LEN) a1->nbyte = 0;
 	/* #AP, 0xD3 */
-	if (a1->nbyte == 0 && !(data == '#' || data == 0xD3)) { a1->nbyte = 0; return 0; }
-	if (a1->nbyte == 1 && !((data == 'A' && a1->buf[0] == '#') || a1->buf[0] == 0xD3)) { a1->nbyte = 0; return 0; }
-	if (a1->nbyte == 2 && !((data == 'P' && a1->buf[1] == 'A' && a1->buf[0] == '#') || a1->buf[0] == 0xD3)) { a1->nbyte = 0; return 0; }
-	if (a1->nbyte == 0) memset(a1, 0, sizeof(a1buff_t));
+	if (a1->nbyte == 0 && !(data == '#' || data == 0xD3)) { 
+		a1->nbyte = 0; 
+#if DEBUG
+		ROS_WARN("BUF RESET: Bad 1st byte {%c}", data); 
+#endif
+		return 0; 
+	}
+	if (a1->nbyte == 1 && !((data == 'A' && a1->buf[0] == '#') || a1->buf[0] == 0xD3)) { a1->nbyte = 0; ROS_WARN("BUF RESET: Bad 2nd byte"); return 0; }
+	if (a1->nbyte == 2 && !((data == 'P' && a1->buf[1] == 'A' && a1->buf[0] == '#') || a1->buf[0] == 0xD3)) { a1->nbyte = 0; ROS_WARN("BUF RESET: Bad 3rd byte"); return 0; }
+	if (a1->nbyte == 0) {
+		memset(a1, 0, sizeof(a1buff_t));
+	}
 	if (a1->nbyte < 3) { a1->buf[a1->nbyte++] = data; return 0; }
-	if (a1->buf[0]!= 0xD3)
+	if (a1->buf[0] != 0xD3)
 	{
 		// denote beginnings of data segments
 		if (data == ',')
@@ -74,7 +86,7 @@ static int input_a1_data (a1buff_t* a1, uint8_t data)
 		}
 		a1->buf[a1->nbyte++] = data;
 
-		// if statement is shorthand for is asc message
+		// if statement is shorthand for 'is asc message?'
 		if (a1->nlen == 0)
 		{
 			/* check message end for complete asc message */
@@ -378,6 +390,7 @@ static void process_hdr (double* hdr, ros::Publisher pub)
 #endif
 }
 
+double last_imu_mcu_time = -1.0;
 static void process_imu (double* imu, ros::Publisher pub)
 {
 	/*
@@ -393,6 +406,17 @@ static void process_imu (double* imu, ros::Publisher pub)
 	* imu[9] = odr Time [ms]
 	* imu[10] = Temp [C]
 	*/
+	double delta_imu_time;
+
+	if (last_imu_mcu_time != -1.0)
+	{
+		delta_imu_time = imu[0] - last_imu_mcu_time;
+		if (delta_imu_time > 6.0)
+		{
+			ROS_WARN("MISSING MESSAGE: dt=%5.5f", delta_imu_time);
+		}
+	}
+	last_imu_mcu_time = imu[0];
 
 	anello_ros_driver::APIMU msg;
 	msg.mcu_time = imu[0];
@@ -489,10 +513,10 @@ static char file_buff_get_c (FILE *fp, file_read_buf_t *file_buf)
 static int process_log ()
 {
 	ros::NodeHandle nh;
-	ros::Publisher pub_imu = nh.advertise<anello_ros_driver::APIMU>("APIMU",1);
-	ros::Publisher pub_ins = nh.advertise<anello_ros_driver::APINS>("APINS",1);
-	ros::Publisher pub_gps = nh.advertise<anello_ros_driver::APGPS>("APGPS",1);
-	ros::Publisher pub_hdg = nh.advertise<anello_ros_driver::APHDG>("APHDG",1);
+	ros::Publisher pub_imu = nh.advertise<anello_ros_driver::APIMU>("APIMU",10);
+	ros::Publisher pub_ins = nh.advertise<anello_ros_driver::APINS>("APINS",10);
+	ros::Publisher pub_gps = nh.advertise<anello_ros_driver::APGPS>("APGPS",10);
+	ros::Publisher pub_hdg = nh.advertise<anello_ros_driver::APHDG>("APHDG",10);
 
 
 	file_read_buf_t serial_read_buf = { 0 };
@@ -515,6 +539,9 @@ static int process_log ()
 	rtcm_apgps_t rtcm_apgps = { 0 };
 	rtcm_aphdr_t rtcm_aphdr = { 0 };
 	rtcm_apins_t rtcm_apins = { 0 };
+
+	double last_imu_mcu_time = -1.0;
+	double delta_imu_time = -1.0;
 
 	serial_interface anello_device(default_serial_interface);
 	while (true)
@@ -542,7 +569,7 @@ static int process_log ()
 					}
 					else
 					{
-						printf("Checksum Fail:");
+						ROS_WARN("Checksum Fail");
 						num = 0;
 					}
 				}
@@ -567,6 +594,7 @@ static int process_log ()
 								imu[9] = rtcm_apimu.ODO_time * 1.0e-9; /* odr time */
 								imu[10] = rtcm_apimu.Temp_C * 0.01; /* temp */
 								imu[11] = rtcm_apimu.Sync_Time * 1.0e-9;
+
 							}
 							else
 							{
@@ -582,6 +610,7 @@ static int process_log ()
 								imu[8] = rtcm_old_apimu.ODO * 0.01; /* odr */
 								imu[9] = rtcm_old_apimu.ODO_time * 1.0e-9; /* odr time */
 								imu[10] = rtcm_old_apimu.Temp_C * 0.01; /* temp */
+
 							}
 
 							process_imu(imu, pub_imu);
@@ -753,6 +782,7 @@ static int process_log ()
 					imu[8] = atof(val[loc++]); /* odr */
 					imu[9] = atof(val[loc++]) * 1.0e-3; /* odr time */
 					imu[10] = atof(val[loc++]); /* temp */
+
 
 					process_imu(imu, pub_imu);
 
