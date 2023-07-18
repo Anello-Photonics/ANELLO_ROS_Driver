@@ -2,7 +2,7 @@
 #include <cstring>
 
 #include "rtcm_decoder.h"
-#include "message_processing.h"
+#include "message_publisher.h"
 
 static void decode_rtcm_imu_msg(double imu[], a1buff_t a1buff, ros::Publisher imu_pub);
 static void decode_rtcm_ins_msg(double ins[], a1buff_t a1buff, ros::Publisher ins_pub);

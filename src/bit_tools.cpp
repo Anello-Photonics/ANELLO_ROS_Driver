@@ -48,7 +48,7 @@ static const unsigned int tbl_CRC24Q[]={
     0x42FA2F,0xC4B6D4,0xC82F22,0x4E63D9,0xD11CCE,0x575035,0x5BC9C3,0xDD8538
 };
 
-extern unsigned int crc24q(const unsigned char *buff, int len)
+extern unsigned int crc24q (const unsigned char *buff, int len)
 {
     unsigned int crc=0;
     int i;
@@ -57,7 +57,7 @@ extern unsigned int crc24q(const unsigned char *buff, int len)
     return crc;
 }
 
-extern void setbitu(unsigned char *buff, int pos, int len, unsigned int data)
+extern void setbitu (unsigned char *buff, int pos, int len, unsigned int data)
 {
     unsigned int mask=1u<<(len-1);
     int i;
@@ -66,14 +66,14 @@ extern void setbitu(unsigned char *buff, int pos, int len, unsigned int data)
         if (data&mask) buff[i/8]|=1u<<(7-i%8); else buff[i/8]&=~(1u<<(7-i%8));
     }
 }
-extern unsigned int getbitu(const unsigned char *buff, int pos, int len)
+extern unsigned int getbitu (const unsigned char *buff, int pos, int len)
 {
     unsigned int bits=0;
     int i;
     for (i=pos;i<pos+len;i++) bits=(bits<<1)+((buff[i/8]>>(7-i%8))&1u);
     return bits;
 }
-extern int getbits(const unsigned char *buff, int pos, int len)
+extern int getbits (const unsigned char *buff, int pos, int len)
 {
     unsigned int bits=getbitu(buff,pos,len);
     if (len<=0||32<=len||!(bits&(1u<<(len-1)))) return (int)bits;
@@ -92,7 +92,7 @@ extern int getbits(const unsigned char *buff, int pos, int len)
 * zero : The checksum is not correct and the message is invalid
 *
 */
-extern int checksum(unsigned char* buff, int len) {
+extern int checksum (unsigned char* buff, int len) {
 	unsigned char ck_sum = 0, cka, ckb;
 	int i;
     std::stringstream ck;

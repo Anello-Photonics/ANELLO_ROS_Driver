@@ -1,5 +1,5 @@
-#ifndef MESSAGE_PUBLISHING_H
-#define MESSAGE_PUBLISHING_H
+#ifndef MESSAGE_PUBLISHER_H
+#define MESSAGE_PUBLISHER_H
 
 #include <ros/ros.h>
 

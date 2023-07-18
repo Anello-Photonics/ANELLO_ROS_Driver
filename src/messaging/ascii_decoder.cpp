@@ -1,12 +1,12 @@
 #include <ros/ros.h>
 
 #include "ascii_decoder.h"
-#include "message_processing.h"
+#include "message_publisher.h"
 
 
 
 
-int decode_ascii_gps(char *val[], ros::Publisher pub_gps)
+int decode_ascii_gps (char *val[], ros::Publisher pub_gps)
 {
 
     /* time [s], lat [deg], lon [deg], ht [m], speed [m/s], heading [deg], hor. accuracy [m], ver. accuracy [m], PDOP, fixType, sat num, gps second [s], pps [s] */
