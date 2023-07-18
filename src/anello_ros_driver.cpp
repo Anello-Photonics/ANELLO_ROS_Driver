@@ -100,17 +100,6 @@ static int input_a1_data (a1buff_t* a1, uint8_t data)
 
 		// if statement is shorthand for 'is asc message?'
 		if (a1->nlen == 0)
-#ifndef NO_GGA
-#define NO_GGA
-#endif
-
-#ifndef PRINT_VALUES
-#define PRINT_VALUES 0
-#endif
-
-#ifndef DEBUG
-#define debug 0
-#endif
 		{
 			/* check message end for complete asc message */
 			if (data == '\r' || data == '\n')

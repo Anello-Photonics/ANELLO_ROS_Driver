@@ -184,7 +184,7 @@ void process_imu (double* imu, ros::Publisher pub)
 	msg.wy = imu[5];
 	msg.wz = imu[6];
 	msg.wz_fog = imu[7];
-	msg.temp = imu[8];
+	msg.temp = imu[10];
 
 	pub.publish(msg);
 

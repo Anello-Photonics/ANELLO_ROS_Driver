@@ -81,6 +81,17 @@ extern int getbits(const unsigned char *buff, int pos, int len)
 }
 
 /* checksum ------------------------------------------------------------------*/
+/*
+* Parameters:
+* unsigned char* buff : buffer containing full ASCII message
+* int len : length of the message
+*
+* Return:
+* int
+* non-zero : checksum at the end of the message matches the calculated checksum
+* zero : The checksum is not correct and the message is invalid
+*
+*/
 extern int checksum(unsigned char* buff, int len) {
 	unsigned char ck_sum = 0, cka, ckb;
 	int i;
