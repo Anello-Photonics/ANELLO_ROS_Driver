@@ -15,7 +15,6 @@
 #include "decoder.h"
 #include "rtcm_decoder.h"
 #include "ascii_decoder.h"
-#include "message_processing.h"
 
 #ifndef NO_GGA
 #define NO_GGA
@@ -39,6 +38,17 @@ typedef struct
 } file_read_buf_t;
 
 
+static int input_a1_data(a1buff_t* a1, uint8_t data);
+static int parse_fields(char *const buffer, char** val);
+static void ros_driver_main_loop();
+
+int main(int argc, char* argv[])
+{
+	ros::init(argc,argv,"anello_ros_driver");
+	ros_driver_main_loop();
+
+
+}
 
 /*
 * Parameters:
@@ -54,24 +64,28 @@ typedef struct
 static int input_a1_data (a1buff_t* a1, uint8_t data)
 {
 	int ret = 0, i = 0;
+	
+	//if length is at maximum reset buffer
 	if (a1->nbyte >= MAX_BUF_LEN) a1->nbyte = 0;
+
+	//Detect correct start characters for message
 	/* #AP, 0xD3 */
-	if (a1->nbyte == 0 && !(data == '#' || data == 0xD3)) { 
-		a1->nbyte = 0; 
-#if DEBUG
-		ROS_WARN("BUF RESET: Bad 1st byte {%c}", data); 
-#endif
-		return 0; 
-	}
-	if (a1->nbyte == 1 && !((data == 'A' && a1->buf[0] == '#') || a1->buf[0] == 0xD3)) { a1->nbyte = 0; ROS_WARN("BUF RESET: Bad 2nd byte"); return 0; }
-	if (a1->nbyte == 2 && !((data == 'P' && a1->buf[1] == 'A' && a1->buf[0] == '#') || a1->buf[0] == 0xD3)) { a1->nbyte = 0; ROS_WARN("BUF RESET: Bad 3rd byte"); return 0; }
+	if (a1->nbyte == 0 && !(data == '#' || data == 0xD3)) { a1->nbyte = 0; return 0; }
+	if (a1->nbyte == 1 && !((data == 'A' && a1->buf[0] == '#') || a1->buf[0] == 0xD3)) { a1->nbyte = 0; return 0; }
+	if (a1->nbyte == 2 && !((data == 'P' && a1->buf[1] == 'A' && a1->buf[0] == '#') || a1->buf[0] == 0xD3)) { a1->nbyte = 0; return 0; }
+	
+	//zero buffer when correct start char is detected before adding
 	if (a1->nbyte == 0) {
 		memset(a1, 0, sizeof(a1buff_t));
 	}
+
+	//add start characters to buffer
 	if (a1->nbyte < 3) { a1->buf[a1->nbyte++] = data; return 0; }
+
+	// if not RTCM message
 	if (a1->buf[0] != 0xD3)
 	{
-		// denote beginnings of data segments
+		// remember index of each delimiter to mark sections
 		if (data == ',')
 		{
 			a1->loc[a1->nseg++] = a1->nbyte;
@@ -80,10 +94,23 @@ static int input_a1_data (a1buff_t* a1, uint8_t data)
 				a1->nlen = 0;
 			}
 		}
+
+		// add byte to buffer
 		a1->buf[a1->nbyte++] = data;
 
 		// if statement is shorthand for 'is asc message?'
 		if (a1->nlen == 0)
+#ifndef NO_GGA
+#define NO_GGA
+#endif
+
+#ifndef PRINT_VALUES
+#define PRINT_VALUES 0
+#endif
+
+#ifndef DEBUG
+#define debug 0
+#endif
 		{
 			/* check message end for complete asc message */
 			if (data == '\r' || data == '\n')
@@ -91,8 +118,8 @@ static int input_a1_data (a1buff_t* a1, uint8_t data)
 				/* 1*74 */
 				if (a1->nbyte > 3 && a1->buf[a1->nbyte - 4] == '*')
 				{
-					a1->loc[a1->nseg++] = a1->nbyte - 4;
-					ret = 1;
+					a1->loc[a1->nseg++] = a1->nbyte - 4;	//mark checksum value as seperator
+					ret = 1;	//mark ready for read
 				}
 			}
 		}
@@ -107,6 +134,7 @@ static int input_a1_data (a1buff_t* a1, uint8_t data)
 			i = 24;
 			a1->type = getbitu(a1->buf, i, 12);
 			i += 12;
+
 			/* check parity */
 			if (crc24q(a1->buf, a1->nlen) != getbitu(a1->buf, a1->nlen * 8, 24))
 			{
@@ -127,18 +155,15 @@ static int input_a1_data (a1buff_t* a1, uint8_t data)
 	return ret;
 }
 
-#ifndef NO_GGA
-static FILE* set_output_file (const char* fname, const char* key)
-{
-	char filename[255] = { 0 }, outfilename[255] = { 0 };
-	strcpy(filename, fname);
-	char* temp = strrchr(filename, '.');
-	if (temp) temp[0] = '\0';
-	sprintf(outfilename, "%s-%s", filename, key);
-	return fopen(outfilename, "w");
-}
-#endif
-
+/*
+* Parameters
+* char *const buffer : A single valid ASCII message
+* char ** val : Empty arr of strings. Each string will be input with one of the distinct fields in the ASCII message
+*
+* Return
+* number of sections that detected and put into val
+*
+*/
 static int parse_fields (char* const buffer, char** val)
 {
 	char* p, * q;
@@ -159,9 +184,16 @@ static int parse_fields (char* const buffer, char** val)
 	return n;
 }
 
-
-
-static int process_log ()
+/*
+* Main loop for the driver
+* Handles calling all of the modules in the program.
+*
+* Includes
+* Calling the device interface
+* Maintaining a buffer of input bytes
+* Calling correct decoder for each message
+*/
+static void ros_driver_main_loop ()
 {
 	//init ros publishers
 	ros::NodeHandle nh;
@@ -186,24 +218,12 @@ static int process_log ()
 	char* val[MAXFIELD];
 	bool checksum_passed;
 
+	//buffer for individual message
 	a1buff_t a1buff = { 0 };
-
-	double gps[20] = { 0 };
-	double gp2[20] = { 0 };
-	double hdr[20] = { 0 };
-	double imu[20] = { 0 };
-	double ins[20] = { 0 };
-
-	rtcm_apimu_t rtcm_apimu = { 0 };
-	rtcm_old_apimu_t rtcm_old_apimu = { 0 };
-	rtcm_apgps_t rtcm_apgps = { 0 };
-	rtcm_aphdr_t rtcm_aphdr = { 0 };
-	rtcm_apins_t rtcm_apins = { 0 };
-
-	double last_imu_mcu_time = -1.0;
-	double delta_imu_time = -1.0;
-
+	
+	//initialize interface with anello unit
 	serial_interface anello_device(default_serial_interface);
+
 	while (true)
 	{
 		//if all data has been read... read more data into buff
@@ -215,6 +235,7 @@ static int process_log ()
 		else
 		{
 
+			//add next byte to message buffer
 			int ret = input_a1_data(&a1buff, serial_read_buf.buff[serial_read_buf.n_used]);
 			serial_read_buf.n_used++;
 			
@@ -243,26 +264,37 @@ static int process_log ()
 					isOK = decode_rtcm_message(a1buff, pub_arr);
 				}
 
+				//ascii gps
 				if (!isOK && num >= 17 && strstr(val[0], "APGPS") != NULL)
 				{
 					isOK = decode_ascii_gps(val, *pub_arr.gps);
 				}
+
+				//ascii gp2 (goes to the same place for now)
 				if (!isOK && num >= 12 && strstr(val[0], "APGP2") != NULL)
 				{
 					isOK = decode_ascii_gps(val, *pub_arr.gps);
 				}
+
+				//ascii hdg
 				if (!isOK && num >= 12 && strstr(val[0], "APHDG") != NULL)
 				{
 					isOK = decode_ascii_hdr(val, *pub_arr.hdg);
 				}
+
+				//ascii imu
 				if (!isOK && num >= 12 && strstr(val[0], "APIMU") != NULL)
 				{
 					isOK = decode_ascii_imu(val, num, *pub_arr.imu);
 				}
+
+				//ascii ins
 				if (!isOK && num >= 14 && strstr(val[0], "APINS") != NULL)
 				{
 					isOK = decode_ascii_ins(val, *pub_arr.ins);
 				}
+
+				//message does not fit into parameter
 				if (!isOK)
 				{
 					printf("%s\n", a1buff.buf);
@@ -271,14 +303,4 @@ static int process_log ()
 			}
 		}
 	}
-
-	return 0;
-}
-
-int main(int argc, char* argv[])
-{
-	ros::init(argc,argv,"anello_ros_driver");
-	process_log();
-
-
 }
