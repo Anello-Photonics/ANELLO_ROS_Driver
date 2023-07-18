@@ -1,7 +1,7 @@
 /** @file serial_interface.c
 *
 *
-* @brief This is an file that defines the object that will represent the serial connection with the EVK
+* @brief This is a file that defines the object that will represent the serial connection with the EVK
 *
 *
 *
@@ -21,16 +21,11 @@
 #define MAX_READ_NUM 1000
 #define MAX_BUF_LEN 128
 
-// static int setup_serial(const char *portname);
-// static int read_serial_data(int fd, char *buff, size_t buf_len);
-
-
 serial_interface::serial_interface ()
 {
     this->usb_fd = -1;
 }
 
-// static int setup_serial (const char *portname)
 serial_interface::serial_interface (const char *portname)
 {
     this->usb_fd = open(portname, O_RDWR);   
