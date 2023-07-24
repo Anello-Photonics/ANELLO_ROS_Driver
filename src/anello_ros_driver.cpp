@@ -205,6 +205,7 @@ static void ros_driver_main_loop ()
 
 	int data = 0;
 	char* val[MAXFIELD];
+	double decoded_val[MAXFIELD];
 	bool checksum_passed;
 
 	//buffer for individual message
@@ -247,41 +248,43 @@ static void ros_driver_main_loop ()
 						ROS_WARN("Checksum Fail");
 						num = 0;
 					}
+
+					if (!isOK && num >= 17 && strstr(val[0], "APGPS") != NULL)
+					{
+						//ascii gps
+						// isOK = decode_ascii_gps(val, *pub_arr.gps);
+						decode_ascii_gps(val, decoded_val);
+					}
+					else if (!isOK && num >= 17 && strstr(val[0], "APGP2") != NULL)
+					{
+						//ascii gp2 (goes to the same place for now)
+						// isOK = decode_ascii_gps(val, *pub_arr.gps);
+						isOK = decode_ascii_gps(val, decoded_val);
+					}
+					else if (!isOK && num >= 12 && strstr(val[0], "APHDG") != NULL)
+					{
+						//ascii hdg
+						// isOK = decode_ascii_hdr(val, *pub_arr.hdg);
+						isOK = decode_ascii_hdr(val, decoded_val);
+					}
+					else if (!isOK && num >= 12 && strstr(val[0], "APIMU") != NULL)
+					{
+						//ascii imu
+						// isOK = decode_ascii_imu(val, num, *pub_arr.imu);
+						isOK = decode_ascii_imu(val, num, decoded_val);
+					}
+					else if (!isOK && num >= 14 && strstr(val[0], "APINS") != NULL)
+					{
+						//ascii ins
+						// isOK = decode_ascii_ins(val, *pub_arr.ins);
+						isOK = decode_ascii_ins(val, decoded_val);
+					}
 				}
 				else if (ret == 5) /* rtcm */
 				{
 					isOK = decode_rtcm_message(a1buff, pub_arr);
 				}
 
-				//ascii gps
-				if (!isOK && num >= 17 && strstr(val[0], "APGPS") != NULL)
-				{
-					isOK = decode_ascii_gps(val, *pub_arr.gps);
-				}
-
-				//ascii gp2 (goes to the same place for now)
-				if (!isOK && num >= 12 && strstr(val[0], "APGP2") != NULL)
-				{
-					isOK = decode_ascii_gps(val, *pub_arr.gps);
-				}
-
-				//ascii hdg
-				if (!isOK && num >= 12 && strstr(val[0], "APHDG") != NULL)
-				{
-					isOK = decode_ascii_hdr(val, *pub_arr.hdg);
-				}
-
-				//ascii imu
-				if (!isOK && num >= 12 && strstr(val[0], "APIMU") != NULL)
-				{
-					isOK = decode_ascii_imu(val, num, *pub_arr.imu);
-				}
-
-				//ascii ins
-				if (!isOK && num >= 14 && strstr(val[0], "APINS") != NULL)
-				{
-					isOK = decode_ascii_ins(val, *pub_arr.ins);
-				}
 
 				//message does not fit into parameter
 				if (!isOK)
