@@ -14,4 +14,16 @@
 int decode_rtcm_message(a1buff_t a1buff, ros_publishers_t pub_arr);
 
 
+void decode_rtcm_imu_msg(double imu[], a1buff_t a1buff);
+
+
+void decode_rtcm_ins_msg(double ins[], a1buff_t a1buff);
+
+
+int decode_rtcm_gps_msg(double gps[], a1buff_t a1buff);
+
+
+void decode_rtcm_hdg_msg(double hdg[], a1buff_t a1buff);
+
+
 #endif

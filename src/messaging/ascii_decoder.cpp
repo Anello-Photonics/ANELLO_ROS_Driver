@@ -31,15 +31,13 @@ int decode_ascii_gps (char *val[], double *output_val)
     output_val[13] = atof(val[14]); /* acc speed */
     output_val[14] = atof(val[15]); /* acc heading */
     output_val[15] = atof(val[16]); /* rtk fix status */
-    process_gps(gps, pub_gps);
-
 
     return 1;
 }
 
 
 
-int decode_ascii_hdr (char *val[] double *output_val)
+int decode_ascii_hdr (char *val[], double *output_val)
 {
     /*
 #APHDG,31527.383,1362269876750000128,2.13,1.60,3.23,4.19,36.92845,0.2796,4.00156,303*59
@@ -57,7 +55,6 @@ int decode_ascii_hdr (char *val[] double *output_val)
     output_val[8] = atof(val[9]); /* acc length */
     output_val[9] = atof(val[10]); /* flag */
 
-    process_hdr(hdr, pub_hdg);
     return 1;
 }
 
@@ -82,9 +79,6 @@ int decode_ascii_imu (char *val[], int field_num, double *output_val)
     output_val[8] = atof(val[loc++]); /* odr */
     output_val[9] = atof(val[loc++]) * 1.0e-3; /* odr time */
     output_val[10] = atof(val[loc++]); /* temp */
-
-
-    process_imu(imu, pub_imu);
 
     return 1;
 }
@@ -115,7 +109,6 @@ int decode_ascii_ins (char *val[], double *output_val)
 
     output_val[12] = atoi(val[13]); /* zupt */
     output_val[13] = atoi(val[2]) * 1.0e-9;
-    process_ins(ins, pub_ins);
 
     return 1;
 }

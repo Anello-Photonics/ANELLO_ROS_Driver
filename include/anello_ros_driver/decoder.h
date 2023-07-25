@@ -9,7 +9,7 @@
 #endif
 
 #ifndef MAXFIELD
-#define MAXFIELD 100
+#define MAXFIELD 20
 #endif
 
 

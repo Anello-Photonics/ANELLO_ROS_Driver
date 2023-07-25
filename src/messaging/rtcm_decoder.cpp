@@ -4,47 +4,8 @@
 #include "rtcm_decoder.h"
 #include "message_publisher.h"
 
-static void decode_rtcm_imu_msg(double imu[], a1buff_t a1buff, ros::Publisher imu_pub);
-static void decode_rtcm_ins_msg(double ins[], a1buff_t a1buff, ros::Publisher ins_pub);
-static void decode_rtcm_gps_msg(double gps[], a1buff_t a1buff, ros::Publisher gps_pub);
-static void decode_rtcm_hdg_msg(double hdg[], a1buff_t a1buff, ros::Publisher hdg_pub);
 
-int decode_rtcm_message (a1buff_t a1buff, ros_publishers_t pub_arr)
-{
- 
-	double gps[20] = { 0 };
-	double gp2[20] = { 0 };
-	double hdr[20] = { 0 };
-	double imu[20] = { 0 };
-	double ins[20] = { 0 };
-
-
-    if (a1buff.type == 4058 && !a1buff.crc)
-    {
-        if (a1buff.subtype == 1) /* IMU */
-        {
-            decode_rtcm_imu_msg(imu, a1buff, *(pub_arr.imu));
-        }
-        else if (a1buff.subtype == 2) /* GPS PVT */
-        {
-            decode_rtcm_gps_msg(gps, a1buff, *(pub_arr.gps));
-        }
-        else if (a1buff.subtype == 3) /* DUAL ANTENNA */
-        {
-            decode_rtcm_hdg_msg(hdr, a1buff, *(pub_arr.hdg));
-        }
-        else if (a1buff.subtype == 4) /* INS */
-        {
-            decode_rtcm_ins_msg(ins, a1buff, *(pub_arr.ins));
-        }
-    }
-    return 1;
-}
-
-
-
-
-static void decode_rtcm_imu_msg (double imu[], a1buff_t a1buff, ros::Publisher imu_pub)
+void decode_rtcm_imu_msg (double imu[], a1buff_t a1buff)
 {
 	rtcm_apimu_t rtcm_apimu = { 0 };
 	rtcm_old_apimu_t rtcm_old_apimu = { 0 };
@@ -82,10 +43,9 @@ static void decode_rtcm_imu_msg (double imu[], a1buff_t a1buff, ros::Publisher i
         imu[10] = rtcm_old_apimu.Temp_C * 0.01; /* temp */
     }
 
-    process_imu(imu, imu_pub);
 }
 
-static void decode_rtcm_ins_msg (double ins[], a1buff_t a1buff, ros::Publisher ins_pub)
+void decode_rtcm_ins_msg (double ins[], a1buff_t a1buff)
 {
 	rtcm_apins_t rtcm_apins = { 0 };
 
@@ -108,11 +68,9 @@ static void decode_rtcm_ins_msg (double ins[], a1buff_t a1buff, ros::Publisher i
     ins[11] = rtcm_apins.Heading_Yaw * 1.0e-5; /* Heading */
     ins[12] = rtcm_apins.ZUPT; /* zupt */
 
-    process_ins(ins, ins_pub);
-
 }
 
-static void decode_rtcm_gps_msg (double gps[], a1buff_t a1buff, ros::Publisher gps_pub)
+int decode_rtcm_gps_msg (double gps[], a1buff_t a1buff)
 {
 	rtcm_apgps_t rtcm_apgps = { 0 };
 
@@ -137,16 +95,15 @@ static void decode_rtcm_gps_msg (double gps[], a1buff_t a1buff, ros::Publisher g
 
     if (rtcm_apgps.Antenna_ID == 0)
     {
-        process_gps(gps, gps_pub);
+        return 1;
     }
     else
     {
-        process_gps(gps, gps_pub);
+        return 2;
     }
-
 }
 
-static void decode_rtcm_hdg_msg (double hdr[], a1buff_t a1buff, ros::Publisher hdg_pub)
+void decode_rtcm_hdg_msg (double hdr[], a1buff_t a1buff)
 {
 	rtcm_aphdr_t rtcm_aphdr = { 0 };
 
@@ -164,5 +121,4 @@ static void decode_rtcm_hdg_msg (double hdr[], a1buff_t a1buff, ros::Publisher h
     hdr[8] = rtcm_aphdr.relPosHeading_Accuracy * 1.0e-5; /* heading length */
     hdr[9] = rtcm_aphdr.statusFlags; /* flag */
 
-    process_hdr(hdr, hdg_pub);
 }

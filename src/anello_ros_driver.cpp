@@ -15,6 +15,7 @@
 #include "decoder.h"
 #include "rtcm_decoder.h"
 #include "ascii_decoder.h"
+#include "message_publisher.h"
 
 #ifndef NO_GGA
 #define NO_GGA
@@ -254,35 +255,81 @@ static void ros_driver_main_loop ()
 						//ascii gps
 						// isOK = decode_ascii_gps(val, *pub_arr.gps);
 						decode_ascii_gps(val, decoded_val);
+						publish_gps(decoded_val, pub_gps);
+
+						isOK = 1;
 					}
 					else if (!isOK && num >= 17 && strstr(val[0], "APGP2") != NULL)
 					{
 						//ascii gp2 (goes to the same place for now)
 						// isOK = decode_ascii_gps(val, *pub_arr.gps);
-						isOK = decode_ascii_gps(val, decoded_val);
+						decode_ascii_gps(val, decoded_val);
+						publish_gps(decoded_val, pub_gps);
+
+						isOK = 1;
 					}
 					else if (!isOK && num >= 12 && strstr(val[0], "APHDG") != NULL)
 					{
 						//ascii hdg
 						// isOK = decode_ascii_hdr(val, *pub_arr.hdg);
-						isOK = decode_ascii_hdr(val, decoded_val);
+						decode_ascii_hdr(val, decoded_val);
+						publish_hdr(decoded_val, pub_hdg);
+
+						isOK = 1;
 					}
 					else if (!isOK && num >= 12 && strstr(val[0], "APIMU") != NULL)
 					{
 						//ascii imu
 						// isOK = decode_ascii_imu(val, num, *pub_arr.imu);
-						isOK = decode_ascii_imu(val, num, decoded_val);
+						decode_ascii_imu(val, num, decoded_val);
+						publish_imu(decoded_val, pub_imu);
+
+						isOK = 1;
 					}
 					else if (!isOK && num >= 14 && strstr(val[0], "APINS") != NULL)
 					{
 						//ascii ins
 						// isOK = decode_ascii_ins(val, *pub_arr.ins);
-						isOK = decode_ascii_ins(val, decoded_val);
+						decode_ascii_ins(val, decoded_val);
+						publish_ins(decoded_val, pub_ins);
+
+						isOK = 1;
 					}
 				}
 				else if (ret == 5) /* rtcm */
 				{
-					isOK = decode_rtcm_message(a1buff, pub_arr);
+					// isOK = decode_rtcm_message(a1buff, pub_arr);
+					if (a1buff.type == 4058 && !a1buff.crc)
+						{
+							if (a1buff.subtype == 1) /* IMU */
+							{
+								decode_rtcm_imu_msg(decoded_val, a1buff);
+								publish_imu(decoded_val, pub_imu);
+
+								isOK = 1;
+							}
+							else if (a1buff.subtype == 2) /* GPS PVT */
+							{
+								decode_rtcm_gps_msg(decoded_val, a1buff);
+								publish_gps(decoded_val, pub_gps);
+
+								isOK = 1;
+							}
+							else if (a1buff.subtype == 3) /* DUAL ANTENNA */
+							{
+								decode_rtcm_hdg_msg(decoded_val, a1buff);
+								publish_hdr(decoded_val, pub_hdg);
+
+								isOK = 1;
+							}
+							else if (a1buff.subtype == 4) /* INS */
+							{
+								decode_rtcm_ins_msg(decoded_val, a1buff);
+								publish_ins(decoded_val, pub_ins);
+
+								isOK = 1;
+							}
+						}
 				}
 
 
@@ -290,6 +337,10 @@ static void ros_driver_main_loop ()
 				if (!isOK)
 				{
 					printf("%s\n", a1buff.buf);
+				}
+				else
+				{
+					memset(decoded_val, 0, MAXFIELD);
 				}
 				a1buff.nbyte = 0;
 			}

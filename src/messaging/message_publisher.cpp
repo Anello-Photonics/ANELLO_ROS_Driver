@@ -5,7 +5,7 @@
 #include <anello_ros_driver/APINS.h>
 #include <anello_ros_driver/APHDG.h>
 
-void process_gps (double *gps, ros::Publisher pub)
+void publish_gps (double *gps, ros::Publisher pub)
 {
 	/*
 	* gps[0] = MCU_Time [ms]
@@ -58,7 +58,7 @@ void process_gps (double *gps, ros::Publisher pub)
 #endif
 }
 
-void process_hdr (double* hdr, ros::Publisher pub)
+void publish_hdr (double* hdr, ros::Publisher pub)
 {
 	/*
 	* hdr[0] = MCU_Time [ms]
@@ -148,7 +148,7 @@ void process_hdr (double* hdr, ros::Publisher pub)
 }
 
 double last_imu_mcu_time = -1.0;
-void process_imu (double* imu, ros::Publisher pub)
+void publish_imu (double* imu, ros::Publisher pub)
 {
 	/*
 	* imu[0] = MCU_Time [ms]
@@ -193,7 +193,7 @@ void process_imu (double* imu, ros::Publisher pub)
 #endif
 }
 
-void process_ins (double* ins, ros::Publisher pub)
+void publish_ins (double* ins, ros::Publisher pub)
 {
 	/*
 	* ins[0] = MCU_Time [ms]

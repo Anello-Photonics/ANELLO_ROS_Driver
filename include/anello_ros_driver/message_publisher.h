@@ -11,7 +11,7 @@
 * Notes:
 * The publisher is called here
 */
-void process_imu(double* imu, ros::Publisher pub);
+void publish_imu(double* imu, ros::Publisher pub);
 
 /*
 * Parameters:
@@ -21,7 +21,7 @@ void process_imu(double* imu, ros::Publisher pub);
 * Notes:
 * The publisher is called here
 */
-void process_ins(double* ins, ros::Publisher pub);
+void publish_ins(double* ins, ros::Publisher pub);
 
 /*
 * Parameters:
@@ -31,7 +31,7 @@ void process_ins(double* ins, ros::Publisher pub);
 * Notes:
 * The publisher is called here
 */
-void process_gps(double* gps, ros::Publisher pub);
+void publish_gps(double* gps, ros::Publisher pub);
 
 /*
 * Parameters:
@@ -41,6 +41,6 @@ void process_gps(double* gps, ros::Publisher pub);
 * Notes:
 * The publisher is called here
 */
-void process_hdr(double* hdg, ros::Publisher pub);
+void publish_hdr(double* hdg, ros::Publisher pub);
 
 #endif
