@@ -250,7 +250,6 @@ static void ros_driver_main_loop ()
 					if (!isOK && num >= 17 && strstr(val[0], "APGPS") != NULL)
 					{
 						//ascii gps
-						// isOK = decode_ascii_gps(val, *pub_arr.gps);
 						decode_ascii_gps(val, decoded_val);
 						publish_gps(decoded_val, pub_gps);
 
@@ -259,7 +258,6 @@ static void ros_driver_main_loop ()
 					else if (!isOK && num >= 17 && strstr(val[0], "APGP2") != NULL)
 					{
 						//ascii gp2 (goes to the same place for now)
-						// isOK = decode_ascii_gps(val, *pub_arr.gps);
 						decode_ascii_gps(val, decoded_val);
 						publish_gps(decoded_val, pub_gps);
 
@@ -268,7 +266,6 @@ static void ros_driver_main_loop ()
 					else if (!isOK && num >= 12 && strstr(val[0], "APHDG") != NULL)
 					{
 						//ascii hdg
-						// isOK = decode_ascii_hdr(val, *pub_arr.hdg);
 						decode_ascii_hdr(val, decoded_val);
 						publish_hdr(decoded_val, pub_hdg);
 
@@ -277,7 +274,6 @@ static void ros_driver_main_loop ()
 					else if (!isOK && num >= 12 && strstr(val[0], "APIMU") != NULL)
 					{
 						//ascii imu
-						// isOK = decode_ascii_imu(val, num, *pub_arr.imu);
 						decode_ascii_imu(val, num, decoded_val);
 						publish_imu(decoded_val, pub_imu);
 
@@ -286,7 +282,6 @@ static void ros_driver_main_loop ()
 					else if (!isOK && num >= 14 && strstr(val[0], "APINS") != NULL)
 					{
 						//ascii ins
-						// isOK = decode_ascii_ins(val, *pub_arr.ins);
 						decode_ascii_ins(val, decoded_val);
 						publish_ins(decoded_val, pub_ins);
 
