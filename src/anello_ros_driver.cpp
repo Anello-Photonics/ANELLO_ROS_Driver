@@ -47,8 +47,6 @@ int main(int argc, char* argv[])
 {
 	ros::init(argc,argv,"anello_ros_driver");
 	ros_driver_main_loop();
-
-
 }
 
 /*
@@ -213,7 +211,7 @@ static void ros_driver_main_loop ()
 	a1buff_t a1buff = { 0 };
 	
 	//initialize interface with anello unit
-	serial_interface anello_device(default_serial_interface);
+	serial_interface anello_device(DEFAULT_DATA_INTERFACE);
 
 	while (true)
 	{
@@ -239,14 +237,13 @@ static void ros_driver_main_loop ()
 				{
 					// check that the checksum is correct
 					checksum_passed = checksum(a1buff.buf, a1buff.nbyte);
-
 					if (checksum_passed)
 					{
 						num = parse_fields((char*)a1buff.buf, val);
 					}
 					else
 					{
-						ROS_WARN("Checksum Fail");
+						ROS_WARN("Checksum Fail: %s", a1buff.buf);
 						num = 0;
 					}
 

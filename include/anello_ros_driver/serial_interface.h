@@ -3,12 +3,12 @@
 
 #include "base_interface.h"
 
-#ifndef DEFAULT_DATA
-#define default_serial_interface "/dev/ttyUSB0"
+#ifndef DEFAULT_DATA_INTERFACE
+#define DEFAULT_DATA_INTERFACE "/dev/ttyUSB0"
 #endif
 
-#ifndef default_config_interface
-#define default_config_interface "/dev/ttyUSB3"
+#ifndef DEFAULT_CONFIG_INTERFACE
+#define DEFAULT_CONFIG_INTERFACE "/dev/ttyUSB3"
 #endif
 
 class serial_interface : base_interface{

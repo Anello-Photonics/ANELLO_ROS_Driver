@@ -5,24 +5,38 @@
 
 /*
 * Parameters:
+* double imu[] : pointer to an array of size 'MAXFIELDS' which will be filled with the values of the message
 * a1buff_t a1buff : buffer variable where the rtcm message is buffered and information about it is stored
-* ros_publishers_t pub_arr : variable containing pointers to the publishers for each of the message types
 *
-* return:
-* 1 on success
 */
-int decode_rtcm_message(a1buff_t a1buff, ros_publishers_t pub_arr);
-
-
 void decode_rtcm_imu_msg(double imu[], a1buff_t a1buff);
 
 
+/*
+* Parameters:
+* double ins[] : pointer to an array of size 'MAXFIELDS' which will be filled with the values of the message
+* a1buff_t a1buff : buffer variable where the rtcm message is buffered and information about it is stored
+*
+*/
 void decode_rtcm_ins_msg(double ins[], a1buff_t a1buff);
 
-
+/*
+* Parameters:
+* double gps[] : pointer to an array of size 'MAXFIELDS' which will be filled with the values of the message
+* a1buff_t a1buff : buffer variable where the rtcm message is buffered and information about it is stored
+*
+* Return:
+* 1 if antenna 1
+* 2 if antenna 2
+*/
 int decode_rtcm_gps_msg(double gps[], a1buff_t a1buff);
 
-
+/*
+* Parameters:
+* double hdg[] : pointer to an array of size 'MAXFIELDS' which will be filled with the values of the message
+* a1buff_t a1buff : buffer variable where the rtcm message is buffered and information about it is stored
+*
+*/
 void decode_rtcm_hdg_msg(double hdg[], a1buff_t a1buff);
 
 

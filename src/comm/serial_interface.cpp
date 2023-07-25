@@ -13,6 +13,7 @@
 #include <termios.h>
 #include <unistd.h>
 #include <string>
+#include <sys/ioctl.h>
 
 #include "serial_interface.h"
 
@@ -20,6 +21,7 @@
 #define DEBUG 0
 #define MAX_READ_NUM 1000
 #define MAX_BUF_LEN 128
+#define SER_PORT_FLUSH_COUNT 20
 
 serial_interface::serial_interface ()
 {
@@ -58,6 +60,13 @@ serial_interface::serial_interface (const char *portname)
         printf("Error %i from tcsetattr: %s\n", errno, strerror(errno));
         exit(1);
     }
+
+    for (int i=0; i < SER_PORT_FLUSH_COUNT; i++)
+    {
+        usleep(1000);
+        ioctl(this->usb_fd, TCFLSH, 2);
+    }
+
 }
 
 size_t serial_interface::get_data (char *buf, size_t buf_len)
@@ -77,6 +86,7 @@ serial_interface::~serial_interface ()
 {
     if (this->usb_fd > 0)
     {
+        tcflush(this->usb_fd, TCIOFLUSH);
         close(this->usb_fd);
     }
 }
