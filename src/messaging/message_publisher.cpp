@@ -1,3 +1,16 @@
+/********************************************************************************
+ * File Name:   message_publisher.cpp
+ * Description: contains functions for publishing messages to ROS topics.
+ *
+ * Author:      Austin Johnson
+ * Date:        7/1/23
+ *
+ * License:     MIT License
+ *
+ * Note:        The message_publisher.h file contains the definitions for the
+ * 			   	message arrays.
+ ********************************************************************************/
+
 #include "message_publisher.h"
 
 #include <anello_ros_driver/APIMU.h>
@@ -5,33 +18,33 @@
 #include <anello_ros_driver/APINS.h>
 #include <anello_ros_driver/APHDG.h>
 
-void publish_gps (double *gps, ros::Publisher pub)
+void publish_gps(double *gps, ros::Publisher pub)
 {
 	/*
-	* gps[0] = MCU_Time [ms]
-	* gps[1] = GPS_Time [ns]
-	* gps[2] = Latitude [deg]
-	* gps[3] = Longitude [deg]
-	* gps[4] = Alt_ellipsoid [m]
-	* gps[5] = Alt_msl [m]
-	* gps[6] = Speed [m/s]
-	* gps[7] = heading [deg]
-	* gps[8] = Hacc [m]
-	* gps[9] = Vacc [m]
-	* gps[10] = PDOP 
-	* gps[11] = FixType (0=No Fix, 2=2D Fix, 3=3D Fix, 5=Time only)
-	* gps[12] = SatNum
-	* gps[13] = Speed Accuracy [m/s]
-	* gps[14] = Heading Accuracy [deg]
-	* gps[15] = RTK Fix Status (0=SPP, 1=RTK Float, 2=RTK Fix)
-	*
-	*/
-	
+	 * gps[0] = MCU_Time [ms]
+	 * gps[1] = GPS_Time [ns]
+	 * gps[2] = Latitude [deg]
+	 * gps[3] = Longitude [deg]
+	 * gps[4] = Alt_ellipsoid [m]
+	 * gps[5] = Alt_msl [m]
+	 * gps[6] = Speed [m/s]
+	 * gps[7] = heading [deg]
+	 * gps[8] = Hacc [m]
+	 * gps[9] = Vacc [m]
+	 * gps[10] = PDOP
+	 * gps[11] = FixType (0=No Fix, 2=2D Fix, 3=3D Fix, 5=Time only)
+	 * gps[12] = SatNum
+	 * gps[13] = Speed Accuracy [m/s]
+	 * gps[14] = Heading Accuracy [deg]
+	 * gps[15] = RTK Fix Status (0=SPP, 1=RTK Float, 2=RTK Fix)
+	 *
+	 */
+
 	anello_ros_driver::APGPS msg;
 
 	msg.mcu_time = gps[0];
 	msg.gps_time = gps[1];
-	
+
 	msg.lat = gps[2];
 	msg.lon = gps[3];
 	msg.alt_ellipsoid = gps[4];
@@ -58,53 +71,53 @@ void publish_gps (double *gps, ros::Publisher pub)
 #endif
 }
 
-void publish_hdr (double* hdr, ros::Publisher pub)
+void publish_hdr(double *hdr, ros::Publisher pub)
 {
 	/*
-	* hdr[0] = MCU_Time [ms]
-	* hdr[1] = GPS Time [ns]
-	*
-	* hdr[2] = relPosN [m]
-	* hdr[3] = relPosE [m]
-	* hdr[4] = relPosD [m]
-	*
-	* hdr[5] = relPosLength [m]
-	* hdr[6] = relPosHeading [Deg] 
-	* 
-	* hdr[7] = relPosLength_Accuracy [m]
-	* hdr[8] = relPosHeading_Accuracy [Deg]
-	*
-	* hdr[9] = Flags
-	*
-	* Flags
-	* bit 0 : gnssFixOk
-	* bit 1 : diffSoln
-	* bit 2 : relPosValid
-	* bit 4..3 : carrSoln
-	* bit 5 : isMoving
-	* bit 6 : refPosMiss
-	* bit 7 : refObsMiss
-	* bit 8 : relPosHeadingValid
-	* bit 9 : relPosNormalized
-	*
-	*/
+	 * hdr[0] = MCU_Time [ms]
+	 * hdr[1] = GPS Time [ns]
+	 *
+	 * hdr[2] = relPosN [m]
+	 * hdr[3] = relPosE [m]
+	 * hdr[4] = relPosD [m]
+	 *
+	 * hdr[5] = relPosLength [m]
+	 * hdr[6] = relPosHeading [Deg]
+	 *
+	 * hdr[7] = relPosLength_Accuracy [m]
+	 * hdr[8] = relPosHeading_Accuracy [Deg]
+	 *
+	 * hdr[9] = Flags
+	 *
+	 * Flags
+	 * bit 0 : gnssFixOk
+	 * bit 1 : diffSoln
+	 * bit 2 : relPosValid
+	 * bit 4..3 : carrSoln
+	 * bit 5 : isMoving
+	 * bit 6 : refPosMiss
+	 * bit 7 : refObsMiss
+	 * bit 8 : relPosHeadingValid
+	 * bit 9 : relPosNormalized
+	 *
+	 */
 	uint16_t status = (uint16_t)hdr[9];
 
 	anello_ros_driver::APHDG msg;
 
-	msg.mcu_time = hdr[0];	
-	msg.gps_time = hdr[1];	
+	msg.mcu_time = hdr[0];
+	msg.gps_time = hdr[1];
 
-	msg.rel_pos_n = hdr[2];	
-	msg.rel_pos_e = hdr[3];	
-	msg.rel_pos_d = hdr[4];	
-	
-	msg.rel_pos_length = hdr[5];	
-	msg.rel_pos_heading = hdr[6];	
-	
-	msg.rel_pos_length_accuracy = hdr[7];	
-	msg.rel_pos_heading_accuracy = hdr[8];	
-	
+	msg.rel_pos_n = hdr[2];
+	msg.rel_pos_e = hdr[3];
+	msg.rel_pos_d = hdr[4];
+
+	msg.rel_pos_length = hdr[5];
+	msg.rel_pos_heading = hdr[6];
+
+	msg.rel_pos_length_accuracy = hdr[7];
+	msg.rel_pos_heading_accuracy = hdr[8];
+
 	msg.status_flags = status;
 
 	msg.gnss_fix_ok = (status & (1 << 0)) > 0;
@@ -124,45 +137,44 @@ void publish_hdr (double* hdr, ros::Publisher pub)
 		/* h[x] = hdr[x] */
 		/* h0     h1     h2    h3      h4     h5     h6     h7     h8   h9 s0 s1 s2 34 s5 s6 s7 s8 s9*/
 		"APHDG,%10.4f,%10.5f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i\n",
-		hdr[0],                             
-		hdr[1],                             
-		hdr[2],                             
-		hdr[3],                             
-		hdr[4],                             
-		hdr[5],                             
-		hdr[6],                             
-		hdr[7],                             
-		hdr[8],                             
-		(int)hdr[9],                        
-		(status & (1 << 0)) > 0,            
-		(status & (1 << 1)) > 0,            
-		(status & (1 << 2)) > 0,            
-		(status & (3 << 3)) >> 3,           
-		(status & (1 << 5)) > 0,            
-		(status & (1 << 6)) > 0,            
-		(status & (1 << 7)) > 0,            
-		(status & (1 << 8)) > 0,            
-		(status & (1 << 9)) > 0             
-	);
+		hdr[0],
+		hdr[1],
+		hdr[2],
+		hdr[3],
+		hdr[4],
+		hdr[5],
+		hdr[6],
+		hdr[7],
+		hdr[8],
+		(int)hdr[9],
+		(status & (1 << 0)) > 0,
+		(status & (1 << 1)) > 0,
+		(status & (1 << 2)) > 0,
+		(status & (3 << 3)) >> 3,
+		(status & (1 << 5)) > 0,
+		(status & (1 << 6)) > 0,
+		(status & (1 << 7)) > 0,
+		(status & (1 << 8)) > 0,
+		(status & (1 << 9)) > 0);
 #endif
 }
 
 double last_imu_mcu_time = -1.0;
-void publish_imu (double* imu, ros::Publisher pub)
+void publish_imu(double *imu, ros::Publisher pub)
 {
 	/*
-	* imu[0] = MCU_Time [ms]
-	* imu[1] = ax [g]
-	* imu[2] = ay [g]
-	* imu[3] = az [g]
-	* imu[4] = wx [Deg/s]
-	* imu[5] = wy [Deg/s]
-	* imu[6] = wz [Deg/s]
-	* imu[7] = wz_fog [Deg/s]
-	* imu[8] = odr [m/s]
-	* imu[9] = odr Time [ms]
-	* imu[10] = Temp [C]
-	*/
+	 * imu[0] = MCU_Time [ms]
+	 * imu[1] = ax [g]
+	 * imu[2] = ay [g]
+	 * imu[3] = az [g]
+	 * imu[4] = wx [Deg/s]
+	 * imu[5] = wy [Deg/s]
+	 * imu[6] = wz [Deg/s]
+	 * imu[7] = wz_fog [Deg/s]
+	 * imu[8] = odr [m/s]
+	 * imu[9] = odr Time [ms]
+	 * imu[10] = Temp [C]
+	 */
 	double delta_imu_time;
 
 	if (last_imu_mcu_time != -1.0)
@@ -193,28 +205,28 @@ void publish_imu (double* imu, ros::Publisher pub)
 #endif
 }
 
-void publish_ins (double* ins, ros::Publisher pub)
+void publish_ins(double *ins, ros::Publisher pub)
 {
 	/*
-	* ins[0] = MCU_Time [ms]
-	* ins[1] = GPS_Time [ns]
-	*
-	* ins[2] = INS Status (255=uninitialized, 0=Attitude only, 1=Pos and Att, 2=Pos Hdg Att, 3= RTK Float, 4=RTK Fix)
-	*
-	* ins[3] = Latitude [deg]
-	* ins[4] = Longitude [deg]
-	* ins[5] = Alt_ellipsoid [m]
-	*
-	* ins[6] = Vn [m/s]
-	* ins[7] = Ve [m/s]
-	* ins[8] = Vd [m/s]
-	*
-	* ins[9] = Roll [deg]
-	* ins[10] = Pitch [deg]
-	* ins[11] = Heading [deg]
-	*
-	* ins[12] = zupt (1=stationary, 0=moving)
-	*/
+	 * ins[0] = MCU_Time [ms]
+	 * ins[1] = GPS_Time [ns]
+	 *
+	 * ins[2] = INS Status (255=uninitialized, 0=Attitude only, 1=Pos and Att, 2=Pos Hdg Att, 3= RTK Float, 4=RTK Fix)
+	 *
+	 * ins[3] = Latitude [deg]
+	 * ins[4] = Longitude [deg]
+	 * ins[5] = Alt_ellipsoid [m]
+	 *
+	 * ins[6] = Vn [m/s]
+	 * ins[7] = Ve [m/s]
+	 * ins[8] = Vd [m/s]
+	 *
+	 * ins[9] = Roll [deg]
+	 * ins[10] = Pitch [deg]
+	 * ins[11] = Heading [deg]
+	 *
+	 * ins[12] = zupt (1=stationary, 0=moving)
+	 */
 
 	anello_ros_driver::APINS msg;
 
@@ -222,7 +234,7 @@ void publish_ins (double* ins, ros::Publisher pub)
 	msg.gps_time = ins[1];
 
 	msg.ins_status = (uint8_t)ins[2];
-	
+
 	msg.lat = ins[3];
 	msg.lon = ins[4];
 	msg.Alt_ellipsoid = ins[5];
