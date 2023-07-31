@@ -143,7 +143,7 @@ include_directories(
 ## The recommended prefix ensures that target names across packages don't collide
 # add_executable(${PROJECT_NAME}_node src/anello_ros_driver_node.cpp)
 add_executable(anello_ros_driver 
-  src/anello_ros_driver.cpp 
+  src/main_anello_ros_driver.cpp 
   src/bit_tools.cpp 
   
   src/messaging/rtcm_decoder.cpp 

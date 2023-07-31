@@ -13,7 +13,7 @@
 #ifndef RTCM_DECODER_H
 #define RTCM_DECODER_H
 
-#include "decoder.h"
+#include "main_anello_ros_driver.h"
 
 /*
  * Parameters:

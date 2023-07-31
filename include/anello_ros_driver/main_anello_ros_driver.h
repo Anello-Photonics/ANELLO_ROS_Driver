@@ -11,8 +11,8 @@
  * 				rtcm message types.
  ********************************************************************************/
 
-#ifndef DECODER_H
-#define DECODER_H
+#ifndef MAIN_ANELLO_ROS_DRIVER_H
+#define MAIN_ANELLO_ROS_DRIVER_H
 
 #include <stdint.h>
 #include <ros/ros.h>
