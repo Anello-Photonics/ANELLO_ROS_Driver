@@ -36,6 +36,13 @@
 #include "ascii_decoder.h"
 #include "message_publisher.h"
 
+// UPDATE THIS VARIABLE TO CHANGE SERIAL PORT
+// DEFAULT_DATA_INTERFACE found in anello_ros_driver/include/anello_ros_driver/serial_interface.h
+//
+// Example:
+// const char *serial_port_name = "/dev/ttyUSB0";
+const char *serial_port_name = DEFAULT_DATA_INTERFACE;
+
 #ifndef NO_GGA
 #define NO_GGA
 #endif
@@ -251,7 +258,7 @@ static void ros_driver_main_loop()
 	a1buff_t a1buff = {0};
 
 	// initialize interface with anello unit
-	serial_interface anello_device(DEFAULT_DATA_INTERFACE);
+	serial_interface anello_device(serial_port_name);
 
 	while (true)
 	{
