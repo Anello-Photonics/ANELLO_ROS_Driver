@@ -57,7 +57,7 @@ ANELLO messages will be published to topics (see below). For information on how 
 
 #### Published Topics
 
-Topic definitions are defined by the [ANELLO Developer Manual](https://docs-a1.readthedocs.io/en/latest/communication_messaging.html#ascii-data-output-messages)
+Topic definitions are defined in the [ANELLO Developer Manual](https://docs-a1.readthedocs.io/en/latest/) in by the ASCII message format.
 
 * `/anello_ros_driver/APIMU.msg`
 * `/anello_ros_driver/APINS.msg`
