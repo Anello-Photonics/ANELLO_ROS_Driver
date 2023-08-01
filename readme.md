@@ -30,13 +30,13 @@ The serial port is defined in `anello_ros_driver/src/main_anello_ros_driver.cpp`
 const char *serial_port_name = DEFAULT_DATA_INTERFACE;
 ```
 
-would be updated to:
+Example:
 
 ```c++
 const char *serial_port_name = "/dev/ttyUSB1";
 ```
 
-Build the code:
+### Build the code
 
 ```bash
 cd ~/catkin_ws
