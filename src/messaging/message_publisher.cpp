@@ -18,6 +18,10 @@
 #include <anello_ros_driver/APINS.h>
 #include <anello_ros_driver/APHDG.h>
 
+#if 0
+#define TWO_HUNDRED_HZ_OUTPUT
+#endif
+
 void publish_gps(double *gps, ros::Publisher pub)
 {
 	/*
@@ -177,6 +181,7 @@ void publish_imu(double *imu, ros::Publisher pub)
 	 */
 	double delta_imu_time;
 
+#ifdef TWO_HUNDRED_HZ_OUTPUT
 	if (last_imu_mcu_time != -1.0)
 	{
 		delta_imu_time = imu[0] - last_imu_mcu_time;
@@ -186,6 +191,7 @@ void publish_imu(double *imu, ros::Publisher pub)
 		}
 	}
 	last_imu_mcu_time = imu[0];
+#endif
 
 	anello_ros_driver::APIMU msg;
 	msg.mcu_time = imu[0];
