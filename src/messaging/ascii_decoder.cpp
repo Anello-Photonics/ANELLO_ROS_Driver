@@ -15,6 +15,8 @@
 #include <ros/ros.h>
 #endif
 
+#include <cstdlib>
+
 #include "ascii_decoder.h"
 #include "message_publisher.h"
 

@@ -15,7 +15,7 @@
 #define MAIN_ANELLO_ROS_DRIVER_H
 
 #ifndef COMPILE_WITH_ROS
-#define COMPILE_WITH_ROS 1
+#define COMPILE_WITH_ROS 0
 #endif
 
 #include <stdint.h>

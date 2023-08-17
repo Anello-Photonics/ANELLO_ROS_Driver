@@ -22,16 +22,18 @@
 #include <cstdlib>
 #include <fstream>
 #include <unistd.h>
+#include "main_anello_ros_driver.h"
 
+#if COMPILE_WITH_ROS
 #include <ros/ros.h>
 #include "anello_ros_driver/APIMU.h"
 #include "anello_ros_driver/APINS.h"
 #include "anello_ros_driver/APGPS.h"
 #include "anello_ros_driver/APHDG.h"
+#endif
 
 #include "bit_tools.h"
 #include "serial_interface.h"
-#include "main_anello_ros_driver.h"
 #include "rtcm_decoder.h"
 #include "ascii_decoder.h"
 #include "message_publisher.h"
@@ -251,9 +253,7 @@ static void ros_driver_main_loop()
 
 	// init buffer
 	file_read_buf_t serial_read_buf = {0};
-	size_t bytes_read;
 
-	int data = 0;
 	char *val[MAXFIELD];
 	double decoded_val[MAXFIELD];
 	bool checksum_passed;
@@ -294,7 +294,11 @@ static void ros_driver_main_loop()
 					}
 					else
 					{
+#if COMPILE_WITH_ROS
 						ROS_WARN("Checksum Fail: %s", a1buff.buf);
+#else
+						printf("Checksum Fail: %s", a1buff.buf);
+#endif
 						num = 0;
 					}
 
@@ -400,7 +404,7 @@ static void ros_driver_main_loop()
 				}
 				else
 				{
-					memset(decoded_val, 0, MAXFIELD);
+					memset(decoded_val, 0, MAXFIELD * sizeof(double));
 				}
 				a1buff.nbyte = 0;
 			}

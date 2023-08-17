@@ -19,6 +19,7 @@
 
 #include <fcntl.h>
 #include <termios.h>
+#include <cstring>
 #include <unistd.h>
 #include <string>
 #include <sys/ioctl.h>
@@ -54,7 +55,7 @@ serial_interface::serial_interface(const char *portname)
 #if COMPILE_WITH_ROS
         ROS_INFO("Error %i from tcgetattr: %s\n", errno, strerror(errno));
 #else
-        printf("Error %i from tcgetattr: %s\n", errnom strerror(errno));
+        printf("Error %i from tcgetattr: %s\n", errno, strerror(errno));
 #endif
         exit(1);
     }
@@ -94,7 +95,7 @@ size_t serial_interface::get_data(char *buf, size_t buf_len)
 #if COMPILE_WITH_ROS
         ROS_ERROR("Anello ros driver serial port file descriptor not defined");
 #else
-        printf("Anello ros driver serial port file descriptor not defined")
+        printf("Anello ros driver serial port file descriptor not defined");
 #endif
         exit(1);
     }
