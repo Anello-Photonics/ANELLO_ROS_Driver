@@ -1,6 +1,7 @@
 #compiler and compiler flags
 CXX = g++
 CXXFLAGS = -Wall -std=c++11
+DEBUG_FLAGS = -g
 
 #directories
 INCLUDE_DIR = include/anello_ros_driver
@@ -32,6 +33,9 @@ $(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp
 	$(info mkdir -p $(BUILD_DIR))
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
 
+#debug target
+debug: CXXFLAGS += $(DEBUG_FLAGS)
+debug: all
 
 # clean
 clean:
