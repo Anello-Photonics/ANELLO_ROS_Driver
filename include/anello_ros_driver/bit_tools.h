@@ -39,9 +39,6 @@ extern "C"
      */
     int checksum(unsigned char *buff, int len);
 
-#ifndef MAX_BUF_LEN
-#define MAX_BUF_LEN (1200)
-#endif
 
 #ifdef __cplusplus
 }

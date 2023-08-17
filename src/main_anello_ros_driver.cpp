@@ -70,7 +70,9 @@ static void ros_driver_main_loop();
 
 int main(int argc, char *argv[])
 {
+#if COMPILE_WITH_ROS
 	ros::init(argc, argv, "anello_ros_driver");
+#endif
 	ros_driver_main_loop();
 }
 
@@ -232,6 +234,7 @@ static int parse_fields(char *const buffer, char **val)
 static void ros_driver_main_loop()
 {
 	// init ros publishers
+#if COMPILE_WITH_ROS
 	ros::NodeHandle nh;
 
 	ros::Publisher pub_imu = nh.advertise<anello_ros_driver::APIMU>("APIMU", 10);
@@ -244,6 +247,7 @@ static void ros_driver_main_loop()
 	pub_arr.ins = &pub_ins;
 	pub_arr.gps = &pub_gps;
 	pub_arr.hdg = &pub_hdg;
+#endif
 
 	// init buffer
 	file_read_buf_t serial_read_buf = {0};
@@ -298,7 +302,9 @@ static void ros_driver_main_loop()
 					{
 						// ascii gps
 						decode_ascii_gps(val, decoded_val);
+#if COMPILE_WITH_ROS
 						publish_gps(decoded_val, pub_gps);
+#endif
 
 						isOK = 1;
 					}
@@ -306,7 +312,9 @@ static void ros_driver_main_loop()
 					{
 						// ascii gp2 (goes to the same place for now)
 						decode_ascii_gps(val, decoded_val);
+#if COMPILE_WITH_ROS
 						publish_gps(decoded_val, pub_gps);
+#endif
 
 						isOK = 1;
 					}
@@ -314,7 +322,9 @@ static void ros_driver_main_loop()
 					{
 						// ascii hdg
 						decode_ascii_hdr(val, decoded_val);
+#if COMPILE_WITH_ROS
 						publish_hdr(decoded_val, pub_hdg);
+#endif
 
 						isOK = 1;
 					}
@@ -322,7 +332,9 @@ static void ros_driver_main_loop()
 					{
 						// ascii imu
 						decode_ascii_imu(val, num, decoded_val);
+#if COMPILE_WITH_ROS
 						publish_imu(decoded_val, pub_imu);
+#endif
 
 						isOK = 1;
 					}
@@ -330,7 +342,9 @@ static void ros_driver_main_loop()
 					{
 						// ascii ins
 						decode_ascii_ins(val, decoded_val);
+#if COMPILE_WITH_ROS
 						publish_ins(decoded_val, pub_ins);
+#endif
 
 						isOK = 1;
 					}
@@ -343,28 +357,36 @@ static void ros_driver_main_loop()
 						if (a1buff.subtype == 1) /* IMU */
 						{
 							decode_rtcm_imu_msg(decoded_val, a1buff);
+#if COMPILE_WITH_ROS
 							publish_imu(decoded_val, pub_imu);
+#endif
 
 							isOK = 1;
 						}
 						else if (a1buff.subtype == 2) /* GPS PVT */
 						{
 							decode_rtcm_gps_msg(decoded_val, a1buff);
+#if COMPILE_WITH_ROS
 							publish_gps(decoded_val, pub_gps);
+#endif
 
 							isOK = 1;
 						}
 						else if (a1buff.subtype == 3) /* DUAL ANTENNA */
 						{
 							decode_rtcm_hdg_msg(decoded_val, a1buff);
+#if COMPILE_WITH_ROS
 							publish_hdr(decoded_val, pub_hdg);
+#endif
 
 							isOK = 1;
 						}
 						else if (a1buff.subtype == 4) /* INS */
 						{
 							decode_rtcm_ins_msg(decoded_val, a1buff);
+#if COMPILE_WITH_ROS
 							publish_ins(decoded_val, pub_ins);
+#endif
 
 							isOK = 1;
 						}

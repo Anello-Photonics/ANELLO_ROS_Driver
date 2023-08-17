@@ -12,7 +12,10 @@
 
 #ifndef MESSAGE_PUBLISHER_H
 #define MESSAGE_PUBLISHER_H
+#include "main_anello_ros_driver.h"
 
+
+#if COMPILE_WITH_ROS
 #include <ros/ros.h>
 
 /*
@@ -54,5 +57,6 @@ void publish_gps(double *gps, ros::Publisher pub);
  * The publisher is called here
  */
 void publish_hdr(double *hdg, ros::Publisher pub);
+#endif
 
 #endif

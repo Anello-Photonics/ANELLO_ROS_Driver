@@ -12,7 +12,9 @@
  ********************************************************************************/
 
 #include "message_publisher.h"
+#include "main_anello_ros_driver.h"
 
+#if COMPILE_WITH_ROS
 #include <anello_ros_driver/APIMU.h>
 #include <anello_ros_driver/APGPS.h>
 #include <anello_ros_driver/APINS.h>
@@ -255,3 +257,4 @@ void publish_ins(double *ins, ros::Publisher pub)
 	ROS_INFO("APINS,%10.3f,%14.7f,%10.4f,%14.9f,%14.9f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f\n", ins[0], ins[1], ins[2], ins[3], ins[4], ins[5], ins[6], ins[7], ins[8], ins[9], ins[10], ins[11], ins[12]);
 #endif
 }
+#endif
