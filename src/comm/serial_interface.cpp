@@ -107,7 +107,6 @@ size_t serial_interface::get_data(char *buf, size_t buf_len)
 void serial_interface::write_data(const char *buf, size_t buf_len) 
 { 
     write(usb_fd, buf, buf_len);
-    printf("Serial port write");
 }
 
 serial_interface::~serial_interface()

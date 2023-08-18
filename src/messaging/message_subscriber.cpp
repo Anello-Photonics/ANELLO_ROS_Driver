@@ -21,8 +21,6 @@
 // subscribe to the ntrip client 
 void ntrip_rtcm_callback(const mavros_msgs::RTCM::ConstPtr& msg)
 {
-
-    ROS_INFO("rtcm_callback");
     global_ntrip_buffer.add_ntrip_data(msg->data.data(), msg->data.size());
 }
 

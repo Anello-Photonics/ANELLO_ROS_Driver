@@ -250,7 +250,7 @@ static void ros_driver_main_loop()
 	ros::Publisher pub_gga = nh.advertise<nmea_msgs::Sentence>("ntrip_client/nmea", 1);
 
 	ros::Subscriber sub_rtcm = nh.subscribe("ntrip_client/rtcm", 1, ntrip_rtcm_callback);
-	printf("Anello ROS Driver Started\n");
+	// printf("Anello ROS Driver Started\n");
 
 	ros_publishers_t pub_arr;
 	pub_arr.imu = &pub_imu;
