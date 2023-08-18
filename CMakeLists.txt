@@ -14,6 +14,8 @@ find_package(catkin REQUIRED COMPONENTS
   # sensor_msgs
   std_msgs
   message_generation
+  nmea_msgs
+  mavros_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -113,7 +115,7 @@ catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES anello_ros_driver
   # CATKIN_DEPENDS geometry_msgs nav_msgs roscpp sensor_msgs std_msgs message_runtime
-  CATKIN_DEPENDS roscpp std_msgs message_runtime
+  CATKIN_DEPENDS roscpp std_msgs message_runtime nmea_msgs mavros_msgs
 #  DEPENDS system_lib
 )
 
@@ -149,9 +151,13 @@ add_executable(anello_ros_driver
   src/messaging/rtcm_decoder.cpp 
   src/messaging/ascii_decoder.cpp 
   src/messaging/message_publisher.cpp 
+  src/messaging/message_subscriber.cpp
+  src/messaging/ntrip_buffer.cpp
   
   src/comm/serial_interface.cpp
 )
+
+add_dependencies(anello_ros_driver ${PROJECT_NAME}_generate_messages_cpp)
 # add_executable(${PROJECT_NAME}_node src/anello_ros_driver_node.cpp)
 
 ## Rename C++ executable without prefix

@@ -20,6 +20,29 @@
 #include <anello_ros_driver/APINS.h>
 #include <anello_ros_driver/APHDG.h>
 
+#include <nmea_msgs/Sentence.h>
+#include <mavros_msgs/RTCM.h>
+#include <std_msgs/Header.h>
+
+#define SAMPLE_GGA_MESSAGE "$GNGGA,180921.50,3723.94984,N,12158.74997,W,5,13,2.64,13.00,M,,M,,*4A\r\n"
+
+uint32_t gga_frame_id = 0;
+void publish_gga(double *gps, ros::Publisher pub)
+{
+	std_msgs::Header msg_header;
+	nmea_msgs::Sentence gga_message;
+
+	msg_header.seq = gga_frame_id;
+	msg_header.stamp = ros::Time::now();
+	msg_header.frame_id = "anello gps data";
+	gga_frame_id++;
+
+	gga_message.header = msg_header;
+	gga_message.sentence = SAMPLE_GGA_MESSAGE;
+
+	pub.publish(gga_message);
+}
+
 void publish_gps(double *gps, ros::Publisher pub)
 {
 	/*

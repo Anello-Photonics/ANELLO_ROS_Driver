@@ -23,6 +23,7 @@
 #include <fstream>
 #include <unistd.h>
 #include "main_anello_ros_driver.h"
+#include "message_subscriber.h"
 
 #if COMPILE_WITH_ROS
 #include <ros/ros.h>
@@ -30,6 +31,7 @@
 #include "anello_ros_driver/APINS.h"
 #include "anello_ros_driver/APGPS.h"
 #include "anello_ros_driver/APHDG.h"
+#include "nmea_msgs/Sentence.h"
 #endif
 
 #include "bit_tools.h"
@@ -37,6 +39,8 @@
 #include "rtcm_decoder.h"
 #include "ascii_decoder.h"
 #include "message_publisher.h"
+#include "ntrip_buffer.h"
+// extern NTRIP_buffer global_ntrip_buffer;
 
 // UPDATE THIS VARIABLE TO CHANGE SERIAL PORT
 // DEFAULT_DATA_INTERFACE found in anello_ros_driver/include/anello_ros_driver/serial_interface.h
@@ -243,6 +247,10 @@ static void ros_driver_main_loop()
 	ros::Publisher pub_ins = nh.advertise<anello_ros_driver::APINS>("APINS", 10);
 	ros::Publisher pub_gps = nh.advertise<anello_ros_driver::APGPS>("APGPS", 10);
 	ros::Publisher pub_hdg = nh.advertise<anello_ros_driver::APHDG>("APHDG", 10);
+	ros::Publisher pub_gga = nh.advertise<nmea_msgs::Sentence>("ntrip_client/nmea", 1);
+
+	ros::Subscriber sub_rtcm = nh.subscribe("ntrip_client/rtcm", 1, ntrip_rtcm_callback);
+	printf("Anello ROS Driver Started\n");
 
 	ros_publishers_t pub_arr;
 	pub_arr.imu = &pub_imu;
@@ -253,6 +261,7 @@ static void ros_driver_main_loop()
 
 	// init buffer
 	file_read_buf_t serial_read_buf = {0};
+	const char *ntrip_data;
 
 	char *val[MAXFIELD];
 	double decoded_val[MAXFIELD];
@@ -266,6 +275,18 @@ static void ros_driver_main_loop()
 
 	while (true)
 	{
+#if COMPILE_WITH_ROS
+		// allow ROS to process callbacks
+		ros::spinOnce();
+#endif
+
+		//when data is available write it to the serial port
+		if (global_ntrip_buffer.is_read_ready())
+		{
+			anello_device.write_data((char *)global_ntrip_buffer.get_buffer(), global_ntrip_buffer.get_buffer_length());
+			global_ntrip_buffer.set_read_ready_false();
+		}
+
 		// if all data has been read... read more data into buff
 		if (serial_read_buf.n_used >= serial_read_buf.nbytes)
 		{
@@ -308,6 +329,7 @@ static void ros_driver_main_loop()
 						decode_ascii_gps(val, decoded_val);
 #if COMPILE_WITH_ROS
 						publish_gps(decoded_val, pub_gps);
+						publish_gga(decoded_val, pub_gga);
 #endif
 
 						isOK = 1;
@@ -318,6 +340,7 @@ static void ros_driver_main_loop()
 						decode_ascii_gps(val, decoded_val);
 #if COMPILE_WITH_ROS
 						publish_gps(decoded_val, pub_gps);
+						publish_gga(decoded_val, pub_gga);
 #endif
 
 						isOK = 1;
@@ -372,6 +395,7 @@ static void ros_driver_main_loop()
 							decode_rtcm_gps_msg(decoded_val, a1buff);
 #if COMPILE_WITH_ROS
 							publish_gps(decoded_val, pub_gps);
+							publish_gga(decoded_val, pub_gga);
 #endif
 
 							isOK = 1;

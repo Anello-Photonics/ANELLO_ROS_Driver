@@ -26,6 +26,14 @@ public:
      * Number of bytes written 'char *buf'
      */
     virtual size_t get_data(char *buf, size_t buf_len) { return 0; }
+    
+    /*
+     * Parameters:
+     * char *buf : char array that will be written to the connected device
+     * size_t buf_len : amount of bytes to be written to the port
+     *
+     */
+    virtual void write_data(const char *buf, size_t buf_len) { return; }
 };
 
 #endif

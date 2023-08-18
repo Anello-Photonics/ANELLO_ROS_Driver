@@ -15,7 +15,7 @@
 #define MAIN_ANELLO_ROS_DRIVER_H
 
 #ifndef COMPILE_WITH_ROS
-#define COMPILE_WITH_ROS 0
+#define COMPILE_WITH_ROS 1
 #endif
 
 #include <stdint.h>
@@ -30,7 +30,6 @@
 #ifndef MAXFIELD
 #define MAXFIELD 20
 #endif
-
 
 typedef struct
 {
