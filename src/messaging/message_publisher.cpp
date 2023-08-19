@@ -200,17 +200,6 @@ void publish_imu(double *imu, ros::Publisher pub)
 	 * imu[9] = odr Time [ms]
 	 * imu[10] = Temp [C]
 	 */
-	double delta_imu_time;
-
-	if (last_imu_mcu_time != -1.0)
-	{
-		delta_imu_time = imu[0] - last_imu_mcu_time;
-		if (delta_imu_time > 6.0)
-		{
-			ROS_WARN("MISSING MESSAGE: dt=%5.5f", delta_imu_time);
-		}
-	}
-	last_imu_mcu_time = imu[0];
 
 	anello_ros_driver::APIMU msg;
 	msg.mcu_time = imu[0];

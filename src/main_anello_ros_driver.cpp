@@ -61,6 +61,14 @@ const char *serial_port_name = DEFAULT_DATA_INTERFACE;
 #define debug 0
 #endif
 
+#ifndef DATA_PORT_PARAMETER_NAME
+#define DATA_PORT_PARAMETER_NAME "data-port"
+#endif
+
+#ifndef CONFIG_PORT_PARAMETER_NAME
+#define CONFIG_PORT_PARAMETER_NAME "config-port"
+#endif
+
 using namespace std;
 
 typedef struct
@@ -250,7 +258,7 @@ static void ros_driver_main_loop()
 	ros::Publisher pub_gga = nh.advertise<nmea_msgs::Sentence>("ntrip_client/nmea", 1);
 
 	ros::Subscriber sub_rtcm = nh.subscribe("ntrip_client/rtcm", 1, ntrip_rtcm_callback);
-	// printf("Anello ROS Driver Started\n");
+	ROS_DEBUG("Anello ROS Driver Started\n");
 
 	ros_publishers_t pub_arr;
 	pub_arr.imu = &pub_imu;
@@ -271,9 +279,22 @@ static void ros_driver_main_loop()
 	a1buff_t a1buff = {0};
 
 	// initialize interface with anello unit
-	serial_interface anello_device(serial_port_name);
 
-	while (true)
+	string data_port_name;
+
+#if COMPILE_WITH_ROS
+	// get data port name from parameter serverV
+	if (!nh.getParam(DATA_PORT_PARAMETER_NAME,data_port_name))
+	{
+			ROS_ERROR("Failed to get data port name from parameter server");
+			exit(1);
+	}
+#endif
+
+	serial_interface anello_device(data_port_name.c_str());
+ 
+
+    while (ros::ok())
 	{
 #if COMPILE_WITH_ROS
 		// allow ROS to process callbacks
