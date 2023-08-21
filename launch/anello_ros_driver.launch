@@ -1,5 +1,6 @@
 <launch>
     <!--Launch anello ros driver-->
+    <!--Update data and config port values to the ports in your system-->
     <node name="anello_ros_driver" pkg="anello_ros_driver" type="anello_ros_driver">
         <param name="data_port" value="/dev/ttyUSB0"/>
         <param name="config_port" value="/dev/ttyUSB3"/>

@@ -15,25 +15,24 @@ cd ~/catkin_ws/src
 git clone https://github.com/Anello-Photonics/ANELLO_ROS_Driver.git
 ```
 
+### Install ANELLO ROS Driver Dependencies
+
+Install the following dependencies:
+
+#### ntrip_client Node
+
+Follow the build instructions on the [ntrip_client github page](https://github.com/LORD-MicroStrain/ntrip_client)
+
 ### Configure ANELLO ROS Driver
 
-Update the code to use the correct serial port (default is `/dev/ttyUSB0`):
+Update the serial port values in the launch file to match the ports in your system:
 
-The serial port is defined in `anello_ros_driver/src/main_anello_ros_driver.cpp` as a global variable at the top of the file:
-
-```c++
-// UPDATE THIS VARIABLE TO CHANGE SERIAL PORT
-// DEFAULT_DATA_INTERFACE found in anello_ros_driver/include/anello_ros_driver/serial_interface.h
-//
-// Example:
-// const char *serial_port_name = "/dev/ttyUSB0";
-const char *serial_port_name = DEFAULT_DATA_INTERFACE;
-```
-
-Example:
-
-```c++
-const char *serial_port_name = "/dev/ttyUSB1";
+```xml
+<!--Update data and config port values to the ports in your system-->
+<node name="anello_ros_driver" pkg="anello_ros_driver" type="anello_ros_driver">
+    <param name="data_port" value="/dev/ttyUSB0"/>
+    <param name="config_port" value="/dev/ttyUSB3"/>
+</node>
 ```
 
 ### Build the code
@@ -48,7 +47,7 @@ catkin_make
 ### Launch ANELLO ROS Driver
 
 ```bash
-rosrun anello_ros_driver anello_ros_driver
+roslaunch anello_ros_driver anello_ros_driver.launch
 ```
 
 ANELLO messages will be published to topics (see below). For information on how to view these messages, see the [ROS Wiki](http://wiki.ros.org/ROS/Tutorials/UnderstandingTopics).
