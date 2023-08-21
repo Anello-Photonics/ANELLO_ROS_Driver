@@ -12,11 +12,36 @@
  ********************************************************************************/
 
 #include "message_publisher.h"
+#include "main_anello_ros_driver.h"
 
+#if COMPILE_WITH_ROS
 #include <anello_ros_driver/APIMU.h>
 #include <anello_ros_driver/APGPS.h>
 #include <anello_ros_driver/APINS.h>
 #include <anello_ros_driver/APHDG.h>
+
+#include <nmea_msgs/Sentence.h>
+#include <mavros_msgs/RTCM.h>
+#include <std_msgs/Header.h>
+
+#define SAMPLE_GGA_MESSAGE "$GNGGA,180921.50,3723.94984,N,12158.74997,W,5,13,2.64,13.00,M,,M,,*4A\r\n"
+
+uint32_t gga_frame_id = 0;
+void publish_gga(double *gps, ros::Publisher pub)
+{
+	std_msgs::Header msg_header;
+	nmea_msgs::Sentence gga_message;
+
+	msg_header.seq = gga_frame_id;
+	msg_header.stamp = ros::Time::now();
+	msg_header.frame_id = "anello gps data";
+	gga_frame_id++;
+
+	gga_message.header = msg_header;
+	gga_message.sentence = SAMPLE_GGA_MESSAGE;
+
+	pub.publish(gga_message);
+}
 
 void publish_gps(double *gps, ros::Publisher pub)
 {
@@ -175,17 +200,6 @@ void publish_imu(double *imu, ros::Publisher pub)
 	 * imu[9] = odr Time [ms]
 	 * imu[10] = Temp [C]
 	 */
-	double delta_imu_time;
-
-	if (last_imu_mcu_time != -1.0)
-	{
-		delta_imu_time = imu[0] - last_imu_mcu_time;
-		if (delta_imu_time > 6.0)
-		{
-			ROS_WARN("MISSING MESSAGE: dt=%5.5f", delta_imu_time);
-		}
-	}
-	last_imu_mcu_time = imu[0];
 
 	anello_ros_driver::APIMU msg;
 	msg.mcu_time = imu[0];
@@ -255,3 +269,4 @@ void publish_ins(double *ins, ros::Publisher pub)
 	ROS_INFO("APINS,%10.3f,%14.7f,%10.4f,%14.9f,%14.9f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f\n", ins[0], ins[1], ins[2], ins[3], ins[4], ins[5], ins[6], ins[7], ins[8], ins[9], ins[10], ins[11], ins[12]);
 #endif
 }
+#endif

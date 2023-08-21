@@ -22,19 +22,25 @@
 #include <cstdlib>
 #include <fstream>
 #include <unistd.h>
+#include "main_anello_ros_driver.h"
+#include "message_subscriber.h"
 
+#if COMPILE_WITH_ROS
 #include <ros/ros.h>
 #include "anello_ros_driver/APIMU.h"
 #include "anello_ros_driver/APINS.h"
 #include "anello_ros_driver/APGPS.h"
 #include "anello_ros_driver/APHDG.h"
+#include "nmea_msgs/Sentence.h"
+#endif
 
 #include "bit_tools.h"
 #include "serial_interface.h"
-#include "main_anello_ros_driver.h"
 #include "rtcm_decoder.h"
 #include "ascii_decoder.h"
 #include "message_publisher.h"
+#include "ntrip_buffer.h"
+// extern NTRIP_buffer global_ntrip_buffer;
 
 // UPDATE THIS VARIABLE TO CHANGE SERIAL PORT
 // DEFAULT_DATA_INTERFACE found in anello_ros_driver/include/anello_ros_driver/serial_interface.h
@@ -55,6 +61,34 @@ const char *serial_port_name = DEFAULT_DATA_INTERFACE;
 #define debug 0
 #endif
 
+#ifndef NODE_NAME
+#define NODE_NAME "anello_ros_driver"
+#endif
+
+#ifndef DATA_PORT_NAME
+#define DATA_PORT_NAME "/data_port"
+#endif
+
+#ifndef CONFIG_PORT_NAME
+#define CONFIG_PORT_NAME "/config_port"
+#endif
+
+#ifndef DATA_PORT_PARAMETER_NAME
+#define DATA_PORT_PARAMETER_NAME NODE_NAME DATA_PORT_NAME
+#endif
+
+#ifndef CONFIG_PORT_PARAMETER_NAME
+#define CONFIG_PORT_PARAMETER_NAME NODE_NAME CONFIG_PORT_NAME
+#endif
+
+#ifndef LOG_LATEST_SET
+#define LOG_LATEST_SET 0
+#endif
+
+#ifndef LOG_FILE_NAME
+#define LOG_FILE_NAME "latest_anello_log.txt"
+#endif
+
 using namespace std;
 
 typedef struct
@@ -64,13 +98,15 @@ typedef struct
 	char buff[MAX_BUF_LEN]; // buffer from file
 } file_read_buf_t;
 
-static int input_a1_data(a1buff_t *a1, uint8_t data);
+static int input_a1_data(a1buff_t *a1, uint8_t data, FILE *log_file);
 static int parse_fields(char *const buffer, char **val);
 static void ros_driver_main_loop();
 
 int main(int argc, char *argv[])
 {
-	ros::init(argc, argv, "anello_ros_driver");
+#if COMPILE_WITH_ROS
+	ros::init(argc, argv, NODE_NAME);
+#endif
 	ros_driver_main_loop();
 }
 
@@ -85,8 +121,13 @@ int main(int argc, char *argv[])
  * 1 = ASCII message ready
  * 5 = RTCM message ready
  */
-static int input_a1_data(a1buff_t *a1, uint8_t data)
+static int input_a1_data(a1buff_t *a1, uint8_t data, FILE *log_file)
 {
+	if (nullptr != log_file)
+	{
+		fprintf(log_file, "%c", data);
+	}
+
 	int ret = 0, i = 0;
 
 	// if length is at maximum reset buffer
@@ -232,24 +273,43 @@ static int parse_fields(char *const buffer, char **val)
 static void ros_driver_main_loop()
 {
 	// init ros publishers
+#if COMPILE_WITH_ROS
 	ros::NodeHandle nh;
 
 	ros::Publisher pub_imu = nh.advertise<anello_ros_driver::APIMU>("APIMU", 10);
 	ros::Publisher pub_ins = nh.advertise<anello_ros_driver::APINS>("APINS", 10);
 	ros::Publisher pub_gps = nh.advertise<anello_ros_driver::APGPS>("APGPS", 10);
 	ros::Publisher pub_hdg = nh.advertise<anello_ros_driver::APHDG>("APHDG", 10);
+	ros::Publisher pub_gga = nh.advertise<nmea_msgs::Sentence>("ntrip_client/nmea", 1);
+
+	ros::Subscriber sub_rtcm = nh.subscribe("ntrip_client/rtcm", 1, ntrip_rtcm_callback);
+	ROS_DEBUG("Anello ROS Driver Started\n");
+	FILE *log_file_fp = nullptr;
+
+	if (LOG_LATEST_SET)
+	{
+		// open log file
+		log_file_fp = fopen(LOG_FILE_NAME, "w");
+
+		//check file was open correctly
+		if (log_file_fp == NULL)
+		{
+			ROS_ERROR("Failed to open log file");
+			exit(1);
+		}
+	}
 
 	ros_publishers_t pub_arr;
 	pub_arr.imu = &pub_imu;
 	pub_arr.ins = &pub_ins;
 	pub_arr.gps = &pub_gps;
 	pub_arr.hdg = &pub_hdg;
+#endif
 
 	// init buffer
 	file_read_buf_t serial_read_buf = {0};
-	size_t bytes_read;
+	const char *ntrip_data;
 
-	int data = 0;
 	char *val[MAXFIELD];
 	double decoded_val[MAXFIELD];
 	bool checksum_passed;
@@ -258,10 +318,35 @@ static void ros_driver_main_loop()
 	a1buff_t a1buff = {0};
 
 	// initialize interface with anello unit
-	serial_interface anello_device(serial_port_name);
 
-	while (true)
+	string data_port_name;
+
+#if COMPILE_WITH_ROS
+	// get data port name from parameter server
+	if (!nh.getParam(DATA_PORT_PARAMETER_NAME,data_port_name))
 	{
+			ROS_ERROR("Failed to get data port name from parameter server -> %s",DATA_PORT_PARAMETER_NAME);
+			exit(1);
+	}
+#endif
+
+	serial_interface anello_device(data_port_name.c_str());
+ 
+
+    while (ros::ok())
+	{
+#if COMPILE_WITH_ROS
+		// allow ROS to process callbacks
+		ros::spinOnce();
+#endif
+
+		//when data is available write it to the serial port
+		if (global_ntrip_buffer.is_read_ready())
+		{
+			anello_device.write_data((char *)global_ntrip_buffer.get_buffer(), global_ntrip_buffer.get_buffer_length());
+			global_ntrip_buffer.set_read_ready_false();
+		}
+
 		// if all data has been read... read more data into buff
 		if (serial_read_buf.n_used >= serial_read_buf.nbytes)
 		{
@@ -272,7 +357,7 @@ static void ros_driver_main_loop()
 		{
 
 			// add next byte to message buffer
-			int ret = input_a1_data(&a1buff, serial_read_buf.buff[serial_read_buf.n_used]);
+			int ret = input_a1_data(&a1buff, serial_read_buf.buff[serial_read_buf.n_used], log_file_fp);
 			serial_read_buf.n_used++;
 
 			// if message complete
@@ -290,7 +375,11 @@ static void ros_driver_main_loop()
 					}
 					else
 					{
+#if COMPILE_WITH_ROS
 						ROS_WARN("Checksum Fail: %s", a1buff.buf);
+#else
+						printf("Checksum Fail: %s", a1buff.buf);
+#endif
 						num = 0;
 					}
 
@@ -298,7 +387,10 @@ static void ros_driver_main_loop()
 					{
 						// ascii gps
 						decode_ascii_gps(val, decoded_val);
+#if COMPILE_WITH_ROS
 						publish_gps(decoded_val, pub_gps);
+						publish_gga(decoded_val, pub_gga);
+#endif
 
 						isOK = 1;
 					}
@@ -306,7 +398,10 @@ static void ros_driver_main_loop()
 					{
 						// ascii gp2 (goes to the same place for now)
 						decode_ascii_gps(val, decoded_val);
+#if COMPILE_WITH_ROS
 						publish_gps(decoded_val, pub_gps);
+						publish_gga(decoded_val, pub_gga);
+#endif
 
 						isOK = 1;
 					}
@@ -314,7 +409,9 @@ static void ros_driver_main_loop()
 					{
 						// ascii hdg
 						decode_ascii_hdr(val, decoded_val);
+#if COMPILE_WITH_ROS
 						publish_hdr(decoded_val, pub_hdg);
+#endif
 
 						isOK = 1;
 					}
@@ -322,7 +419,9 @@ static void ros_driver_main_loop()
 					{
 						// ascii imu
 						decode_ascii_imu(val, num, decoded_val);
+#if COMPILE_WITH_ROS
 						publish_imu(decoded_val, pub_imu);
+#endif
 
 						isOK = 1;
 					}
@@ -330,7 +429,9 @@ static void ros_driver_main_loop()
 					{
 						// ascii ins
 						decode_ascii_ins(val, decoded_val);
+#if COMPILE_WITH_ROS
 						publish_ins(decoded_val, pub_ins);
+#endif
 
 						isOK = 1;
 					}
@@ -343,28 +444,37 @@ static void ros_driver_main_loop()
 						if (a1buff.subtype == 1) /* IMU */
 						{
 							decode_rtcm_imu_msg(decoded_val, a1buff);
+#if COMPILE_WITH_ROS
 							publish_imu(decoded_val, pub_imu);
+#endif
 
 							isOK = 1;
 						}
 						else if (a1buff.subtype == 2) /* GPS PVT */
 						{
 							decode_rtcm_gps_msg(decoded_val, a1buff);
+#if COMPILE_WITH_ROS
 							publish_gps(decoded_val, pub_gps);
+							publish_gga(decoded_val, pub_gga);
+#endif
 
 							isOK = 1;
 						}
 						else if (a1buff.subtype == 3) /* DUAL ANTENNA */
 						{
 							decode_rtcm_hdg_msg(decoded_val, a1buff);
+#if COMPILE_WITH_ROS
 							publish_hdr(decoded_val, pub_hdg);
+#endif
 
 							isOK = 1;
 						}
 						else if (a1buff.subtype == 4) /* INS */
 						{
 							decode_rtcm_ins_msg(decoded_val, a1buff);
+#if COMPILE_WITH_ROS
 							publish_ins(decoded_val, pub_ins);
+#endif
 
 							isOK = 1;
 						}
@@ -378,10 +488,16 @@ static void ros_driver_main_loop()
 				}
 				else
 				{
-					memset(decoded_val, 0, MAXFIELD);
+					memset(decoded_val, 0, MAXFIELD * sizeof(double));
 				}
 				a1buff.nbyte = 0;
 			}
 		}
+	}
+
+	if (LOG_LATEST_SET)
+	{
+		// close log file
+		fclose(log_file_fp);
 	}
 }

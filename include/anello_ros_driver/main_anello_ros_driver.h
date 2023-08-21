@@ -14,8 +14,14 @@
 #ifndef MAIN_ANELLO_ROS_DRIVER_H
 #define MAIN_ANELLO_ROS_DRIVER_H
 
+#ifndef COMPILE_WITH_ROS
+#define COMPILE_WITH_ROS 1
+#endif
+
 #include <stdint.h>
+#if COMPILE_WITH_ROS
 #include <ros/ros.h>
+#endif
 
 #ifndef MAX_BUF_LEN
 #define MAX_BUF_LEN (1200)
@@ -125,6 +131,7 @@ typedef struct
 	uint8_t Status;		   // UInt8	    See ASCII packet
 } rtcm_apins_t;
 
+#if COMPILE_WITH_ROS
 typedef struct
 {
 	ros::Publisher *imu;
@@ -132,5 +139,6 @@ typedef struct
 	ros::Publisher *gps;
 	ros::Publisher *hdg;
 } ros_publishers_t;
+#endif
 
 #endif

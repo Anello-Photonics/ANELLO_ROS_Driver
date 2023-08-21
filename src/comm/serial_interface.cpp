@@ -11,10 +11,15 @@
  *              This can be changed in the constructor.
  ********************************************************************************/
 
+#include "main_anello_ros_driver.h"
+
+#if COMPILE_WITH_ROS
 #include <ros/ros.h>
+#endif
 
 #include <fcntl.h>
 #include <termios.h>
+#include <cstring>
 #include <unistd.h>
 #include <string>
 #include <sys/ioctl.h>
@@ -23,7 +28,6 @@
 
 #define DEBUG 0
 #define MAX_READ_NUM 1000
-#define MAX_BUF_LEN 128
 #define SER_PORT_FLUSH_COUNT 20
 
 serial_interface::serial_interface()
@@ -36,7 +40,11 @@ serial_interface::serial_interface(const char *portname)
     this->usb_fd = open(portname, O_RDWR);
     if (this->usb_fd < 0)
     {
+#if COMPILE_WITH_ROS
         ROS_INFO("file open error");
+#else
+        printf("File open error\n");
+#endif
         exit(1);
     }
 
@@ -44,7 +52,11 @@ serial_interface::serial_interface(const char *portname)
     memset(&options, 0, sizeof(options));
     if (tcgetattr(this->usb_fd, &options) != 0)
     {
+#if COMPILE_WITH_ROS
         ROS_INFO("Error %i from tcgetattr: %s\n", errno, strerror(errno));
+#else
+        printf("Error %i from tcgetattr: %s\n", errno, strerror(errno));
+#endif
         exit(1);
     }
 
@@ -80,12 +92,21 @@ size_t serial_interface::get_data(char *buf, size_t buf_len)
 {
     if (this->usb_fd < 0)
     {
-        ROS_ERROR("Anello ros driver serial port file escriptor not defined");
+#if COMPILE_WITH_ROS
+        ROS_ERROR("Anello ros driver serial port file descriptor not defined");
+#else
+        printf("Anello ros driver serial port file descriptor not defined");
+#endif
         exit(1);
     }
     size_t bytes_read = read(this->usb_fd, buf, (buf_len * sizeof(char)) - 1);
     buf[bytes_read] = '\0';
     return bytes_read;
+}
+
+void serial_interface::write_data(const char *buf, size_t buf_len) 
+{ 
+    write(usb_fd, buf, buf_len);
 }
 
 serial_interface::~serial_interface()

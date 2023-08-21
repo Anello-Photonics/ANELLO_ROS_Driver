@@ -60,6 +60,14 @@ public:
     size_t get_data(char *buf, size_t buf_len);
 
     /*
+     * Parameters:
+     * char *buf : char array that will be written to the connected device
+     * size_t buf_len : amount of bytes to be written to the port
+     *
+     */
+    void write_data(const char *buf, size_t buf_len);
+
+    /*
      * Notes:
      * Closes the port serial port
      */
