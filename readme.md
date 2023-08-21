@@ -28,11 +28,32 @@ Follow the build instructions on the [ntrip_client github page](https://github.c
 Update the serial port values in the launch file to match the ports in your system:
 
 ```xml
-<!--Update data and config port values to the ports in your system-->
-<node name="anello_ros_driver" pkg="anello_ros_driver" type="anello_ros_driver">
-    <param name="data_port" value="/dev/ttyUSB0"/>
-    <param name="config_port" value="/dev/ttyUSB3"/>
-</node>
+    <!--Update data and config port values to the ports in your system-->
+    <node name="anello_ros_driver" pkg="anello_ros_driver" type="anello_ros_driver">
+        <param name="data_port" value="/dev/ttyUSB0"/>
+        <param name="config_port" value="/dev/ttyUSB3"/>
+    </node>
+```
+
+Update the ntrip_client parameters in the launch file to match your system:
+
+```xml
+    <!--Launch ntrip client-->
+    <include file="$(find ntrip_client)/launch/ntrip_client.launch">
+        <arg name="host" value="127.0.0.1"/>
+        <arg name="port" value="1111"/>
+        <arg name="mountpoint" value="AUTO"/>
+        <arg name="authenticate" value="true"/>
+        <arg name="username" value=""/>
+        <arg name="password" value=""/>
+        <arg name="ntrip_version" value=""/>
+        <arg name="ssl" value="false"/>
+        <arg name="cert" value=""/>
+        <arg name="key" value=""/>
+        <arg name="ca_cert" value=""/>
+        <arg name="debug" value="false"/>
+        <arg name="rtcm_message_package" value="mavros_msgs"/>
+    </include>
 ```
 
 ### Build the code
