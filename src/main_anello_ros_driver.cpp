@@ -86,7 +86,7 @@ const char *serial_port_name = DEFAULT_DATA_INTERFACE;
 #endif
 
 #ifndef LOG_FILE_NAME
-#define LOG_FILE_NAME "../latest_log.txt"
+#define LOG_FILE_NAME "latest_anello_log.txt"
 #endif
 
 using namespace std;
