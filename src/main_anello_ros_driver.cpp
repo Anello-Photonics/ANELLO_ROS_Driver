@@ -61,12 +61,24 @@ const char *serial_port_name = DEFAULT_DATA_INTERFACE;
 #define debug 0
 #endif
 
+#ifndef NODE_NAME
+#define NODE_NAME "anello_ros_driver"
+#endif
+
+#ifndef DATA_PORT_NAME
+#define DATA_PORT_NAME "/data_port"
+#endif
+
+#ifndef CONFIG_PORT_NAME
+#define CONFIG_PORT_NAME "/config_port"
+#endif
+
 #ifndef DATA_PORT_PARAMETER_NAME
-#define DATA_PORT_PARAMETER_NAME "data-port"
+#define DATA_PORT_PARAMETER_NAME NODE_NAME DATA_PORT_NAME
 #endif
 
 #ifndef CONFIG_PORT_PARAMETER_NAME
-#define CONFIG_PORT_PARAMETER_NAME "config-port"
+#define CONFIG_PORT_PARAMETER_NAME NODE_NAME CONFIG_PORT_NAME
 #endif
 
 using namespace std;
@@ -85,7 +97,7 @@ static void ros_driver_main_loop();
 int main(int argc, char *argv[])
 {
 #if COMPILE_WITH_ROS
-	ros::init(argc, argv, "anello_ros_driver");
+	ros::init(argc, argv, NODE_NAME);
 #endif
 	ros_driver_main_loop();
 }
@@ -283,10 +295,10 @@ static void ros_driver_main_loop()
 	string data_port_name;
 
 #if COMPILE_WITH_ROS
-	// get data port name from parameter serverV
+	// get data port name from parameter server
 	if (!nh.getParam(DATA_PORT_PARAMETER_NAME,data_port_name))
 	{
-			ROS_ERROR("Failed to get data port name from parameter server");
+			ROS_ERROR("Failed to get data port name from parameter server -> %s",DATA_PORT_PARAMETER_NAME);
 			exit(1);
 	}
 #endif

@@ -1,8 +1,8 @@
 <launch>
     <!--Launch anello ros driver-->
     <node name="anello_ros_driver" pkg="anello_ros_driver" type="anello_ros_driver">
-        <param name="data-port" value="/dev/ttyUSB0"/>
-        <param name="config-port" value="/dev/ttyUSB3"/>
+        <param name="data_port" value="/dev/ttyUSB0"/>
+        <param name="config_port" value="/dev/ttyUSB3"/>
     </node>
 
     <!--Launch ntrip client-->
