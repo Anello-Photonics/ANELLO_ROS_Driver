@@ -81,6 +81,14 @@ const char *serial_port_name = DEFAULT_DATA_INTERFACE;
 #define CONFIG_PORT_PARAMETER_NAME NODE_NAME CONFIG_PORT_NAME
 #endif
 
+#ifndef LOG_LATEST_SET
+#define LOG_LATEST_SET 0
+#endif
+
+#ifndef LOG_FILE_NAME
+#define LOG_FILE_NAME "latest_anello_log.txt"
+#endif
+
 using namespace std;
 
 typedef struct
@@ -90,7 +98,7 @@ typedef struct
 	char buff[MAX_BUF_LEN]; // buffer from file
 } file_read_buf_t;
 
-static int input_a1_data(a1buff_t *a1, uint8_t data);
+static int input_a1_data(a1buff_t *a1, uint8_t data, FILE *log_file);
 static int parse_fields(char *const buffer, char **val);
 static void ros_driver_main_loop();
 
@@ -113,8 +121,13 @@ int main(int argc, char *argv[])
  * 1 = ASCII message ready
  * 5 = RTCM message ready
  */
-static int input_a1_data(a1buff_t *a1, uint8_t data)
+static int input_a1_data(a1buff_t *a1, uint8_t data, FILE *log_file)
 {
+	if (nullptr != log_file)
+	{
+		fprintf(log_file, "%c", data);
+	}
+
 	int ret = 0, i = 0;
 
 	// if length is at maximum reset buffer
@@ -271,6 +284,20 @@ static void ros_driver_main_loop()
 
 	ros::Subscriber sub_rtcm = nh.subscribe("ntrip_client/rtcm", 1, ntrip_rtcm_callback);
 	ROS_DEBUG("Anello ROS Driver Started\n");
+	FILE *log_file_fp = nullptr;
+
+	if (LOG_LATEST_SET)
+	{
+		// open log file
+		log_file_fp = fopen(LOG_FILE_NAME, "w");
+
+		//check file was open correctly
+		if (log_file_fp == NULL)
+		{
+			ROS_ERROR("Failed to open log file");
+			exit(1);
+		}
+	}
 
 	ros_publishers_t pub_arr;
 	pub_arr.imu = &pub_imu;
@@ -330,7 +357,7 @@ static void ros_driver_main_loop()
 		{
 
 			// add next byte to message buffer
-			int ret = input_a1_data(&a1buff, serial_read_buf.buff[serial_read_buf.n_used]);
+			int ret = input_a1_data(&a1buff, serial_read_buf.buff[serial_read_buf.n_used], log_file_fp);
 			serial_read_buf.n_used++;
 
 			// if message complete
@@ -466,5 +493,11 @@ static void ros_driver_main_loop()
 				a1buff.nbyte = 0;
 			}
 		}
+	}
+
+	if (LOG_LATEST_SET)
+	{
+		// close log file
+		fclose(log_file_fp);
 	}
 }
