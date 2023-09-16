@@ -291,7 +291,7 @@ static void ros_driver_main_loop()
 		// open log file
 		log_file_fp = fopen(LOG_FILE_NAME, "w");
 
-		//check file was open correctly
+		// check file was open correctly
 		if (log_file_fp == NULL)
 		{
 			ROS_ERROR("Failed to open log file");
@@ -323,24 +323,23 @@ static void ros_driver_main_loop()
 
 #if COMPILE_WITH_ROS
 	// get data port name from parameter server
-	if (!nh.getParam(DATA_PORT_PARAMETER_NAME,data_port_name))
+	if (!nh.getParam(DATA_PORT_PARAMETER_NAME, data_port_name))
 	{
-			ROS_ERROR("Failed to get data port name from parameter server -> %s",DATA_PORT_PARAMETER_NAME);
-			exit(1);
+		ROS_ERROR("Failed to get data port name from parameter server -> %s", DATA_PORT_PARAMETER_NAME);
+		exit(1);
 	}
 #endif
 
 	serial_interface anello_device(data_port_name.c_str());
- 
 
-    while (ros::ok())
+	while (ros::ok())
 	{
 #if COMPILE_WITH_ROS
 		// allow ROS to process callbacks
 		ros::spinOnce();
 #endif
 
-		//when data is available write it to the serial port
+		// when data is available write it to the serial port
 		if (global_ntrip_buffer.is_read_ready())
 		{
 			anello_device.write_data((char *)global_ntrip_buffer.get_buffer(), global_ntrip_buffer.get_buffer_length());
@@ -365,6 +364,8 @@ static void ros_driver_main_loop()
 			{
 				int isOK = 0;
 				int num = 0;
+
+				// if ascii
 				if (ret == 1)
 				{
 					// check that the checksum is correct
@@ -436,6 +437,7 @@ static void ros_driver_main_loop()
 						isOK = 1;
 					}
 				}
+				// if rtcm
 				else if (ret == 5) /* rtcm */
 				{
 					// isOK = decode_rtcm_message(a1buff, pub_arr);
