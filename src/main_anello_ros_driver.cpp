@@ -89,6 +89,10 @@ const char *serial_port_name = DEFAULT_DATA_INTERFACE;
 #define LOG_FILE_NAME "latest_anello_log.txt"
 #endif
 
+#ifndef USE_CONFIG_PORT
+#define USE_CONFIG_PORT 0
+#endif
+
 using namespace std;
 
 typedef struct
@@ -284,8 +288,18 @@ static void ros_driver_main_loop()
 
 	ros::Subscriber sub_rtcm = nh.subscribe("ntrip_client/rtcm", 1, ntrip_rtcm_callback);
 	ROS_DEBUG("Anello ROS Driver Started\n");
-	FILE *log_file_fp = nullptr;
 
+
+	ros_publishers_t pub_arr;
+	pub_arr.imu = &pub_imu;
+	pub_arr.ins = &pub_ins;
+	pub_arr.gps = &pub_gps;
+	pub_arr.hdg = &pub_hdg;
+	
+	const char *ntrip_data;
+#endif
+
+	FILE *log_file_fp = nullptr;
 	if (LOG_LATEST_SET)
 	{
 		// open log file
@@ -294,21 +308,17 @@ static void ros_driver_main_loop()
 		//check file was open correctly
 		if (log_file_fp == NULL)
 		{
+#if COMPILE_WITH_ROS
 			ROS_ERROR("Failed to open log file");
+#else
+			printf("Failed to open log file\n");
+#endif
 			exit(1);
 		}
 	}
 
-	ros_publishers_t pub_arr;
-	pub_arr.imu = &pub_imu;
-	pub_arr.ins = &pub_ins;
-	pub_arr.gps = &pub_gps;
-	pub_arr.hdg = &pub_hdg;
-#endif
-
 	// init buffer
 	file_read_buf_t serial_read_buf = {0};
-	const char *ntrip_data;
 
 	char *val[MAXFIELD];
 	double decoded_val[MAXFIELD];
@@ -328,29 +338,45 @@ static void ros_driver_main_loop()
 			ROS_ERROR("Failed to get data port name from parameter server -> %s",DATA_PORT_PARAMETER_NAME);
 			exit(1);
 	}
+#else
+	// data_port_name = DEFAULT_DATA_INTERFACE;
+	data_port_name = "AUTO";	
+
 #endif
 
+#if USE_CONFIG_PORT
+	anello_config_port anello_config_device("AUTO");
+	anello_config_device.init();
+#endif
+/*
 	serial_interface anello_device(data_port_name.c_str());
+	anello_device.init();
+*/
+	anello_data_port anello_device_data(data_port_name.c_str());
+	anello_device_data.init();
  
 
+#if COMPILE_WITH_ROS
     while (ros::ok())
 	{
-#if COMPILE_WITH_ROS
 		// allow ROS to process callbacks
 		ros::spinOnce();
+#else
+	while (1)
+	{
 #endif
 
 		//when data is available write it to the serial port
 		if (global_ntrip_buffer.is_read_ready())
 		{
-			anello_device.write_data((char *)global_ntrip_buffer.get_buffer(), global_ntrip_buffer.get_buffer_length());
+			anello_device_data.write_data((char *)global_ntrip_buffer.get_buffer(), global_ntrip_buffer.get_buffer_length());
 			global_ntrip_buffer.set_read_ready_false();
 		}
 
 		// if all data has been read... read more data into buff
 		if (serial_read_buf.n_used >= serial_read_buf.nbytes)
 		{
-			serial_read_buf.nbytes = anello_device.get_data(serial_read_buf.buff, MAX_BUF_LEN);
+			serial_read_buf.nbytes = anello_device_data.get_data(serial_read_buf.buff, MAX_BUF_LEN);
 			serial_read_buf.n_used = 0;
 		}
 		else
@@ -390,6 +416,8 @@ static void ros_driver_main_loop()
 #if COMPILE_WITH_ROS
 						publish_gps(decoded_val, pub_gps);
 						publish_gga(decoded_val, pub_gga);
+#else
+						printf("APGPSa\n");
 #endif
 
 						isOK = 1;
@@ -401,6 +429,8 @@ static void ros_driver_main_loop()
 #if COMPILE_WITH_ROS
 						publish_gps(decoded_val, pub_gps);
 						publish_gga(decoded_val, pub_gga);
+#else
+						printf("APGP2a\n");
 #endif
 
 						isOK = 1;
@@ -411,6 +441,8 @@ static void ros_driver_main_loop()
 						decode_ascii_hdr(val, decoded_val);
 #if COMPILE_WITH_ROS
 						publish_hdr(decoded_val, pub_hdg);
+#else
+						printf("APHDGa\n");
 #endif
 
 						isOK = 1;
@@ -421,6 +453,8 @@ static void ros_driver_main_loop()
 						decode_ascii_imu(val, num, decoded_val);
 #if COMPILE_WITH_ROS
 						publish_imu(decoded_val, pub_imu);
+#else
+						printf("APIMUa\n");
 #endif
 
 						isOK = 1;
@@ -431,6 +465,8 @@ static void ros_driver_main_loop()
 						decode_ascii_ins(val, decoded_val);
 #if COMPILE_WITH_ROS
 						publish_ins(decoded_val, pub_ins);
+#else
+						printf("APINSa\n");
 #endif
 
 						isOK = 1;
@@ -446,6 +482,8 @@ static void ros_driver_main_loop()
 							decode_rtcm_imu_msg(decoded_val, a1buff);
 #if COMPILE_WITH_ROS
 							publish_imu(decoded_val, pub_imu);
+#else
+							printf("APIMUr\n");
 #endif
 
 							isOK = 1;
@@ -456,6 +494,8 @@ static void ros_driver_main_loop()
 #if COMPILE_WITH_ROS
 							publish_gps(decoded_val, pub_gps);
 							publish_gga(decoded_val, pub_gga);
+#else
+							printf("APGPSr\n");
 #endif
 
 							isOK = 1;
@@ -465,6 +505,8 @@ static void ros_driver_main_loop()
 							decode_rtcm_hdg_msg(decoded_val, a1buff);
 #if COMPILE_WITH_ROS
 							publish_hdr(decoded_val, pub_hdg);
+#else
+							printf("APHDGr\n");
 #endif
 
 							isOK = 1;
@@ -474,6 +516,8 @@ static void ros_driver_main_loop()
 							decode_rtcm_ins_msg(decoded_val, a1buff);
 #if COMPILE_WITH_ROS
 							publish_ins(decoded_val, pub_ins);
+#else
+							printf("APINSr\n");
 #endif
 
 							isOK = 1;
@@ -485,10 +529,12 @@ static void ros_driver_main_loop()
 				if (!isOK)
 				{
 					printf("%s\n", a1buff.buf);
+					anello_device_data.port_parse_fail();
 				}
 				else
 				{
 					memset(decoded_val, 0, MAXFIELD * sizeof(double));
+					anello_device_data.port_confirm();
 				}
 				a1buff.nbyte = 0;
 			}
