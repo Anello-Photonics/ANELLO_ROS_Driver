@@ -10,7 +10,12 @@
 #endif
 
 #ifndef PATCH_VERSION
-#define PATCH_VERSION 1
+#define PATCH_VERSION 2
 #endif
+
+
+/*
+FW v1.0.2 : Added data-port and config port auto-connect
+*/
 
 #endif
