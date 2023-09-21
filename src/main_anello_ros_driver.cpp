@@ -90,7 +90,7 @@ const char *serial_port_name = DEFAULT_DATA_INTERFACE;
 #endif
 
 #ifndef USE_CONFIG_PORT
-#define USE_CONFIG_PORT 0
+#define USE_CONFIG_PORT 1
 #endif
 
 using namespace std;
