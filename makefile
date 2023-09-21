@@ -16,6 +16,7 @@ srcs = $(wildcard $(SRC_DIR)/**/*.cpp) $(wildcard $(SRC_DIR)/*.cpp)
 
 INCLUDES = -I$(INCLUDE_DIR)
 OBJS = $(patsubst $(SRC_DIR)/%.cpp,$(BUILD_DIR)/%.o,$(srcs))
+LIBS = 
 
 EXECUTABLE = $(BIN_DIR)/anello_ros_driver.out
 
@@ -25,13 +26,13 @@ all: $(EXECUTABLE)
 #build executable
 $(EXECUTABLE): $(OBJS)
 	@mkdir -p $(BIN_DIR)
-	$(CXX) $(CXXFLAGS) -o $@ $^
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(LIBS)
 
 # build object files
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp
 	@mkdir -p $(dir $@)
 	$(info mkdir -p $(BUILD_DIR))
-	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@ $(LIBS)
 
 #debug target
 debug: CXXFLAGS += $(DEBUG_FLAGS)

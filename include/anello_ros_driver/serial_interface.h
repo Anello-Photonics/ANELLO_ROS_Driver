@@ -19,6 +19,9 @@
 #ifndef SERIAL_INTERFACE_H
 #define SERIAL_INTERFACE_H
 
+#include <vector>
+#include <string>
+
 #include "base_interface.h"
 
 #ifndef DEFAULT_DATA_INTERFACE
@@ -29,9 +32,23 @@
 #define DEFAULT_CONFIG_INTERFACE "/dev/ttyUSB3"
 #endif
 
+#ifndef PORT_DIR
+#define PORT_DIR "/dev/"
+#endif
+
+#ifndef PORT_PREFIX
+#define PORT_PREFIX "ttyUSB"
+#endif
+
+#ifndef MAX_PORT_PARSE_FAIL
+#define MAX_PORT_PARSE_FAIL 5
+#endif
+
 class serial_interface : base_interface
 {
+protected:
     int usb_fd;
+    std::string portname;
 
 public:
     /*
@@ -45,9 +62,15 @@ public:
      * const char *ser_port : string defining the serial port that the object will listen too
      *
      * Notes:
-     * This constructor initializes the serial port interface including configuring the port.
+     * This just sets the variables. To initialize the port, call init().
      */
     serial_interface(const char *ser_port);
+
+    /*
+     * Notes:
+     * This function initializes the serial port interface including configuring the port.
+     */
+    void init();
 
     /*
      * Parameters:
@@ -74,4 +97,49 @@ public:
     ~serial_interface();
 };
 
+class anello_config_port : public serial_interface
+{
+
+public:
+    /*
+     * Notes:
+     * This constructor does not initialize its port.
+     */
+    anello_config_port() : serial_interface(){};
+    anello_config_port(const char *ser_port_name) : serial_interface(ser_port_name){};
+
+    /*
+     * Notes:
+     * This function initializes the serial port interface including configuring the port.
+     */
+    void init();
+
+};
+
+class anello_data_port : public serial_interface
+{
+    bool decode_success;
+    bool auto_detect;
+    std::vector<std::string> port_names;
+    uint32_t port_index;
+    int fail_count;
+public:
+    /*
+     * Notes:
+     * This constructor does not initialize its port.
+     */
+    anello_data_port() : serial_interface(){};
+    anello_data_port(const char *ser_port_name);
+
+    /*
+     * Notes:
+     * This function initializes the serial port interface including configuring the port.
+     */
+    void init();
+    size_t get_data(char *buf, size_t buf_len);
+
+    void port_parse_fail();
+    void port_confirm();
+
+};     
 #endif
