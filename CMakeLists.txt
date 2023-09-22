@@ -58,6 +58,7 @@ add_message_files(
   APINS.msg
   APGPS.msg
   APHDG.msg
+  APODO.msg
 #   Message2.msg
 )
 

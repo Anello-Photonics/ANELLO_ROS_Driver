@@ -18,8 +18,11 @@
 #if COMPILE_WITH_ROS
 #include <ros/ros.h>
 #include "mavros_msgs/RTCM.h"
+#include "anello_ros_driver/APODO.h"
 
 void ntrip_rtcm_callback(const mavros_msgs::RTCM::ConstPtr& msg);
+
+void apodo_callback(const anello_ros_driver::APODOConstPtr& msg);
 
 
 #endif

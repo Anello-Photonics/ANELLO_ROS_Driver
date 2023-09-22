@@ -25,14 +25,44 @@ Follow the build instructions on the [ntrip_client github page](https://github.c
 
 ### Configure ANELLO ROS Driver
 
-Update the serial port values in the launch file to match the ports in your system:
+Update the serial port values in the launch file to match the ports in your system.
+If the value is AUTO the program will automatically connect that port.
 
 ```xml
-<!--Update data and config port values to the ports in your system-->
-<node name="anello_ros_driver" pkg="anello_ros_driver" type="anello_ros_driver">
-    <param name="data_port" value="/dev/ttyUSB0"/>
-    <param name="config_port" value="/dev/ttyUSB3"/>
-</node>
+    <!--Update data and config port values to the ports in your system-->
+    <node name="anello_ros_driver" pkg="anello_ros_driver" type="anello_ros_driver">
+        <param name="data_port" value="/dev/ttyUSB0"/>
+        <param name="config_port" value="/dev/ttyUSB3"/>
+    </node>
+```
+
+```xml
+    <!--Update data and config port values to the ports in your system-->
+    <node name="anello_ros_driver" pkg="anello_ros_driver" type="anello_ros_driver">
+        <param name="data_port" value="AUTO"/>
+        <param name="config_port" value="AUTO"/>
+    </node>
+```
+
+Update the ntrip_client parameters in the launch file to match your system:
+
+```xml
+    <!--Launch ntrip client-->
+    <include file="$(find ntrip_client)/launch/ntrip_client.launch">
+        <arg name="host" value="127.0.0.1"/>
+        <arg name="port" value="1111"/>
+        <arg name="mountpoint" value="AUTO"/>
+        <arg name="authenticate" value="true"/>
+        <arg name="username" value=""/>
+        <arg name="password" value=""/>
+        <arg name="ntrip_version" value=""/>
+        <arg name="ssl" value="false"/>
+        <arg name="cert" value=""/>
+        <arg name="key" value=""/>
+        <arg name="ca_cert" value=""/>
+        <arg name="debug" value="false"/>
+        <arg name="rtcm_message_package" value="mavros_msgs"/>
+    </include>
 ```
 
 ### Build the code
@@ -56,16 +86,21 @@ ANELLO messages will be published to topics (see below). For information on how 
 
 #### Published Topics
 
-Topic definitions are defined in the [ANELLO Developer Manual](https://docs-a1.readthedocs.io/en/latest/) by the ASCII message format.
+Topic definitions are defined in the [ANELLO Developer Manual](https://docs-a1.readthedocs.io/en/latest/) by the ASCII message format. Custom message definitions are used for Anello messages and can be found in the `/anello_ros_driver/msg` directory.
 
-* `/anello_ros_driver/APIMU.msg`
-* `/anello_ros_driver/APINS.msg`
-* `/anello_ros_driver/APGPS.msg`
-* `/anello_ros_driver/APHDG.msg`
+* `/anello_ros_driver/APIMU`
+* `/anello_ros_driver/APINS`
+* `/anello_ros_driver/APGPS`
+* `/anello_ros_driver/APHDG`
+* `/ntrip_client/nmea`
 
 #### Subscribed Topics
 
-* None
+Use the custom message and topic below to send odometer speed to the Anello Photonics unit.
+
+* `/APODO`
+  * Use the custom message definition found in `/anello_ros_driver/msg/APODO.msg`
+* `/ntrip_client/rtcm_msg`
 
 ### Services
 
