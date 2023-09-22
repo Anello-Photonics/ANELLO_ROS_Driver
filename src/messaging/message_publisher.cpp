@@ -210,6 +210,8 @@ void publish_imu(double *imu, ros::Publisher pub)
 	msg.wy = imu[5];
 	msg.wz = imu[6];
 	msg.wz_fog = imu[7];
+	msg.odo_speed = imu[8];
+	msg.odo_time = imu[9];
 	msg.temp = imu[10];
 
 	pub.publish(msg);
