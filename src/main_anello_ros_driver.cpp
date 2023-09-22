@@ -31,6 +31,7 @@
 #include "anello_ros_driver/APINS.h"
 #include "anello_ros_driver/APGPS.h"
 #include "anello_ros_driver/APHDG.h"
+#include "anello_ros_driver/APODO.h"
 #include "nmea_msgs/Sentence.h"
 #endif
 
@@ -51,14 +52,6 @@ const char *serial_port_name = DEFAULT_DATA_INTERFACE;
 
 #ifndef NO_GGA
 #define NO_GGA
-#endif
-
-#ifndef PRINT_VALUES
-#define PRINT_VALUES 0
-#endif
-
-#ifndef DEBUG
-#define debug 0
 #endif
 
 #ifndef NODE_NAME
@@ -287,6 +280,8 @@ static void ros_driver_main_loop()
 	ros::Publisher pub_gga = nh.advertise<nmea_msgs::Sentence>("ntrip_client/nmea", 1);
 
 	ros::Subscriber sub_rtcm = nh.subscribe("ntrip_client/rtcm", 1, ntrip_rtcm_callback);
+	ros::Subscriber sub_odo = nh.subscribe("APODO", 1, apodo_callback);
+	// anello_ros_driver::APODO odo_msg;
 	ROS_DEBUG("Anello ROS Driver Started\n");
 
 
@@ -345,16 +340,12 @@ static void ros_driver_main_loop()
 #endif
 
 #if USE_CONFIG_PORT
-	anello_config_port anello_config_device("AUTO");
-	anello_config_device.init();
+	anello_config_port anello_device_config("AUTO");
+	anello_device_config.init();
 #endif
-/*
-	serial_interface anello_device(data_port_name.c_str());
-	anello_device.init();
-*/
+ 
 	anello_data_port anello_device_data(data_port_name.c_str());
 	anello_device_data.init();
- 
 
 #if COMPILE_WITH_ROS
     while (ros::ok())
@@ -372,6 +363,14 @@ static void ros_driver_main_loop()
 			anello_device_data.write_data((char *)global_ntrip_buffer.get_buffer(), global_ntrip_buffer.get_buffer_length());
 			global_ntrip_buffer.set_read_ready_false();
 		}
+
+#if USE_CONFIG_PORT
+		if (global_config_buffer.is_read_ready())
+		{
+			anello_device_config.write_data((char *)global_config_buffer.get_buffer(), global_config_buffer.get_buffer_length());
+			global_config_buffer.set_read_ready_false();
+		}
+#endif
 
 		// if all data has been read... read more data into buff
 		if (serial_read_buf.n_used >= serial_read_buf.nbytes)

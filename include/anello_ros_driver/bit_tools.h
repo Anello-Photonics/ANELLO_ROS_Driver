@@ -44,4 +44,6 @@ extern "C"
 }
 #endif
 
+#include <string>
+extern std::string compute_checksum(const char *buff, int len);
 #endif

@@ -31,6 +31,14 @@
 #define MAXFIELD 20
 #endif
 
+#ifndef DEBUG_PUBLISHERS
+#define DEBUG_PUBLISHERS 0
+#endif
+
+#ifndef DEBUG_SUBSCRIBERS
+#define DEBUG_SUBSCRIBERS 0
+#endif
+
 typedef struct
 {
 	uint8_t buf[MAX_BUF_LEN]; /* buffer where the raw data is held */

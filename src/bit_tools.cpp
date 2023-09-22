@@ -18,6 +18,7 @@
 #include <iostream>
 #include <iomanip>
 #include <sstream>
+#include <algorithm>
 
 #include <math.h>
 
@@ -132,4 +133,28 @@ extern int checksum(unsigned char *buff, int len)
     ckb = std::toupper(hexstring[1]);
 
     return (cka == buff[len - 3]) && (ckb == buff[len - 2]);
+}
+
+extern std::string compute_checksum(const char *buff, int len)
+{
+    unsigned char ck_sum = 0, cka, ckb;
+    int i;
+    
+    std::stringstream ck;
+    std::string ck_final;
+    
+    
+    for (i = 0; i < len; i++)
+    {
+        ck_sum ^= buff[i];
+    }
+
+    //ensure two digits and add 0
+    ck << std::hex << std::setw(2) << std::setfill('0') << (int)ck_sum;
+    ck_final = ck.str();
+
+    //make uppercase
+    std::transform(ck_final.begin(), ck_final.end(), ck_final.begin(), ::toupper);
+
+    return ck_final;
 }
