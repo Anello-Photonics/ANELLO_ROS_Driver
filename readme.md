@@ -25,8 +25,8 @@ Follow the build instructions on the [ntrip_client github page](https://github.c
 
 ### Configure ANELLO ROS Driver
 
-Update the serial port values in the launch file to match the ports in your system:
-if the value is AUTO the program will automatically connect that port.
+Update the serial port values in the launch file to match the ports in your system.
+If the value is AUTO the program will automatically connect that port.
 
 ```xml
     <!--Update data and config port values to the ports in your system-->
