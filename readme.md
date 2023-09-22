@@ -35,6 +35,7 @@ If the value is AUTO the program will automatically connect that port.
         <param name="config_port" value="/dev/ttyUSB3"/>
     </node>
 ```
+
 ```xml
     <!--Update data and config port values to the ports in your system-->
     <node name="anello_ros_driver" pkg="anello_ros_driver" type="anello_ros_driver">
@@ -85,16 +86,21 @@ ANELLO messages will be published to topics (see below). For information on how 
 
 #### Published Topics
 
-Topic definitions are defined in the [ANELLO Developer Manual](https://docs-a1.readthedocs.io/en/latest/) by the ASCII message format.
+Topic definitions are defined in the [ANELLO Developer Manual](https://docs-a1.readthedocs.io/en/latest/) by the ASCII message format. Custom message definitions are used for Anello messages and can be found in the `/anello_ros_driver/msg` directory.
 
-* `/anello_ros_driver/APIMU.msg`
-* `/anello_ros_driver/APINS.msg`
-* `/anello_ros_driver/APGPS.msg`
-* `/anello_ros_driver/APHDG.msg`
+* `/anello_ros_driver/APIMU`
+* `/anello_ros_driver/APINS`
+* `/anello_ros_driver/APGPS`
+* `/anello_ros_driver/APHDG`
+* `/ntrip_client/nmea`
 
 #### Subscribed Topics
 
-* None
+Use the custom message and topic below to send odometer speed to the Anello Photonics unit.
+
+* `/APODO`
+  * Use the custom message definition found in `/anello_ros_driver/msg/APODO.msg`
+* `/ntrip_client/rtcm_msg`
 
 ### Services
 

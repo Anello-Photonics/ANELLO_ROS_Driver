@@ -281,7 +281,6 @@ static void ros_driver_main_loop()
 
 	ros::Subscriber sub_rtcm = nh.subscribe("ntrip_client/rtcm", 1, ntrip_rtcm_callback);
 	ros::Subscriber sub_odo = nh.subscribe("APODO", 1, apodo_callback);
-	// anello_ros_driver::APODO odo_msg;
 	ROS_DEBUG("Anello ROS Driver Started\n");
 
 

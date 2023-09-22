@@ -10,12 +10,14 @@
 #endif
 
 #ifndef PATCH_VERSION
-#define PATCH_VERSION 2
+#define PATCH_VERSION 3
 #endif
 
 
 /*
-FW v1.0.2 : Added data-port and config port auto-connect
+v1.0.2 : Added data-port and config port auto-connect
+
+v1.0.3 : Added odometer forwarding
 */
 
 #endif
