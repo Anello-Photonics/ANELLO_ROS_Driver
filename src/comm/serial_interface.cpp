@@ -51,9 +51,9 @@ void serial_interface::init()
     if (this->usb_fd < 0)
     {
 #if COMPILE_WITH_ROS
-        ROS_INFO("file open error");
+        ROS_INFO("Serial port open error");
 #else
-        printf("File open error\n");
+        printf("Serial port open error\n");
 #endif
         exit(1);
     }
@@ -80,8 +80,8 @@ void serial_interface::init()
     options.c_cc[VMIN] = 0;      // read doesn't block
     options.c_cc[VTIME] = 5;     // 0.5 seconds read timeout
 
-    cfsetispeed(&options, B921600);
-    cfsetospeed(&options, B921600);
+    cfsetispeed(&options, BAUD_RATE);
+    cfsetospeed(&options, BAUD_RATE);
 
     // set the options
     if (tcsetattr(this->usb_fd, TCSANOW, &options) != 0)

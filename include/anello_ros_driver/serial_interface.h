@@ -44,6 +44,8 @@
 #define MAX_PORT_PARSE_FAIL 5
 #endif
 
+#define BAUD_RATE B230400
+
 class serial_interface : base_interface
 {
 protected:
