@@ -80,7 +80,7 @@ int serial_interface::init()
     options.c_cflag |= CS8;      // 8-bit data
     options.c_cflag &= ~CRTSCTS; // disable hardware flow control
     options.c_lflag = 0;         // no signaling characters, no echo
-    // options.c_iflag &= ~(IXON | IXOFF | IXANY); // disable software flow control
+    options.c_iflag &= ~(IXON | IXOFF | IXANY); // disable software flow control
     options.c_oflag = 0;         // no remapping, no delays
     options.c_cc[VMIN] = 0;      // read doesn't block
     options.c_cc[VTIME] = 5;     // 0.5 seconds read timeout
