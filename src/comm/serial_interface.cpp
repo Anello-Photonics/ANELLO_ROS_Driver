@@ -23,6 +23,7 @@
 #include <unistd.h>
 #include <string>
 #include <sys/ioctl.h>
+#include <sys/file.h> 
 #include <dirent.h>
 #include <vector>
 // #include <libusb1.0/libusb.h>
@@ -45,9 +46,12 @@ serial_interface::serial_interface(const char *portname)
     this->usb_fd = -1;
 }
 
-void serial_interface::init()
+int serial_interface::init()
 {
-    this->usb_fd = open(this->portname.c_str(), O_RDWR);
+    this->usb_fd = open(this->portname.c_str(), O_RDWR | O_NOCTTY | O_NONBLOCK);
+    
+    //lock port
+    flock(this->usb_fd, LOCK_EX | LOCK_NB);
     if (this->usb_fd < 0)
     {
 #if COMPILE_WITH_ROS
@@ -72,10 +76,11 @@ void serial_interface::init()
 
     options.c_cflag &= ~PARENB; // disable parity bit
     options.c_cflag &= ~CSTOPB; // use one stop bit
-    options.c_cflag &= ~CSIZE;
+    options.c_cflag &= ~CSIZE; // mask the character size bits
     options.c_cflag |= CS8;      // 8-bit data
     options.c_cflag &= ~CRTSCTS; // disable hardware flow control
     options.c_lflag = 0;         // no signaling characters, no echo
+    // options.c_iflag &= ~(IXON | IXOFF | IXANY); // disable software flow control
     options.c_oflag = 0;         // no remapping, no delays
     options.c_cc[VMIN] = 0;      // read doesn't block
     options.c_cc[VTIME] = 5;     // 0.5 seconds read timeout
@@ -96,6 +101,7 @@ void serial_interface::init()
         usleep(1000);
         ioctl(this->usb_fd, TCFLSH, 2);
     }
+    return 0;
 }
 
 size_t serial_interface::get_data(char *buf, size_t buf_len)
@@ -120,7 +126,7 @@ void serial_interface::write_data(const char *buf, size_t buf_len)
     write(usb_fd, buf, buf_len);
 }
 
-serial_interface::~serial_interface()
+void serial_interface::free_ports()
 {
     if (this->usb_fd > 0)
     {
@@ -130,73 +136,16 @@ serial_interface::~serial_interface()
     }
 }
 
-void anello_config_port::init()
+void serial_interface::load_port_names()
 {
-    if (strcmp(this->portname.c_str(), "AUTO") == 0)
-    {
-        // get all /dev/ttyUSB* ports
-        DIR *dir = opendir(PORT_DIR);
-        if (nullptr == dir)
-        {
-#if COMPILE_WITH_ROS
-            ROS_ERROR("Failed to open port directory");
-#else
-            printf("Failed to open port directory");
-#endif
-            exit(1);
-        }
-
-        struct dirent *entry;
-        std::vector<std::string> port_names;
-        while ((entry = readdir(dir)) != nullptr)
-        {
-            std::string temp_port_name = PORT_DIR;
-            if (strncmp(entry->d_name, PORT_PREFIX, strlen(PORT_PREFIX)) == 0)
-            {
-                // port_name = PORT_DIR;
-                temp_port_name += entry->d_name;
-                // port_names.push_back(temp_port_name);
-                port_names.insert(port_names.begin(), temp_port_name);  
-                // break;
-            }
-        }
-        closedir(dir);
-
-        // try to open each port and send a command to it
-        std::string command = "#APPNG*48\r\n";
-        for (std::string port_name : port_names)
-        {
-            this->portname = port_name;
-            serial_interface::init();
-            char buf[100];
-
-            this->get_data(buf, 100);
-            this->write_data(command.c_str(), command.length()*sizeof(char));
-            this->get_data(buf, 100);
-
-            if (strstr(buf, "#APPNG") != nullptr)
-            {
-                break;
-            }
-            else
-            {
-                this->~anello_config_port();
-            }
-        }
-
-    }
-    else
-    {
-        serial_interface::init();
-    }
-}
-
-anello_data_port::anello_data_port(const char *ser_port_name) : serial_interface(ser_port_name)
-{
-    this->decode_success = false;
-    this->port_index = 0;
-
     // get all /dev/ttyUSB* ports
+    // get all /dev/ttyUSB* ports
+    if (this->port_names.size() > 0)
+    {
+        //clear port names
+        this->port_names.clear();
+    }
+
     DIR *dir = opendir(PORT_DIR);
     if (nullptr == dir)
     {
@@ -214,14 +163,68 @@ anello_data_port::anello_data_port(const char *ser_port_name) : serial_interface
         std::string temp_port_name = PORT_DIR;
         if (strncmp(entry->d_name, PORT_PREFIX, strlen(PORT_PREFIX)) == 0)
         {
-            // port_name = PORT_DIR;
             temp_port_name += entry->d_name;
-            port_names.push_back(temp_port_name);
-            // this->port_names.insert(this->port_names.begin(), temp_port_name);  
-            // break;
+            this->port_names.push_back(temp_port_name);
         }
     }
     closedir(dir);
+}
+
+serial_interface::~serial_interface()
+{
+    this->free_ports();
+}
+
+int anello_config_port::init()
+{
+    int ret_status = -1;
+    if (strcmp(this->portname.c_str(), "AUTO") == 0)
+    {
+        this->load_port_names();
+
+        // try to open each port and send a command to it
+        std::string command = "#APPNG*48\r\n";
+        for (std::string port_idx : this->port_names)
+        {
+            this->portname = port_idx;
+            serial_interface::init();
+            char buf[100];
+
+            this->get_data(buf, 100);
+            this->write_data(command.c_str(), command.length()*sizeof(char));
+            this->get_data(buf, 100);
+
+            //If correct return value is received, break
+            if (strstr(buf, "#APPNG") != nullptr)
+            {
+                ret_status = 0;
+#if COMPILE_WITH_ROS
+                ROS_INFO("Config port found: %s", this->portname.c_str());
+#endif
+                break;
+            }
+            else
+            {
+                this->free_ports();
+            }
+        }
+
+    }
+    else
+    {
+        serial_interface::init();
+        ret_status = 0;
+    }
+    return ret_status;
+}
+
+anello_data_port::anello_data_port(const char *ser_port_name) : serial_interface(ser_port_name)
+{
+    this->decode_success = false;
+    this->port_index = 0;
+
+    //loads all ports with prefix /dev/ttyUSB* (CAN BE CONFIGURED)
+    this->load_port_names();
 
     //check for auto-detect
     if (strcmp(this->portname.c_str(), "AUTO") == 0)
@@ -234,16 +237,28 @@ anello_data_port::anello_data_port(const char *ser_port_name) : serial_interface
     }
 }
 
-void anello_data_port::init()
+int anello_data_port::init()
 {
+    this->load_port_names();
+    if (this->port_names.size() == 0)
+    {
+        
+#if COMPILE_WITH_ROS
+        ROS_INFO("Data port can see no ports");
+#else
+        printf("Data port can see no ports\n");
+#endif
+        exit(1);
+    }
+
     if (this->auto_detect)
     {
-        /**/
         this->portname = this->port_names[this->port_index];
     }
 
-    serial_interface::init();
+    return serial_interface::init();
 }
+
 
 void anello_data_port::port_parse_fail()
 {

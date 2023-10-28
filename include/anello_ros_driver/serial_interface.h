@@ -25,11 +25,13 @@
 #include "base_interface.h"
 
 #ifndef DEFAULT_DATA_INTERFACE
-#define DEFAULT_DATA_INTERFACE "/dev/ttyUSB0"
+// #define DEFAULT_DATA_INTERFACE "/dev/ttyUSB0"
+#define DEFAULT_DATA_INTERFACE "AUTO"
 #endif
 
 #ifndef DEFAULT_CONFIG_INTERFACE
-#define DEFAULT_CONFIG_INTERFACE "/dev/ttyUSB3"
+// #define DEFAULT_CONFIG_INTERFACE "/dev/ttyUSB3"
+#define DEFAULT_CONFIG_INTERFACE "AUTO"
 #endif
 
 #ifndef PORT_DIR
@@ -44,14 +46,17 @@
 #define MAX_PORT_PARSE_FAIL 5
 #endif
 
-#define BAUD_RATE B230400
+// #define BAUD_RATE B230400
+#define BAUD_RATE B921600
 
 class serial_interface : base_interface
 {
 protected:
     int usb_fd;
     std::string portname;
+    std::vector<std::string> port_names;
 
+    void load_port_names();
 public:
     /*
      * Notes:
@@ -71,8 +76,11 @@ public:
     /*
      * Notes:
      * This function initializes the serial port interface including configuring the port.
+     * 
+     * Return:
+     * 0 if successful, 1 if not
      */
-    void init();
+    int init();
 
     /*
      * Parameters:
@@ -97,6 +105,7 @@ public:
      * Closes the port serial port
      */
     ~serial_interface();
+    void free_ports();
 };
 
 class anello_config_port : public serial_interface
@@ -113,8 +122,11 @@ public:
     /*
      * Notes:
      * This function initializes the serial port interface including configuring the port.
+     * 
+     * Return:
+     * 0 if successful, 1 if not
      */
-    void init();
+    int init();
 
 };
 
@@ -122,9 +134,9 @@ class anello_data_port : public serial_interface
 {
     bool decode_success;
     bool auto_detect;
-    std::vector<std::string> port_names;
     uint32_t port_index;
     int fail_count;
+
 public:
     /*
      * Notes:
@@ -136,8 +148,11 @@ public:
     /*
      * Notes:
      * This function initializes the serial port interface including configuring the port.
+     * 
+     * Return:
+     * 0 if successful, 1 if not
      */
-    void init();
+    int init();
     size_t get_data(char *buf, size_t buf_len);
 
     void port_parse_fail();

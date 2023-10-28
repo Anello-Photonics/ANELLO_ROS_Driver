@@ -22,6 +22,7 @@
 #include <cstdlib>
 #include <fstream>
 #include <unistd.h>
+#include <csignal>
 #include "main_anello_ros_driver.h"
 #include "message_subscriber.h"
 
@@ -258,6 +259,13 @@ static int parse_fields(char *const buffer, char **val)
 	return n;
 }
 
+volatile bool stopper = false;
+void exit_handler(int signum)
+{
+	printf("Caught signal %d\n", signum);
+	stopper = true;
+}
+
 /*
  * Main loop for the driver
  * Handles calling all of the modules in the program.
@@ -281,8 +289,6 @@ static void ros_driver_main_loop()
 
 	ros::Subscriber sub_rtcm = nh.subscribe("ntrip_client/rtcm", 1, ntrip_rtcm_callback);
 	ros::Subscriber sub_odo = nh.subscribe("APODO", 1, apodo_callback);
-	ROS_DEBUG("Anello ROS Driver Started\n");
-
 
 	ros_publishers_t pub_arr;
 	pub_arr.imu = &pub_imu;
@@ -325,6 +331,9 @@ static void ros_driver_main_loop()
 
 	string data_port_name;
 
+	//initialize keyboard interrupt handler
+	signal(SIGINT, exit_handler);
+
 #if COMPILE_WITH_ROS
 	// get data port name from parameter server
 	if (!nh.getParam(DATA_PORT_PARAMETER_NAME,data_port_name))
@@ -339,20 +348,42 @@ static void ros_driver_main_loop()
 #endif
 
 #if USE_CONFIG_PORT
-	anello_config_port anello_device_config("AUTO");
-	anello_device_config.init();
+	string config_port_name;
+#if COMPILE_WITH_ROS
+	// get config port name from parameter server
+	if (!nh.getParam(CONFIG_PORT_PARAMETER_NAME,config_port_name))
+	{
+			ROS_ERROR("Failed to get config port name from parameter server -> %s",CONFIG_PORT_PARAMETER_NAME);
+			exit(1);
+	}
+#else
+	config_port_name = DEFAULT_CONFIG_INTERFACE;
 #endif
- 
-	anello_data_port anello_device_data(data_port_name.c_str());
+	anello_config_port anello_device_config(config_port_name.c_str());
+	while (anello_device_config.init() && !stopper) 
+	{ 
+#if COMPILE_WITH_ROS
+		ROS_WARN("Failed to open config port. Retrying...");
+#else
+		printf("Failed to open config port. Retrying...\n");
+#endif
+		sleep(1);  
+	}
+#endif
+
+	//data port exit(1) if no ports are present
+	anello_data_port anello_device_data(data_port_name.c_str());	//no retry mechanism; Uses decoding to determine correct port
 	anello_device_data.init();
 
+	
 #if COMPILE_WITH_ROS
-    while (ros::ok())
+    while (ros::ok() && !stopper)
 	{
+
 		// allow ROS to process callbacks
 		ros::spinOnce();
 #else
-	while (1)
+	while (!stopper)
 	{
 #endif
 
@@ -544,4 +575,17 @@ static void ros_driver_main_loop()
 		// close log file
 		fclose(log_file_fp);
 	}
+	
+	//cleanup serial interface
+	anello_device_data.free_ports();
+#if USE_CONFIG_PORT
+	anello_device_config.free_ports();
+#endif
+
+#if COMPILE_WITH_ROS
+	ROS_INFO("Anello ROS Driver Stopped\n");
+#else
+	printf("Anello ROS Driver Stopped\n");
+#endif
+
 }
