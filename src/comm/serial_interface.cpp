@@ -75,6 +75,7 @@ void serial_interface::init()
     options.c_cflag &= ~CSIZE;
     options.c_cflag |= CS8;      // 8-bit data
     options.c_cflag &= ~CRTSCTS; // disable hardware flow control
+    options.c_iflag = 0; // disable software flow control
     options.c_lflag = 0;         // no signaling characters, no echo
     options.c_oflag = 0;         // no remapping, no delays
     options.c_cc[VMIN] = 0;      // read doesn't block
