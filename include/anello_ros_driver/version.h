@@ -10,7 +10,7 @@
 #endif
 
 #ifndef PATCH_VERSION
-#define PATCH_VERSION 2
+#define PATCH_VERSION 3
 #endif
 
 
