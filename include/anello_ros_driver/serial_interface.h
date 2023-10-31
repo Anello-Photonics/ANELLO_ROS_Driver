@@ -89,6 +89,14 @@ public:
      *
      */
     void write_data(const char *buf, size_t buf_len);
+    
+    /*
+     * Parameters:
+     *
+     * Return:
+     * string containing the port name
+     */
+    const std::string get_portname();
 
     /*
      * Notes:
