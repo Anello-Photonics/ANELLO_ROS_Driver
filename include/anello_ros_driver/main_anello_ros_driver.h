@@ -31,6 +31,10 @@
 #define MAXFIELD 20
 #endif
 
+#ifndef DEBUG_MAIN
+#define DEBUG_MAIN 0
+#endif
+
 #ifndef DEBUG_PUBLISHERS
 #define DEBUG_PUBLISHERS 0
 #endif
