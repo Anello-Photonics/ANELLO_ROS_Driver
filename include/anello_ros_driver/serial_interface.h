@@ -40,6 +40,10 @@
 #define PORT_PREFIX "ttyUSB"
 #endif
 
+#ifndef BAUDRATE
+#define BAUDRATE B921600
+#endif
+
 #ifndef MAX_PORT_PARSE_FAIL
 #define MAX_PORT_PARSE_FAIL 5
 #endif
