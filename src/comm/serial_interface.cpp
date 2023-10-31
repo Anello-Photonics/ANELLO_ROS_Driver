@@ -81,8 +81,8 @@ void serial_interface::init()
     options.c_cc[VMIN] = 0;      // read doesn't block
     options.c_cc[VTIME] = 5;     // 0.5 seconds read timeout
 
-    cfsetispeed(&options, B921600);
-    cfsetospeed(&options, B921600);
+    cfsetispeed(&options, BAUDRATE);
+    cfsetospeed(&options, BAUDRATE);
     
     // set the options
     if (tcsetattr(this->usb_fd, TCSANOW, &options) != 0)
@@ -97,6 +97,13 @@ void serial_interface::init()
         usleep(1000);
         ioctl(this->usb_fd, TCFLSH, 2);
     }
+#if DEBUG_SERIAL
+#if COMPILE_WITH_ROS
+    ROS_INFO("Serial port %s initialized", this->portname.c_str());
+#else
+    printf("Serial port %s initialized\n", this->portname.c_str());
+#endif
+#endif
 }
 
 size_t serial_interface::get_data(char *buf, size_t buf_len)
@@ -140,6 +147,14 @@ void anello_config_port::init()
 {
     if (strcmp(this->portname.c_str(), "AUTO") == 0)
     {
+#if DEBUG_SERIAL
+#if COMPILE_WITH_ROS
+        ROS_INFO("Auto detect config port enabled");
+#else
+        printf("Auto detect config port enabled");
+#endif 
+#endif
+
         // get all /dev/ttyUSB* ports
         DIR *dir = opendir(PORT_DIR);
         if (nullptr == dir)
@@ -175,14 +190,29 @@ void anello_config_port::init()
         {        
             for (std::string port_name : port_names)
             {
+#if DEBUG_SERIAL
+#if COMPILE_WITH_ROS
+                ROS_INFO("config_port: Trying port %s", port_name.c_str());
+#else
+                printf("config_port: Trying port %s", port_name.c_str());
+#endif
+#endif
                 this->portname = port_name;
                 serial_interface::init();
                 char buf[100];
 
                 this->get_data(buf, 100);
                 this->write_data(command.c_str(), command.length()*sizeof(char));
+                usleep(500 * 1000); // 500 ms
                 this->get_data(buf, 100);
 
+#if DEBUG_SERIAL
+#if COMPILE_WITH_ROS
+                ROS_INFO("config_port: Received: %s", buf);
+#else
+                printf("config_port: Received: %s", buf);
+#endif
+#endif
                 if (strstr(buf, "#APPNG") != nullptr)
                 {
                     port_found = true;
@@ -243,6 +273,13 @@ anello_data_port::anello_data_port(const char *ser_port_name) : serial_interface
     //check for auto-detect
     if (strcmp(this->portname.c_str(), "AUTO") == 0)
     {
+#if DEBUG_SERIAL
+#if COMPILE_WITH_ROS
+        ROS_INFO("Auto detect data port enabled");
+#else
+        printf("Auto detect data port enabled");
+#endif
+#endif
         this->auto_detect = true;
     }
     else
@@ -259,6 +296,14 @@ void anello_data_port::init()
         this->portname = this->port_names[this->port_index];
     }
 
+#if DEBUG_SERIAL
+#if COMPILE_WITH_ROS
+    ROS_INFO("Data: Trying port %s", this->portname.c_str());
+#else
+    printf("Data: Trying port %s", this->portname.c_str());
+#endif
+#endif
+
     serial_interface::init();
 }
 
@@ -269,6 +314,14 @@ void anello_data_port::port_parse_fail()
     {
         return;
     }
+
+#if DEBUG_SERIAL
+#if COMPILE_WITH_ROS
+    ROS_INFO("Data: Failed to parse data on port %s", this->portname.c_str());
+#else
+    printf("Data: Failed to parse data on port %s", this->portname.c_str());
+#endif
+#endif
 
     this->fail_count++;
     
@@ -304,9 +357,21 @@ void anello_data_port::port_confirm()
 {
     //reset fail count
     this->fail_count = 0;
+    if (this->decode_success)
+    {
+        return;
+    }
 
     //set decode success
     this->decode_success = true;
+
+#if DEBUG_SERIAL
+#if COMPILE_WITH_ROS
+    ROS_INFO("Data: Confirmed port %s", this->portname.c_str());
+#else
+    printf("Data: Confirmed port %s", this->portname.c_str());
+#endif
+#endif
 }
 
 size_t anello_data_port::get_data(char *buf, size_t buf_len)

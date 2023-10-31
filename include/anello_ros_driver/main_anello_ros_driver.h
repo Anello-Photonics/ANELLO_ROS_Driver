@@ -35,6 +35,10 @@
 #define DEBUG_MAIN 0
 #endif
 
+#ifndef DEBUG_SERIAL
+#define DEBUG_SERIAL 0
+#endif
+
 #ifndef DEBUG_PUBLISHERS
 #define DEBUG_PUBLISHERS 0
 #endif
