@@ -75,6 +75,7 @@ void serial_interface::init()
     options.c_cflag &= ~CSIZE;
     options.c_cflag |= CS8;      // 8-bit data
     options.c_cflag &= ~CRTSCTS; // disable hardware flow control
+    options.c_iflag = 0; // disable software flow control
     options.c_lflag = 0;         // no signaling characters, no echo
     options.c_oflag = 0;         // no remapping, no delays
     options.c_cc[VMIN] = 0;      // read doesn't block
@@ -82,7 +83,7 @@ void serial_interface::init()
 
     cfsetispeed(&options, B921600);
     cfsetospeed(&options, B921600);
-
+    
     // set the options
     if (tcsetattr(this->usb_fd, TCSANOW, &options) != 0)
     {
@@ -118,6 +119,11 @@ size_t serial_interface::get_data(char *buf, size_t buf_len)
 void serial_interface::write_data(const char *buf, size_t buf_len) 
 { 
     write(usb_fd, buf, buf_len);
+}
+
+const std::string serial_interface::get_portname()
+{
+    return this->portname;
 }
 
 serial_interface::~serial_interface()
@@ -164,23 +170,34 @@ void anello_config_port::init()
 
         // try to open each port and send a command to it
         std::string command = "#APPNG*48\r\n";
-        for (std::string port_name : port_names)
-        {
-            this->portname = port_name;
-            serial_interface::init();
-            char buf[100];
-
-            this->get_data(buf, 100);
-            this->write_data(command.c_str(), command.length()*sizeof(char));
-            this->get_data(buf, 100);
-
-            if (strstr(buf, "#APPNG") != nullptr)
+        bool port_found = false;
+        while (!port_found)
+        {        
+            for (std::string port_name : port_names)
             {
-                break;
+                this->portname = port_name;
+                serial_interface::init();
+                char buf[100];
+
+                this->get_data(buf, 100);
+                this->write_data(command.c_str(), command.length()*sizeof(char));
+                this->get_data(buf, 100);
+
+                if (strstr(buf, "#APPNG") != nullptr)
+                {
+                    port_found = true;
+                    break;
+                }
+                else
+                {
+                    this->~anello_config_port();
+                }
             }
-            else
+            if (!port_found)
             {
-                this->~anello_config_port();
+#if COMPILE_WITH_ROS
+                ROS_DEBUG("No port found");
+#endif
             }
         }
 

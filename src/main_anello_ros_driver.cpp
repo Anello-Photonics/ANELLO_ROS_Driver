@@ -342,9 +342,28 @@ static void ros_driver_main_loop()
 	anello_config_port anello_device_config("AUTO");
 	anello_device_config.init();
 #endif
- 
+
 	anello_data_port anello_device_data(data_port_name.c_str());
 	anello_device_data.init();
+
+#if DEBUG_MAIN
+#if COMPILE_WITH_ROS
+	ROS_INFO("Anello ROS Driver Started\n");
+	ROS_INFO("Data Port: %s", anello_device_data.get_portname().c_str());
+#else
+	printf("Anello ROS Driver Started\n");
+	printf("Data Port: %s", anello_device_data.get_portname().c_str());
+#endif	
+
+#if USE_CONFIG_PORT
+#if COMPILE_WITH_ROS
+	ROS_INFO("Config Port: %s", anello_device_config.get_portname().c_str());
+#else
+	printf("Config Port: %s", anello_device_config.get_portname().c_str());
+#endif
+#endif
+
+#endif
 
 #if COMPILE_WITH_ROS
     while (ros::ok())
