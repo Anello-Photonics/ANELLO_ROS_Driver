@@ -91,7 +91,7 @@ void publish_gps(double *gps, ros::Publisher pub)
 	msg.rtk_fix_status = (uint8_t)gps[15];
 
 	pub.publish(msg);
-#if PRINT_VALUES
+#if DEBUG_PUBLISHERS
 	ROS_INFO("APGPS,%10.3f,%14.9f,%14.9f,%14.9f,%10.4f,%10.3f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f\n", gps[0], gps[1], gps[2], gps[3], gps[4], gps[5], gps[6], gps[7], gps[8], gps[9], gps[10], gps[11], gps[12], gps[13], gps[14], gps[15]);
 #endif
 }
@@ -157,7 +157,7 @@ void publish_hdr(double *hdr, ros::Publisher pub)
 
 	pub.publish(msg);
 
-#if PRINT_VALUES
+#if DEBUG_PUBLISHERS
 	ROS_INFO(
 		/* h[x] = hdr[x] */
 		/* h0     h1     h2    h3      h4     h5     h6     h7     h8   h9 s0 s1 s2 34 s5 s6 s7 s8 s9*/
@@ -210,11 +210,13 @@ void publish_imu(double *imu, ros::Publisher pub)
 	msg.wy = imu[5];
 	msg.wz = imu[6];
 	msg.wz_fog = imu[7];
+	msg.odo_speed = imu[8];
+	msg.odo_time = imu[9];
 	msg.temp = imu[10];
 
 	pub.publish(msg);
 
-#if PRINT_VALUES
+#if DEBUG_PUBLISHERS
 	ROS_INFO("APIMU,%10.3f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f\n", imu[0], imu[1], imu[2], imu[3], imu[4], imu[5], imu[6], imu[7], imu[8], imu[9], imu[10], imu[11]);
 #endif
 }
@@ -265,7 +267,7 @@ void publish_ins(double *ins, ros::Publisher pub)
 
 	pub.publish(msg);
 
-#if PRINT_VALUES
+#if DEBUG_PUBLISHERS
 	ROS_INFO("APINS,%10.3f,%14.7f,%10.4f,%14.9f,%14.9f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f\n", ins[0], ins[1], ins[2], ins[3], ins[4], ins[5], ins[6], ins[7], ins[8], ins[9], ins[10], ins[11], ins[12]);
 #endif
 }
