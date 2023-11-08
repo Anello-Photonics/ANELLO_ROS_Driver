@@ -75,8 +75,14 @@ int decode_ascii_imu(char *val[], int field_num, double *output_val)
     /*
     #APIMU,318214.937,0.0344,-0.0128,1.0077,-0.0817,0.0013,-0.0038,0.01051,0.0000,318214.548,47.0547*55
     */
+    bool b_tsync_detected = false;
+
     output_val[0] = atof(val[1]);
     int loc = (field_num == 15) ? 3 : 2;
+    if (3 == loc)
+    {
+        b_tsync_detected = true;
+    }
     output_val[1] = atof(val[loc++]);          /* fx */
     output_val[2] = atof(val[loc++]);          /* fy */
     output_val[3] = atof(val[loc++]);          /* fz */
@@ -87,6 +93,37 @@ int decode_ascii_imu(char *val[], int field_num, double *output_val)
     output_val[8] = atof(val[loc++]);          /* odr */
     output_val[9] = atof(val[loc++]) * 1.0e-3; /* odr time */
     output_val[10] = atof(val[loc++]);         /* temp */
+
+    output_val[11] = (b_tsync_detected) ? atof(val[2]) : 0.0; /* tsync */
+
+    return 1;
+}
+
+int decode_ascii_im1(char *val[], int field_num, double *output_val)
+{
+    /*
+    #APIMU,318214.937,0.0344,-0.0128,1.0077,-0.0817,0.0013,-0.0038,0.01051,47.0547*55
+    */
+    bool b_tsync_detected = false;
+    int loc = (field_num == 13) ? 3 : 2;
+
+    output_val[0] = atof(val[1]);
+    if (3 == loc)
+    {
+        b_tsync_detected = true;
+    }
+    output_val[1] = atof(val[loc++]);          /* fx */
+    output_val[2] = atof(val[loc++]);          /* fy */
+    output_val[3] = atof(val[loc++]);          /* fz */
+    output_val[4] = atof(val[loc++]);          /* wx */
+    output_val[5] = atof(val[loc++]);          /* wy */
+    output_val[6] = atof(val[loc++]);          /* wz */
+    output_val[7] = atof(val[loc++]);          /* wz_fog */
+    output_val[8] = atof(val[loc++]);         /* temp */
+    if (b_tsync_detected)
+    {
+        output_val[9] = atof(val[2]);          /* tsync */
+    }
 
     return 1;
 }

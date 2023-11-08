@@ -55,6 +55,7 @@ find_package(catkin REQUIRED COMPONENTS
 add_message_files(
   FILES
   APIMU.msg
+  APIM1.msg
   APINS.msg
   APGPS.msg
   APHDG.msg
