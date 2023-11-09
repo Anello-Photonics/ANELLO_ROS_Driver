@@ -39,7 +39,7 @@ void decode_rtcm_imu_msg(double imu[], a1buff_t a1buff)
         imu[8] = rtcm_apimu.ODO * 0.01;               /* odr */
         imu[9] = rtcm_apimu.ODO_time * 1.0e-9;        /* odr time */
         imu[10] = rtcm_apimu.Temp_C * 0.01;           /* temp */
-        imu[11] = rtcm_apimu.Sync_Time * 1.0e-9;
+        imu[11] = rtcm_apimu.Sync_Time * 1.0e-6;       /* T_Sync ms*/
     }
     else
     {
@@ -72,7 +72,7 @@ void decode_rtcm_im1_msg(double im1[], a1buff_t a1buff)
     im1[6] = rtcm_apim1.WZ * 1.0 / 0x0048D15A;    /* wz */
     im1[7] = rtcm_apim1.OG_WZ * 1.0 / 0x0048D15A; /* wz_fog */
     im1[8] = rtcm_apim1.Temp_C * 0.01;           /* temp */
-    im1[9] = rtcm_apim1.Sync_Time * 1.0e-9;       /* T_Sync ms*/
+    im1[9] = rtcm_apim1.Sync_Time * 1.0e-6;       /* T_Sync ms*/
 }
 
 void decode_rtcm_ins_msg(double ins[], a1buff_t a1buff)
