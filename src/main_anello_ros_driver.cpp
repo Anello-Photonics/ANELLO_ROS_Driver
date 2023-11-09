@@ -558,6 +558,17 @@ static void ros_driver_main_loop()
 
 							isOK = 1;
 						}
+						else if (a1buff.subtype == 6) /* IM1 */
+						{
+							decode_rtcm_im1_msg(decoded_val, a1buff);
+#if COMPILE_WITH_ROS
+							publish_im1(decoded_val, pub_im1);
+#else
+							printf("APIM1r\n");
+#endif
+
+							isOK = 1;
+						}
 					}
 				}
 

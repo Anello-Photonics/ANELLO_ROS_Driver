@@ -58,6 +58,23 @@ void decode_rtcm_imu_msg(double imu[], a1buff_t a1buff)
     }
 }
 
+void decode_rtcm_im1_msg(double im1[], a1buff_t a1buff)
+{
+    rtcm_apim1_t rtcm_apim1 = {0};
+
+    memcpy((uint8_t *)&rtcm_apim1, a1buff.buf + 5, sizeof(rtcm_apim1_t));
+    im1[0] = rtcm_apim1.MCU_Time * 1e-6;
+    im1[1] = rtcm_apim1.AX * 1.0 / 0x08888889;    /* fx */
+    im1[2] = rtcm_apim1.AY * 1.0 / 0x08888889;    /* fy */
+    im1[3] = rtcm_apim1.AZ * 1.0 / 0x08888889;    /* fz */
+    im1[4] = rtcm_apim1.WX * 1.0 / 0x0048D15A;    /* wx */
+    im1[5] = rtcm_apim1.WY * 1.0 / 0x0048D15A;    /* wy */
+    im1[6] = rtcm_apim1.WZ * 1.0 / 0x0048D15A;    /* wz */
+    im1[7] = rtcm_apim1.OG_WZ * 1.0 / 0x0048D15A; /* wz_fog */
+    im1[8] = rtcm_apim1.Temp_C * 0.01;           /* temp */
+    im1[9] = rtcm_apim1.Sync_Time * 1.0e-9;       /* T_Sync ms*/
+}
+
 void decode_rtcm_ins_msg(double ins[], a1buff_t a1buff)
 {
     rtcm_apins_t rtcm_apins = {0};
