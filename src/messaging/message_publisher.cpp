@@ -16,6 +16,7 @@
 
 #if COMPILE_WITH_ROS
 #include <anello_ros_driver/APIMU.h>
+#include <anello_ros_driver/APIM1.h>
 #include <anello_ros_driver/APGPS.h>
 #include <anello_ros_driver/APINS.h>
 #include <anello_ros_driver/APHDG.h>
@@ -199,6 +200,7 @@ void publish_imu(double *imu, ros::Publisher pub)
 	 * imu[8] = odr [m/s]
 	 * imu[9] = odr Time [ms]
 	 * imu[10] = Temp [C]
+	 * imu[11] = T_Sync [ms]
 	 */
 
 	anello_ros_driver::APIMU msg;
@@ -213,11 +215,46 @@ void publish_imu(double *imu, ros::Publisher pub)
 	msg.odo_speed = imu[8];
 	msg.odo_time = imu[9];
 	msg.temp = imu[10];
+	msg.T_Sync = imu[11];
 
 	pub.publish(msg);
 
 #if DEBUG_PUBLISHERS
 	ROS_INFO("APIMU,%10.3f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f\n", imu[0], imu[1], imu[2], imu[3], imu[4], imu[5], imu[6], imu[7], imu[8], imu[9], imu[10], imu[11]);
+#endif
+}
+
+void publish_im1(double *im1, ros::Publisher pub)
+{
+	/*
+	 * im1[0] = MCU_Time [ms]
+	 * im1[1] = ax [g]
+	 * im1[2] = ay [g]
+	 * im1[3] = az [g]
+	 * im1[4] = wx [Deg/s]
+	 * im1[5] = wy [Deg/s]
+	 * im1[6] = wz [Deg/s]
+	 * im1[7] = wz_fog [Deg/s]
+	 * im1[8] = Temp [C]
+	 * im1[9] = T_Sync [ms]
+	 */
+
+	anello_ros_driver::APIM1 msg;
+	msg.mcu_time = im1[0];
+	msg.ax = im1[1];
+	msg.ay = im1[2];
+	msg.az = im1[3];
+	msg.wx = im1[4];
+	msg.wy = im1[5];
+	msg.wz = im1[6];
+	msg.wz_fog = im1[7];
+	msg.temp = im1[8];
+	msg.T_Sync = im1[9];
+
+	pub.publish(msg);
+
+#if DEBUG_PUBLISHERS
+	ROS_INFO("APIM1,%10.3f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f\n", im1[0], im1[1], im1[2], im1[3], im1[4], im1[5], im1[6], im1[7], im1[8], im1[9]);
 #endif
 }
 

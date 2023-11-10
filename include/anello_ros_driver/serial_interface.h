@@ -41,7 +41,7 @@
 #endif
 
 #ifndef BAUDRATE
-#define BAUDRATE B921600
+#define BAUDRATE B230400
 #endif
 
 #ifndef MAX_PORT_PARSE_FAIL

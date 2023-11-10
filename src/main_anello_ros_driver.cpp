@@ -28,6 +28,7 @@
 #if COMPILE_WITH_ROS
 #include <ros/ros.h>
 #include "anello_ros_driver/APIMU.h"
+#include "anello_ros_driver/APIM1.h"
 #include "anello_ros_driver/APINS.h"
 #include "anello_ros_driver/APGPS.h"
 #include "anello_ros_driver/APHDG.h"
@@ -274,6 +275,7 @@ static void ros_driver_main_loop()
 	ros::NodeHandle nh;
 
 	ros::Publisher pub_imu = nh.advertise<anello_ros_driver::APIMU>("APIMU", 10);
+	ros::Publisher pub_im1 = nh.advertise<anello_ros_driver::APIM1>("APIM1", 10);
 	ros::Publisher pub_ins = nh.advertise<anello_ros_driver::APINS>("APINS", 10);
 	ros::Publisher pub_gps = nh.advertise<anello_ros_driver::APGPS>("APGPS", 10);
 	ros::Publisher pub_hdg = nh.advertise<anello_ros_driver::APHDG>("APHDG", 10);
@@ -478,6 +480,20 @@ static void ros_driver_main_loop()
 
 						isOK = 1;
 					}
+					else if (!isOK && num >= 10 && strstr(val[0], "APIM1") != NULL)
+					{
+						// ascii imu
+#if 1
+						decode_ascii_im1(val, num, decoded_val);
+#endif
+#if COMPILE_WITH_ROS
+						publish_im1(decoded_val, pub_im1);
+#else
+						printf("APIM1a\n");
+#endif
+
+						isOK = 1;
+					}
 					else if (!isOK && num >= 14 && strstr(val[0], "APINS") != NULL)
 					{
 						// ascii ins
@@ -538,6 +554,17 @@ static void ros_driver_main_loop()
 							publish_ins(decoded_val, pub_ins);
 #else
 							printf("APINSr\n");
+#endif
+
+							isOK = 1;
+						}
+						else if (a1buff.subtype == 6) /* IM1 */
+						{
+							decode_rtcm_im1_msg(decoded_val, a1buff);
+#if COMPILE_WITH_ROS
+							publish_im1(decoded_val, pub_im1);
+#else
+							printf("APIM1r\n");
 #endif
 
 							isOK = 1;
