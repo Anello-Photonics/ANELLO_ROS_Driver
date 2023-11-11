@@ -137,7 +137,7 @@ extern int checksum(unsigned char *buff, int len)
 
 extern std::string compute_checksum(const char *buff, int len)
 {
-    unsigned char ck_sum = 0, cka, ckb;
+    unsigned char ck_sum = 0;
     int i;
     
     std::stringstream ck;
