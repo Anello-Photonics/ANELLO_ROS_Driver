@@ -47,6 +47,11 @@
 #define DEBUG_SUBSCRIBERS 0
 #endif
 
+#ifndef OLD_MESSAGING
+#define OLD_MESSAGING 1
+#endif
+
+
 typedef struct
 {
 	uint8_t buf[MAX_BUF_LEN]; /* buffer where the raw data is held */

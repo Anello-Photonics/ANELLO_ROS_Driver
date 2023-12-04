@@ -212,10 +212,15 @@ void publish_imu(double *imu, ros::Publisher pub)
 	msg.wy = imu[5];
 	msg.wz = imu[6];
 	msg.wz_fog = imu[7];
+#if OLD_MESSAGING
+	msg.odometer_speed = imu[8];
+	msg.odometer_time = imu[9];
+#else
 	msg.odo_speed = imu[8];
 	msg.odo_time = imu[9];
-	msg.temp = imu[10];
 	msg.T_Sync = imu[11];
+#endif
+	msg.temp = imu[10];
 
 	pub.publish(msg);
 
