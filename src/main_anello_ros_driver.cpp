@@ -582,6 +582,9 @@ static void ros_driver_main_loop()
 				{
 					memset(decoded_val, 0, MAXFIELD * sizeof(double));
 					anello_device_data.port_confirm();
+#if DEBUG_MAIN
+					printf("%s\n", a1buff.buf);
+#endif
 				}
 				a1buff.nbyte = 0;
 			}
