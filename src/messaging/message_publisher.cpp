@@ -13,6 +13,10 @@
 
 #include "message_publisher.h"
 #include "main_anello_ros_driver.h"
+#include "bit_tools.h"
+
+#include <string.h>
+#include <ctime>
 
 #if COMPILE_WITH_ROS
 #include <anello_ros_driver/APIMU.h>
@@ -38,8 +42,99 @@ void publish_gga(double *gps, ros::Publisher pub)
 	msg_header.frame_id = "anello gps data";
 	gga_frame_id++;
 
+	std::ostringstream gngga_message;
+
+	gngga_message << "$GNGGA,";	//message header
+
+	double gps_seconds = gps[1] * 1e-9;
+	
+	time_t utc_time_s = (gps_seconds) - 18.0; //subtract 18 leap seconds
+	struct tm *utc_info = std::gmtime(&utc_time_s);
+
+/*************************UTC Time*************************/
+	int utc_hours = utc_info->tm_hour;
+	int utc_minutes = utc_info->tm_min;
+	int utc_seconds = utc_info->tm_sec;
+	int utc_milliseconds = floor( (gps_seconds - floor(gps_seconds)) * 1e3);
+
+	gngga_message << std::setw(2) << std::setfill('0') << utc_hours
+					<< std::setw(2) << std::setfill('0') << utc_minutes
+					<< std::setw(2) << std::setfill('0') << utc_seconds
+					<< "."
+					<< std::setw(3) << std::setfill('0') << utc_milliseconds << ",";
+
+
+/*************************Lat Deg*************************/
+	double lat_float = gps[2];
+	char lat_hemisphere = (lat_float >= 0) ? 'N' : 'S';
+	int lat_deg = floor(abs(lat_float));
+	double lat_min = 60 * abs(abs(lat_float) - abs(lat_deg));
+	int lat_min_int = floor(lat_min);
+	int lat_min_dec = floor((lat_min - lat_min_int) * 1e7);
+	
+	gngga_message << std::setw(2) << std::setfill('0') << lat_deg
+					<< std::setw(2) << std::setfill('0') << lat_min_int
+					<< "."
+					<< std::setw(7) << std::setfill('0') << lat_min_dec
+					<< ",";
+	
+	gngga_message << lat_hemisphere << ",";
+
+
+/*************************Lon Deg*************************/
+	double lon_float = gps[3];
+	char lon_hemisphere = (lon_float >= 0) ? 'E' : 'W';
+	int lon_deg = floor(abs(lon_float));
+	double lon_min = 60 * abs(abs(lon_float) - abs(lon_deg));
+	int lon_min_int = floor(lon_min);
+	int lon_min_dec = floor((lon_min - lon_min_int) * 1e7);
+
+	gngga_message << std::setw(3) << std::setfill('0') << lon_deg
+					<< std::setw(2) << std::setfill('0') << lon_min_int
+					<< "."
+					<< std::setw(7) << std::setfill('0') << lon_min_dec
+					<< ",";
+
+	gngga_message << lon_hemisphere << ",";
+
+/*************************Fix Quality*************************/	
+	int value_map[3] = {1, 5, 4}; // index is the anello fix type, value is the NMEA fix type
+	int rtk_fix_quality = (int)gps[15];
+
+	gngga_message << value_map[rtk_fix_quality] << ",";
+
+/*************************Satellites*************************/
+	int sat_num = (int)gps[12];
+	gngga_message << sat_num << ",";
+
+/*************************HDOP*************************/
+	double pdop = gps[10];
+	gngga_message << std::setw(4) << std::setfill('0') << pdop << ",";
+
+/*************************Altitude*************************/
+	double alt_msl = gps[5];
+	
+	gngga_message << alt_msl << ",M,";
+
+/*************************Geoid Separation*************************/
+	gngga_message << ",M,";
+
+/*************************Age of Diff. Corr.*************************/
+	gngga_message << ",";
+
+/*************************Diff. Ref. Station ID*************************/
+	gngga_message << ",";
+
+/*************************Checksum*************************/
+	std::string ck = compute_checksum(gngga_message.str().c_str() + 1, gngga_message.str().length() - 1);
+	gngga_message << "*" << ck << "\r\n";
+
+#if DEBUG_PUBLISHERS
+	ROS_INFO("GGA Message: %s",gngga_message.str().c_str());
+#endif
+
 	gga_message.header = msg_header;
-	gga_message.sentence = SAMPLE_GGA_MESSAGE;
+	gga_message.sentence = gngga_message.str();
 
 	pub.publish(gga_message);
 }
