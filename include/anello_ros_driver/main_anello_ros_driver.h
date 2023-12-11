@@ -63,6 +63,20 @@ typedef struct
 {
 	uint64_t MCU_Time;	//	UInt64	ns	    Time since power on
 	uint64_t Sync_Time; // UInt64   ns   Timestamp of external sync pulse
+	int32_t AX;			// Int32	15 g	X-axis accel
+	int32_t AY;			// Int32	15 g	Y-axis accel
+	int32_t AZ;			// Int32	15 g	Z-axis accel
+	int32_t WX;			// Int32	450 dps	X-axis angular rate (MEMS)
+	int32_t WY;			// Int32	450 dps	Y-axis angular rate (MEMS)
+	int32_t WZ;			// Int32	450 dps	Z-axis angular rate (MEMS)
+	int32_t OG_WZ;		// Int32	450 dps	High precision z-axis angular rate
+	int16_t Temp_C;		// Int16	�C
+} rtcm_apim1_t;
+
+typedef struct
+{
+	uint64_t MCU_Time;	//	UInt64	ns	    Time since power on
+	uint64_t Sync_Time; // UInt64   ns   Timestamp of external sync pulse
 	uint64_t ODO_time;	//	Int64	ns	    Timestamp of ODometer reading
 	int32_t AX;			// Int32	15 g	X-axis accel
 	int32_t AY;			// Int32	15 g	Y-axis accel

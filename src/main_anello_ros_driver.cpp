@@ -28,6 +28,7 @@
 #if COMPILE_WITH_ROS
 #include <ros/ros.h>
 #include "anello_ros_driver/APIMU.h"
+#include "anello_ros_driver/APIM1.h"
 #include "anello_ros_driver/APINS.h"
 #include "anello_ros_driver/APGPS.h"
 #include "anello_ros_driver/APHDG.h"
@@ -274,6 +275,7 @@ static void ros_driver_main_loop()
 	ros::NodeHandle nh;
 
 	ros::Publisher pub_imu = nh.advertise<anello_ros_driver::APIMU>("APIMU", 10);
+	ros::Publisher pub_im1 = nh.advertise<anello_ros_driver::APIM1>("APIM1", 10);
 	ros::Publisher pub_ins = nh.advertise<anello_ros_driver::APINS>("APINS", 10);
 	ros::Publisher pub_gps = nh.advertise<anello_ros_driver::APGPS>("APGPS", 10);
 	ros::Publisher pub_hdg = nh.advertise<anello_ros_driver::APHDG>("APHDG", 10);
@@ -299,7 +301,7 @@ static void ros_driver_main_loop()
 		// open log file
 		log_file_fp = fopen(LOG_FILE_NAME, "w");
 
-		//check file was open correctly
+		// check file was open correctly
 		if (log_file_fp == NULL)
 		{
 #if COMPILE_WITH_ROS
@@ -327,10 +329,10 @@ static void ros_driver_main_loop()
 
 #if COMPILE_WITH_ROS
 	// get data port name from parameter server
-	if (!nh.getParam(DATA_PORT_PARAMETER_NAME,data_port_name))
+	if (!nh.getParam(DATA_PORT_PARAMETER_NAME, data_port_name))
 	{
-			ROS_ERROR("Failed to get data port name from parameter server -> %s",DATA_PORT_PARAMETER_NAME);
-			exit(1);
+		ROS_ERROR("Failed to get data port name from parameter server -> %s", DATA_PORT_PARAMETER_NAME);
+		exit(1);
 	}
 #else
 	// data_port_name = DEFAULT_DATA_INTERFACE;
@@ -375,7 +377,7 @@ static void ros_driver_main_loop()
 	{
 #endif
 
-		//when data is available write it to the serial port
+		// when data is available write it to the serial port
 		if (global_ntrip_buffer.is_read_ready())
 		{
 			anello_device_data.write_data((char *)global_ntrip_buffer.get_buffer(), global_ntrip_buffer.get_buffer_length());
@@ -408,6 +410,8 @@ static void ros_driver_main_loop()
 			{
 				int isOK = 0;
 				int num = 0;
+
+				// if ascii
 				if (ret == 1)
 				{
 					// check that the checksum is correct
@@ -476,6 +480,20 @@ static void ros_driver_main_loop()
 
 						isOK = 1;
 					}
+					else if (!isOK && num >= 10 && strstr(val[0], "APIM1") != NULL)
+					{
+						// ascii imu
+#if 1
+						decode_ascii_im1(val, num, decoded_val);
+#endif
+#if COMPILE_WITH_ROS
+						publish_im1(decoded_val, pub_im1);
+#else
+						printf("APIM1a\n");
+#endif
+
+						isOK = 1;
+					}
 					else if (!isOK && num >= 14 && strstr(val[0], "APINS") != NULL)
 					{
 						// ascii ins
@@ -489,6 +507,7 @@ static void ros_driver_main_loop()
 						isOK = 1;
 					}
 				}
+				// if rtcm
 				else if (ret == 5) /* rtcm */
 				{
 					// isOK = decode_rtcm_message(a1buff, pub_arr);
@@ -539,6 +558,17 @@ static void ros_driver_main_loop()
 
 							isOK = 1;
 						}
+						else if (a1buff.subtype == 6) /* IM1 */
+						{
+							decode_rtcm_im1_msg(decoded_val, a1buff);
+#if COMPILE_WITH_ROS
+							publish_im1(decoded_val, pub_im1);
+#else
+							printf("APIM1r\n");
+#endif
+
+							isOK = 1;
+						}
 					}
 				}
 
@@ -552,6 +582,9 @@ static void ros_driver_main_loop()
 				{
 					memset(decoded_val, 0, MAXFIELD * sizeof(double));
 					anello_device_data.port_confirm();
+#if DEBUG_MAIN
+					printf("%s\n", a1buff.buf);
+#endif
 				}
 				a1buff.nbyte = 0;
 			}

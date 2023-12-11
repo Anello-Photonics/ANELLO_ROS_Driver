@@ -13,9 +13,14 @@
 
 #include "message_publisher.h"
 #include "main_anello_ros_driver.h"
+#include "bit_tools.h"
+
+#include <string.h>
+#include <ctime>
 
 #if COMPILE_WITH_ROS
 #include <anello_ros_driver/APIMU.h>
+#include <anello_ros_driver/APIM1.h>
 #include <anello_ros_driver/APGPS.h>
 #include <anello_ros_driver/APINS.h>
 #include <anello_ros_driver/APHDG.h>
@@ -37,8 +42,99 @@ void publish_gga(double *gps, ros::Publisher pub)
 	msg_header.frame_id = "anello gps data";
 	gga_frame_id++;
 
+	std::ostringstream gngga_message;
+
+	gngga_message << "$GNGGA,";	//message header
+
+	double gps_seconds = gps[1] * 1e-9;
+	
+	time_t utc_time_s = (gps_seconds) - 18.0; //subtract 18 leap seconds
+	struct tm *utc_info = std::gmtime(&utc_time_s);
+
+/*************************UTC Time*************************/
+	int utc_hours = utc_info->tm_hour;
+	int utc_minutes = utc_info->tm_min;
+	int utc_seconds = utc_info->tm_sec;
+	int utc_milliseconds = floor( (gps_seconds - floor(gps_seconds)) * 1e3);
+
+	gngga_message << std::setw(2) << std::setfill('0') << utc_hours
+					<< std::setw(2) << std::setfill('0') << utc_minutes
+					<< std::setw(2) << std::setfill('0') << utc_seconds
+					<< "."
+					<< std::setw(3) << std::setfill('0') << utc_milliseconds << ",";
+
+
+/*************************Lat Deg*************************/
+	double lat_float = gps[2];
+	char lat_hemisphere = (lat_float >= 0) ? 'N' : 'S';
+	int lat_deg = floor(abs(lat_float));
+	double lat_min = 60 * abs(abs(lat_float) - abs(lat_deg));
+	int lat_min_int = floor(lat_min);
+	int lat_min_dec = floor((lat_min - lat_min_int) * 1e7);
+	
+	gngga_message << std::setw(2) << std::setfill('0') << lat_deg
+					<< std::setw(2) << std::setfill('0') << lat_min_int
+					<< "."
+					<< std::setw(7) << std::setfill('0') << lat_min_dec
+					<< ",";
+	
+	gngga_message << lat_hemisphere << ",";
+
+
+/*************************Lon Deg*************************/
+	double lon_float = gps[3];
+	char lon_hemisphere = (lon_float >= 0) ? 'E' : 'W';
+	int lon_deg = floor(abs(lon_float));
+	double lon_min = 60 * abs(abs(lon_float) - abs(lon_deg));
+	int lon_min_int = floor(lon_min);
+	int lon_min_dec = floor((lon_min - lon_min_int) * 1e7);
+
+	gngga_message << std::setw(3) << std::setfill('0') << lon_deg
+					<< std::setw(2) << std::setfill('0') << lon_min_int
+					<< "."
+					<< std::setw(7) << std::setfill('0') << lon_min_dec
+					<< ",";
+
+	gngga_message << lon_hemisphere << ",";
+
+/*************************Fix Quality*************************/	
+	int value_map[3] = {1, 5, 4}; // index is the anello fix type, value is the NMEA fix type
+	int rtk_fix_quality = (int)gps[15];
+
+	gngga_message << value_map[rtk_fix_quality] << ",";
+
+/*************************Satellites*************************/
+	int sat_num = (int)gps[12];
+	gngga_message << sat_num << ",";
+
+/*************************HDOP*************************/
+	double pdop = gps[10];
+	gngga_message << std::setw(4) << std::setfill('0') << pdop << ",";
+
+/*************************Altitude*************************/
+	double alt_msl = gps[5];
+	
+	gngga_message << alt_msl << ",M,";
+
+/*************************Geoid Separation*************************/
+	gngga_message << ",M,";
+
+/*************************Age of Diff. Corr.*************************/
+	gngga_message << ",";
+
+/*************************Diff. Ref. Station ID*************************/
+	gngga_message << ",";
+
+/*************************Checksum*************************/
+	std::string ck = compute_checksum(gngga_message.str().c_str() + 1, gngga_message.str().length() - 1);
+	gngga_message << "*" << ck << "\r\n";
+
+#if DEBUG_PUBLISHERS
+	ROS_INFO("GGA Message: %s",gngga_message.str().c_str());
+#endif
+
 	gga_message.header = msg_header;
-	gga_message.sentence = SAMPLE_GGA_MESSAGE;
+	gga_message.sentence = gngga_message.str();
 
 	pub.publish(gga_message);
 }
@@ -199,6 +295,7 @@ void publish_imu(double *imu, ros::Publisher pub)
 	 * imu[8] = odr [m/s]
 	 * imu[9] = odr Time [ms]
 	 * imu[10] = Temp [C]
+	 * imu[11] = T_Sync [ms]
 	 */
 
 	anello_ros_driver::APIMU msg;
@@ -213,11 +310,46 @@ void publish_imu(double *imu, ros::Publisher pub)
 	msg.odo_speed = imu[8];
 	msg.odo_time = imu[9];
 	msg.temp = imu[10];
+	msg.T_Sync = imu[11];
 
 	pub.publish(msg);
 
 #if DEBUG_PUBLISHERS
 	ROS_INFO("APIMU,%10.3f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f\n", imu[0], imu[1], imu[2], imu[3], imu[4], imu[5], imu[6], imu[7], imu[8], imu[9], imu[10], imu[11]);
+#endif
+}
+
+void publish_im1(double *im1, ros::Publisher pub)
+{
+	/*
+	 * im1[0] = MCU_Time [ms]
+	 * im1[1] = ax [g]
+	 * im1[2] = ay [g]
+	 * im1[3] = az [g]
+	 * im1[4] = wx [Deg/s]
+	 * im1[5] = wy [Deg/s]
+	 * im1[6] = wz [Deg/s]
+	 * im1[7] = wz_fog [Deg/s]
+	 * im1[8] = Temp [C]
+	 * im1[9] = T_Sync [ms]
+	 */
+
+	anello_ros_driver::APIM1 msg;
+	msg.mcu_time = im1[0];
+	msg.ax = im1[1];
+	msg.ay = im1[2];
+	msg.az = im1[3];
+	msg.wx = im1[4];
+	msg.wy = im1[5];
+	msg.wz = im1[6];
+	msg.wz_fog = im1[7];
+	msg.temp = im1[8];
+	msg.T_Sync = im1[9];
+
+	pub.publish(msg);
+
+#if DEBUG_PUBLISHERS
+	ROS_INFO("APIM1,%10.3f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f\n", im1[0], im1[1], im1[2], im1[3], im1[4], im1[5], im1[6], im1[7], im1[8], im1[9]);
 #endif
 }
 
