@@ -10,11 +10,12 @@
 #endif
 
 #ifndef PATCH_VERSION
-#define PATCH_VERSION 0
+#define PATCH_VERSION 1
 #endif
 
 
 /*
+v1.2.1 : Added support for dynamic gga message generation
 
 v1.2.0 : Feature List:
             1. Added IMU+ support
@@ -29,6 +30,8 @@ v1.1.0 : Feature List:
             3. Add launch file and parameter support
 
 v1.0.0 : Initial basic feature set
+
+v1.1.0 : Push changes to main
 
 */
 
