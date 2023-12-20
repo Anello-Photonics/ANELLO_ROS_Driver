@@ -1,5 +1,9 @@
 # ANELLO ROS Driver
 
+## Supported Firmware
+
+Support FW Versions >= v1.1.1
+
 ## Installation
 
 ### Install ROS
@@ -24,6 +28,23 @@ Install the following dependencies:
 Follow the build instructions on the [ntrip_client github page](https://github.com/LORD-MicroStrain/ntrip_client)
 
 ### Configure ANELLO ROS Driver
+
+#### Required Actions
+
+Product Type:
+
+GNSS/INS: None
+
+IMU+: None
+
+EVK: Update baud rate to 921600 in "anello_ros_driver/include/serial_interface.h"
+
+```c++
+#ifndef BAUDRATE
+#define BAUDRATE B230400    //Default baudrate for anello GNSS/INS and IMU+
+// #define BAUDRATE B921600    //Default baudrate for anello EVK
+#endif
+```
 
 Update the serial port values in the launch file to match the ports in your system.
 If the value is AUTO the program will automatically connect that port.
@@ -88,10 +109,11 @@ ANELLO messages will be published to topics (see below). For information on how 
 
 Topic definitions are defined in the [ANELLO Developer Manual](https://docs-a1.readthedocs.io/en/latest/) by the ASCII message format. Custom message definitions are used for Anello messages and can be found in the `/anello_ros_driver/msg` directory.
 
-* `/anello_ros_driver/APIMU`
-* `/anello_ros_driver/APINS`
-* `/anello_ros_driver/APGPS`
-* `/anello_ros_driver/APHDG`
+* `/APIMU`
+* `/APIM1`
+* `/APINS`
+* `/APGPS`
+* `/APHDG`
 * `/ntrip_client/nmea`
 
 #### Subscribed Topics
