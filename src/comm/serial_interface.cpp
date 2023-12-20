@@ -50,7 +50,7 @@ serial_interface::serial_interface(const char *portname)
 void serial_interface::init()
 {
     //Check for disabled port
-    if (strcmp(this->portname.c_str(), "DISABLE") == 0)
+    if (strcmp(this->portname.c_str(), "OFF") == 0)
     {
 #if DEBUG_SERIAL
 #if COMPILE_WITH_ROS
@@ -67,9 +67,9 @@ void serial_interface::init()
     if (this->usb_fd < 0)
     {
 #if COMPILE_WITH_ROS
-        ROS_INFO("file open error");
+        ROS_INFO("file open error with port %s", this->portname.c_str());
 #else
-        printf("File open error\n");
+        printf("File open error with port %s\n", this->portname.c_str());
 #endif
         exit(1);
     }
