@@ -51,6 +51,7 @@
 class serial_interface : base_interface
 {
 protected:
+    bool port_enabled;
     int usb_fd;
     std::string portname;
 
