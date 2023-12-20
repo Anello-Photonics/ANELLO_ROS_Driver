@@ -83,10 +83,6 @@ const char *serial_port_name = DEFAULT_DATA_INTERFACE;
 #define LOG_FILE_NAME "latest_anello_log.txt"
 #endif
 
-#ifndef USE_CONFIG_PORT
-#define USE_CONFIG_PORT 1
-#endif
-
 using namespace std;
 
 typedef struct
@@ -326,6 +322,7 @@ static void ros_driver_main_loop()
 	// initialize interface with anello unit
 
 	string data_port_name;
+	string config_port_name;
 
 #if COMPILE_WITH_ROS
 	// get data port name from parameter server
@@ -334,16 +331,20 @@ static void ros_driver_main_loop()
 		ROS_ERROR("Failed to get data port name from parameter server -> %s", DATA_PORT_PARAMETER_NAME);
 		exit(1);
 	}
+
+	if (!nh.getParam(CONFIG_PORT_PARAMETER_NAME, config_port_name))
+	{
+		ROS_ERROR("Failed to get config port name from parameter server -> %s", CONFIG_PORT_PARAMETER_NAME);
+		exit(1);
+	}
 #else
 	// data_port_name = DEFAULT_DATA_INTERFACE;
 	data_port_name = "AUTO";	
-
+	config_port_name = "AUTO";
 #endif
 
-#if USE_CONFIG_PORT
-	anello_config_port anello_device_config("AUTO");
+	anello_config_port anello_device_config(config_port_name.c_str());
 	anello_device_config.init();
-#endif
 
 	anello_data_port anello_device_data(data_port_name.c_str());
 	anello_device_data.init();
@@ -357,12 +358,10 @@ static void ros_driver_main_loop()
 	printf("Data Port: %s", anello_device_data.get_portname().c_str());
 #endif	
 
-#if USE_CONFIG_PORT
 #if COMPILE_WITH_ROS
 	ROS_INFO("Config Port: %s", anello_device_config.get_portname().c_str());
 #else
 	printf("Config Port: %s", anello_device_config.get_portname().c_str());
-#endif
 #endif
 
 #endif
@@ -384,13 +383,11 @@ static void ros_driver_main_loop()
 			global_ntrip_buffer.set_read_ready_false();
 		}
 
-#if USE_CONFIG_PORT
 		if (global_config_buffer.is_read_ready())
 		{
 			anello_device_config.write_data((char *)global_config_buffer.get_buffer(), global_config_buffer.get_buffer_length());
 			global_config_buffer.set_read_ready_false();
 		}
-#endif
 
 		// if all data has been read... read more data into buff
 		if (serial_read_buf.n_used >= serial_read_buf.nbytes)

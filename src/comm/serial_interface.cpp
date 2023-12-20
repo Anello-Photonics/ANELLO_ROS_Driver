@@ -37,23 +37,39 @@ serial_interface::serial_interface()
 {
     this->portname = "";
     this->usb_fd = -1;
+    this->port_enabled = false;
 }
 
 serial_interface::serial_interface(const char *portname)
 {
     this->portname = portname;
     this->usb_fd = -1;
+    this->port_enabled = true;
 }
 
 void serial_interface::init()
 {
+    //Check for disabled port
+    if (strcmp(this->portname.c_str(), "OFF") == 0)
+    {
+#if DEBUG_SERIAL
+#if COMPILE_WITH_ROS
+        ROS_INFO("Serial port disabled");
+#else
+        printf("Serial port disabled\n");
+#endif
+#endif
+        this->port_enabled = false;
+        return;
+    }
+
     this->usb_fd = open(this->portname.c_str(), O_RDWR);
     if (this->usb_fd < 0)
     {
 #if COMPILE_WITH_ROS
-        ROS_INFO("file open error");
+        ROS_INFO("file open error with port %s", this->portname.c_str());
 #else
-        printf("File open error\n");
+        printf("File open error with port %s\n", this->portname.c_str());
 #endif
         exit(1);
     }
@@ -108,6 +124,10 @@ void serial_interface::init()
 
 size_t serial_interface::get_data(char *buf, size_t buf_len)
 {
+    if (!this->port_enabled)
+    {
+        return 0;
+    }
     if (this->usb_fd < 0)
     {
 #if COMPILE_WITH_ROS
@@ -125,6 +145,10 @@ size_t serial_interface::get_data(char *buf, size_t buf_len)
 
 void serial_interface::write_data(const char *buf, size_t buf_len) 
 { 
+    if (!this->port_enabled)
+    {
+        return;
+    }
     write(usb_fd, buf, buf_len);
 }
 
@@ -174,11 +198,8 @@ void anello_config_port::init()
             std::string temp_port_name = PORT_DIR;
             if (strncmp(entry->d_name, PORT_PREFIX, strlen(PORT_PREFIX)) == 0)
             {
-                // port_name = PORT_DIR;
                 temp_port_name += entry->d_name;
-                // port_names.push_back(temp_port_name);
                 port_names.insert(port_names.begin(), temp_port_name);  
-                // break;
             }
         }
         closedir(dir);
@@ -264,8 +285,6 @@ anello_data_port::anello_data_port(const char *ser_port_name) : serial_interface
             // port_name = PORT_DIR;
             temp_port_name += entry->d_name;
             port_names.push_back(temp_port_name);
-            // this->port_names.insert(this->port_names.begin(), temp_port_name);  
-            // break;
         }
     }
     closedir(dir);
@@ -310,7 +329,7 @@ void anello_data_port::init()
 void anello_data_port::port_parse_fail()
 {
     //exit if auto detect is off or decode success is true
-    if (this->decode_success || !this->auto_detect)
+    if (this->decode_success || !this->auto_detect || !this->port_enabled)
     {
         return;
     }
@@ -376,6 +395,10 @@ void anello_data_port::port_confirm()
 
 size_t anello_data_port::get_data(char *buf, size_t buf_len)
 {
+    if (!this->port_enabled)
+    {
+        return 0;
+    }
     if (this->usb_fd < 0)
     {
 #if COMPILE_WITH_ROS
