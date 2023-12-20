@@ -47,7 +47,7 @@ EVK: Update baud rate to 921600 in "anello_ros_driver/include/serial_interface.h
 ```
 
 Update the serial port values in the launch file to match the ports in your system.
-If the value is AUTO the program will automatically connect that port.
+If the value is AUTO the program will automatically connect that port. The config port can be set to "OFF" if odometer correction are not being used.
 
 ```xml
     <!--Update data and config port values to the ports in your system-->
