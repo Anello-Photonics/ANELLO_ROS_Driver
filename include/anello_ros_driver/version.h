@@ -10,11 +10,13 @@
 #endif
 
 #ifndef PATCH_VERSION
-#define PATCH_VERSION 1
+#define PATCH_VERSION 2
 #endif
 
 
 /*
+v1.2.2 : Added option for config port to be disabled if the parameter is set to "OFF"
+
 v1.2.1 : Added support for dynamic gga message generation
 
 v1.2.0 : Feature List:
