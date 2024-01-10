@@ -41,7 +41,8 @@
 #endif
 
 #ifndef BAUDRATE
-#define BAUDRATE B230400
+#define BAUDRATE B230400    //Default baudrate for anello GNSS/INS and IMU+
+// #define BAUDRATE B921600    //Default baudrate for anello EVK
 #endif
 
 #ifndef MAX_PORT_PARSE_FAIL
@@ -51,6 +52,7 @@
 class serial_interface : base_interface
 {
 protected:
+    bool port_enabled;
     int usb_fd;
     std::string portname;
 
