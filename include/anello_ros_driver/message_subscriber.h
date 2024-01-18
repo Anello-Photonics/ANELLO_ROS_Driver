@@ -20,12 +20,14 @@
 #include "mavros_msgs/RTCM.h"
 #include "anello_ros_driver/APODO.h"
 #include "anello_ros_driver/init_heading.h"
+#include "anello_ros_driver/upd_heading.h"
 
 void ntrip_rtcm_callback(const mavros_msgs::RTCM::ConstPtr& msg);
 
 void apodo_callback(const anello_ros_driver::APODOConstPtr& msg);
 
 bool init_heading_callback(anello_ros_driver::init_heading::Request &req, anello_ros_driver::init_heading::Response &res);
+bool upd_heading_callback(anello_ros_driver::upd_heading::Request &req, anello_ros_driver::upd_heading::Response &res);
 
 #endif
 

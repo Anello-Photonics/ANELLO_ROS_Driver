@@ -67,6 +67,7 @@ add_message_files(
 add_service_files(
   FILES
   init_heading.srv
+  upd_heading.srv
 #   Service1.srv
 #   Service2.srv
 )

@@ -20,6 +20,7 @@
 #include "mavros_msgs/RTCM.h"
 #include "anello_ros_driver/APODO.h"
 #include "anello_ros_driver/init_heading.h"
+#include "anello_ros_driver/upd_heading.h"
 
 #ifndef APODO_HEADER
 #define APODO_HEADER "APODO"
@@ -78,6 +79,7 @@ void apodo_callback(const anello_ros_driver::APODOConstPtr& msg)
     // global_config_buffer.add_data_to_buffer((uint8_t *)full_message_str.c_str(), full_message_str.length());
 }
 
+//TODO update for uncertainty parameter
 bool init_heading_callback(anello_ros_driver::init_heading::Request &req, anello_ros_driver::init_heading::Response &res)
 {
 
@@ -122,6 +124,13 @@ bool init_heading_callback(anello_ros_driver::init_heading::Request &req, anello
     ROS_INFO("resp: %s %d", port_response, bytes_rec);
 #endif
     // global_config_buffer.add_data_to_buffer((uint8_t *)full_message_str.c_str(), full_message_str.length());
+    return true;
+}
+
+bool upd_heading_callback(anello_ros_driver::upd_heading::Request &req, anello_ros_driver::upd_heading::Response &res)
+{
+    ROS_INFO("APUPD_HDG callback");
+    res.is_success = true;
     return true;
 }
 

@@ -283,6 +283,7 @@ static void ros_driver_main_loop()
 	ros::Subscriber sub_odo = nh.subscribe("APODO", 1, apodo_callback);
 
 	ros::ServiceServer srv_init_heading = nh.advertiseService("init_heading", init_heading_callback);
+	ros::ServiceServer srv_upd_heading = nh.advertiseService("upd_heading", upd_heading_callback);
 	ROS_DEBUG("Anello ROS Driver Started\n");
 
 
