@@ -83,6 +83,8 @@ const char *serial_port_name = DEFAULT_DATA_INTERFACE;
 #define LOG_FILE_NAME "latest_anello_log.txt"
 #endif
 
+anello_config_port *gp_global_config_port;
+
 using namespace std;
 
 typedef struct
@@ -279,6 +281,8 @@ static void ros_driver_main_loop()
 
 	ros::Subscriber sub_rtcm = nh.subscribe("ntrip_client/rtcm", 1, ntrip_rtcm_callback);
 	ros::Subscriber sub_odo = nh.subscribe("APODO", 1, apodo_callback);
+
+	ros::ServiceServer srv_init_heading = nh.advertiseService("init_heading", init_heading_callback);
 	ROS_DEBUG("Anello ROS Driver Started\n");
 
 
@@ -345,6 +349,7 @@ static void ros_driver_main_loop()
 
 	anello_config_port anello_device_config(config_port_name.c_str());
 	anello_device_config.init();
+	gp_global_config_port = &anello_device_config;
 
 	anello_data_port anello_device_data(data_port_name.c_str());
 	anello_device_data.init();

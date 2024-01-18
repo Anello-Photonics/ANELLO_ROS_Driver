@@ -22,6 +22,7 @@
 #if COMPILE_WITH_ROS
 #include <ros/ros.h>
 #endif
+#include "serial_interface.h"
 
 #ifndef MAX_BUF_LEN
 #define MAX_BUF_LEN (1200)
@@ -51,6 +52,7 @@
 #define OLD_MESSAGING 1
 #endif
 
+extern anello_config_port *gp_global_config_port;
 
 typedef struct
 {
