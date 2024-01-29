@@ -66,8 +66,8 @@ add_message_files(
 ## Generate services in the 'srv' folder
 add_service_files(
   FILES
-  init_heading.srv
-  upd_heading.srv
+  initHeading.srv
+  updHeading.srv
 #   Service1.srv
 #   Service2.srv
 )

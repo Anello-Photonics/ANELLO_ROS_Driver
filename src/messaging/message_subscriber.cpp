@@ -30,6 +30,10 @@
 #define APINI_HEADER "APINI"
 #endif
 
+#ifndef APUPD_HEADER
+#define APUPD_HEADER "APUPD"
+#endif
+
 
 
 // subscribe to the ntrip client 
@@ -79,18 +83,20 @@ void apodo_callback(const anello_ros_driver::APODOConstPtr& msg)
     // global_config_buffer.add_data_to_buffer((uint8_t *)full_message_str.c_str(), full_message_str.length());
 }
 
+bool static is_success_message(const char *resp_message)
+{
+    return (strstr(resp_message, "err") == NULL) && (strstr(resp_message, "ERR") == NULL);
+}
+
 //TODO update for uncertainty parameter
 bool init_heading_callback(anello_ros_driver::init_heading::Request &req, anello_ros_driver::init_heading::Response &res)
 {
-
-#if DEBUG_SUBSCRIBERS
-    ROS_INFO("init_heading callback");
-#endif
 
     const int resp_max_data = 150;
     char port_response[resp_max_data];
     float heading = req.init_heading;
 
+    // build message body
     std::stringstream message_body;
     message_body << APINI_HEADER;
     message_body << ',';
@@ -98,39 +104,82 @@ bool init_heading_callback(anello_ros_driver::init_heading::Request &req, anello
     message_body << ',';
     message_body << heading;
 
+    //get checksum
     std::string ck_string = compute_checksum(message_body.str().c_str(), message_body.str().length());
 
+    //put message together
     std::stringstream full_message;
     full_message << '#';
     full_message << message_body.str();
     full_message << '*';
-
-    //transform ck_string to lowercase
     full_message << ck_string;
-
     std::string full_message_str = full_message.str();
 
-#if DEBUG_SUBSCRIBERS
-    ROS_INFO("Send: %s", full_message_str.c_str());
-#endif
-    res.is_success = true;
-    // return true;
 
+    // send data to port and get response
     gp_global_config_port->write_data((char *)full_message_str.c_str(), full_message_str.length());
-    sleep(.1);
+    sleep(.01);
     int bytes_rec = gp_global_config_port->get_data(port_response, resp_max_data);
 
+    // process response
+    port_response[bytes_rec] = '\0';
+    res.is_success = is_success_message(port_response);
+
 #if DEBUG_SUBSCRIBERS
+    ROS_INFO("init_heading callback");
+    ROS_INFO("Send: %s", full_message_str.c_str());
     ROS_INFO("resp: %s %d", port_response, bytes_rec);
 #endif
-    // global_config_buffer.add_data_to_buffer((uint8_t *)full_message_str.c_str(), full_message_str.length());
+
     return true;
 }
 
 bool upd_heading_callback(anello_ros_driver::upd_heading::Request &req, anello_ros_driver::upd_heading::Response &res)
 {
+    const int resp_max_data = 150;
+    char port_response[resp_max_data];
+    float heading = req.upd_heading;
+    float uncertainty = req.heading_uncertainty;
+
+    // build message body
+    std::stringstream message_body;
+    message_body << APUPD_HEADER;
+    message_body << ',';
+    message_body << "hdg";
+    message_body << ',';
+    message_body << std::fixed << std::setprecision(1) << heading;
+    message_body << ',';
+    message_body << "hdg_unc";
+    message_body << ',';
+    message_body << std::fixed << std::setprecision(1) << uncertainty;
+
+    //get checksum
+    std::string ck_string = compute_checksum(message_body.str().c_str(), message_body.str().length());
+
+    //put message together
+    std::stringstream full_message;
+    full_message << '#';
+    full_message << message_body.str();
+    full_message << '*';
+    full_message << ck_string;
+    std::string full_message_str = full_message.str();
+
+
+    // send data to port and get response
+    gp_global_config_port->write_data((char *)full_message_str.c_str(), full_message_str.length());
+    sleep(.01);
+    int bytes_rec = gp_global_config_port->get_data(port_response, resp_max_data);
+
+    // process response
+    port_response[bytes_rec] = '\0';
+    res.is_success = is_success_message(port_response);
+
+#if DEBUG_SUBSCRIBERS
     ROS_INFO("APUPD_HDG callback");
-    res.is_success = true;
+    ROS_INFO("Send: %s", full_message_str.c_str());
+    ROS_INFO("resp: %s %d", port_response, bytes_rec);
+#endif
+
     return true;
 }
 
