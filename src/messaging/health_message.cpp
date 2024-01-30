@@ -137,12 +137,14 @@ bool health_message::has_stable_heading()
     double hdg_ins_diff = abs(this->ins_heading - this->hdg_heading);
     double gps_ins_diff = abs(this->ins_heading - this->gps_heading);
 
-    if (this->is_baseline_correct() && (hdg_ins_diff < HEADING_STABILITY_THRESHOLD))
+    if (gps_ins_diff < HEADING_STABILITY_THRESHOLD)
     {
         ret_val = true;
-    } else if (gps_ins_diff < HEADING_STABILITY_THRESHOLD)
+    }
+
+    if (this->is_baseline_correct())
     {
-        ret_val = true;
+        ret_val = (ret_val) && (hdg_ins_diff < HEADING_STABILITY_THRESHOLD);
     }
 
     return ret_val;
