@@ -126,24 +126,24 @@ int decode_ascii_ins(char *val[], double *output_val)
     /*
     #APINS,318215,1343773580502990592,1,37.398875500000,-121.979132700000,-27.965002059937,,,,-0.166232,1.773182,0.250746,1*74
     */
-    output_val[0] = atof(val[1]);
-    output_val[1] = atof(val[2]);
-    output_val[2] = atof(val[3]);
+    output_val[0] = atof(val[1]);           /* time MCU */
+    output_val[1] = atof(val[2]);           /* GPS Time ns */
+    output_val[2] = atof(val[3]);           /* status */
 
-    output_val[3] = atof(val[4]);
-    output_val[4] = atof(val[5]);
-    output_val[5] = atof(val[6]);
+    output_val[3] = atof(val[4]);           /* lat (deg) */
+    output_val[4] = atof(val[5]);           /* lon (deg) */
+    output_val[5] = atof(val[6]);           /* ht (m) */
 
-    output_val[6] = atof(val[7]);
-    output_val[7] = atof(val[8]);
-    output_val[8] = atof(val[9]);
+    output_val[6] = atof(val[7]);           /* vn (m/s) */
+    output_val[7] = atof(val[8]);           /* ve (m/s) */
+    output_val[8] = atof(val[9]);           /* vd (m/s) */
 
-    output_val[9] = atof(val[10]);
-    output_val[10] = atof(val[11]);
-    output_val[11] = atof(val[12]);
+    output_val[9] = atof(val[10]);          /* roll (deg) */
+    output_val[10] = atof(val[11]);         /* pitch (deg) */
+    output_val[11] = atof(val[12]);         /* heading (deg) */
 
-    output_val[12] = atoi(val[13]); /* zupt */
-    output_val[13] = atoi(val[2]) * 1.0e-9;
+    output_val[12] = atoi(val[13]);         /* zupt */
+    output_val[13] = atoi(val[2]) * 1.0e-9; /* GPS Time s */
 
     return 1;
 }
