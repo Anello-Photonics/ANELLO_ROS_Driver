@@ -63,6 +63,8 @@ private:
 
     bool is_baseline_correct();
 public:
+    health_message();
+
     void add_imu_message(double *data);
     void add_ins_message(double *data);
     void add_gps_message(double *data);

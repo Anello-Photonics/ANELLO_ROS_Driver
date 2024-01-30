@@ -24,6 +24,7 @@
 #include <unistd.h>
 #include "main_anello_ros_driver.h"
 #include "message_subscriber.h"
+#include "health_message.h"
 
 #if COMPILE_WITH_ROS
 #include <ros/ros.h>
@@ -291,6 +292,9 @@ static void ros_driver_main_loop()
 	const char *ntrip_data;
 #endif
 
+	// init health message class
+	health_message health_msg;
+
 	FILE *log_file_fp = nullptr;
 	if (LOG_LATEST_SET)
 	{
@@ -320,7 +324,6 @@ static void ros_driver_main_loop()
 	a1buff_t a1buff = {0};
 
 	// initialize interface with anello unit
-
 	string data_port_name;
 	string config_port_name;
 
@@ -431,6 +434,7 @@ static void ros_driver_main_loop()
 					{
 						// ascii gps
 						decode_ascii_gps(val, decoded_val);
+						health_msg.add_gps_message(decoded_val);
 #if COMPILE_WITH_ROS
 						publish_gps(decoded_val, pub_gps);
 						publish_gga(decoded_val, pub_gga);
@@ -457,6 +461,7 @@ static void ros_driver_main_loop()
 					{
 						// ascii hdg
 						decode_ascii_hdr(val, decoded_val);
+						health_msg.add_hdg_message(decoded_val);
 #if COMPILE_WITH_ROS
 						publish_hdr(decoded_val, pub_hdg);
 #else
@@ -469,6 +474,7 @@ static void ros_driver_main_loop()
 					{
 						// ascii imu
 						decode_ascii_imu(val, num, decoded_val);
+						health_msg.add_imu_message(decoded_val);
 #if COMPILE_WITH_ROS
 						publish_imu(decoded_val, pub_imu);
 #else
@@ -480,9 +486,7 @@ static void ros_driver_main_loop()
 					else if (!isOK && num >= 10 && strstr(val[0], "APIM1") != NULL)
 					{
 						// ascii imu
-#if 1
 						decode_ascii_im1(val, num, decoded_val);
-#endif
 #if COMPILE_WITH_ROS
 						publish_im1(decoded_val, pub_im1);
 #else
@@ -495,6 +499,7 @@ static void ros_driver_main_loop()
 					{
 						// ascii ins
 						decode_ascii_ins(val, decoded_val);
+						health_msg.add_ins_message(decoded_val);
 #if COMPILE_WITH_ROS
 						publish_ins(decoded_val, pub_ins);
 #else
@@ -513,6 +518,7 @@ static void ros_driver_main_loop()
 						if (a1buff.subtype == 1) /* IMU */
 						{
 							decode_rtcm_imu_msg(decoded_val, a1buff);
+							health_msg.add_imu_message(decoded_val);
 #if COMPILE_WITH_ROS
 							publish_imu(decoded_val, pub_imu);
 #else
@@ -523,7 +529,13 @@ static void ros_driver_main_loop()
 						}
 						else if (a1buff.subtype == 2) /* GPS PVT */
 						{
-							decode_rtcm_gps_msg(decoded_val, a1buff);
+							int ant_id = decode_rtcm_gps_msg(decoded_val, a1buff);
+
+							// only add gps1 to health message
+							if (GPS1 == ant_id)
+							{
+								health_msg.add_gps_message(decoded_val);
+							}
 #if COMPILE_WITH_ROS
 							publish_gps(decoded_val, pub_gps);
 							publish_gga(decoded_val, pub_gga);
@@ -536,6 +548,7 @@ static void ros_driver_main_loop()
 						else if (a1buff.subtype == 3) /* DUAL ANTENNA */
 						{
 							decode_rtcm_hdg_msg(decoded_val, a1buff);
+							health_msg.add_hdg_message(decoded_val);
 #if COMPILE_WITH_ROS
 							publish_hdr(decoded_val, pub_hdg);
 #else
@@ -547,6 +560,7 @@ static void ros_driver_main_loop()
 						else if (a1buff.subtype == 4) /* INS */
 						{
 							decode_rtcm_ins_msg(decoded_val, a1buff);
+							health_msg.add_ins_message(decoded_val);
 #if COMPILE_WITH_ROS
 							publish_ins(decoded_val, pub_ins);
 #else

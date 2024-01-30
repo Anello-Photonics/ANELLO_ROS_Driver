@@ -51,11 +51,6 @@ health_message::health_message()
     this->rtk_status = 0;
 }
 
-health_message::~health_message()
-{
-    
-}
-
 void health_message::add_imu_message(double *imu_msg)
 {
     double wz = imu_msg[6];
