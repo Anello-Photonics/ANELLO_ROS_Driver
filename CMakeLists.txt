@@ -157,6 +157,7 @@ add_executable(anello_ros_driver
   src/messaging/message_publisher.cpp 
   src/messaging/message_subscriber.cpp
   src/messaging/ntrip_buffer.cpp
+  src/messaging/health_message.cpp
   
   src/comm/serial_interface.cpp
 )
