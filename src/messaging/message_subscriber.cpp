@@ -85,7 +85,7 @@ void apodo_callback(const anello_ros_driver::APODOConstPtr& msg)
 
 bool static is_success_message(const char *resp_message)
 {
-    return (strstr(resp_message, "err") == NULL) && (strstr(resp_message, "ERR") == NULL);
+    return (strstr(resp_message, "err") == NULL) && (strstr(resp_message, "ERR") == NULL) && (strstr(resp_message, "APUPD") != NULL);
 }
 
 //TODO update for uncertainty parameter
@@ -118,7 +118,7 @@ bool init_heading_callback(anello_ros_driver::init_heading::Request &req, anello
 
     // send data to port and get response
     gp_global_config_port->write_data((char *)full_message_str.c_str(), full_message_str.length());
-    sleep(.01);
+    sleep(.005);
     int bytes_rec = gp_global_config_port->get_data(port_response, resp_max_data);
 
     // process response
@@ -167,7 +167,7 @@ bool upd_heading_callback(anello_ros_driver::upd_heading::Request &req, anello_r
 
     // send data to port and get response
     gp_global_config_port->write_data((char *)full_message_str.c_str(), full_message_str.length());
-    sleep(.01);
+    sleep(.005);
     int bytes_rec = gp_global_config_port->get_data(port_response, resp_max_data);
 
     // process response

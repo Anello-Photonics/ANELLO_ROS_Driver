@@ -514,6 +514,10 @@ static void ros_driver_main_loop()
 
 						isOK = 1;
 					}
+					else if (!isOK && ((strstr(val[0], "APINI") != NULL ) || (strstr(val[0], "APUPD") != NULL)))
+					{
+						isOK = 1;
+					}
 				}
 				// if rtcm
 				else if (ret == 5) /* rtcm */
