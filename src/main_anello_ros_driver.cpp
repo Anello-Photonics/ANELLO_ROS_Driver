@@ -96,7 +96,6 @@ typedef struct
 } file_read_buf_t;
 
 static int input_a1_data(a1buff_t *a1, uint8_t data, FILE *log_file);
-static int parse_fields(char *const buffer, char **val);
 static void ros_driver_main_loop();
 
 int main(int argc, char *argv[])
@@ -224,39 +223,6 @@ static int input_a1_data(a1buff_t *a1, uint8_t data, FILE *log_file)
 	return ret;
 }
 
-/*
- * Parameters
- * char *const buffer : A single valid ASCII message
- * char ** val : Empty arr of strings. Each string will be input with one of the distinct fields in the ASCII message
- *
- * Return
- * number of sections that detected and put into val
- *
- */
-static int parse_fields(char *const buffer, char **val)
-{
-	char *p, *q;
-	int n = 0;
-
-	/* parse fields */
-	for (p = buffer; *p && n < MAXFIELD; p = q + 1)
-	{
-		if (p == NULL)
-			break;
-		if ((q = strchr(p, ',')) || (q = strchr(p, '*')) || (q = strchr(p, '\n')) || (q = strchr(p, '\r')))
-		{
-			val[n++] = p;
-			*q = '\0';
-		}
-		else
-			break;
-	}
-	if (p != NULL)
-	{
-		val[n++] = p;
-	}
-	return n;
-}
 
 /*
  * Main loop for the driver
@@ -358,6 +324,7 @@ static void ros_driver_main_loop()
 	anello_data_port anello_device_data(data_port_name.c_str());
 	anello_device_data.init();
 
+	health_msg.set_baseline(anello_device_config.get_baseline());
 #if DEBUG_MAIN
 #if COMPILE_WITH_ROS
 	ROS_INFO("Anello ROS Driver Started\n");

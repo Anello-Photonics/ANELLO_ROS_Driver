@@ -64,73 +64,6 @@ health_message::health_message()
     this->rtk_status = 0;
 }
 
-//TODO: Implement baseline check
-bool health_message::is_baseline_correct()
-{
-    return true;
-}
-
-bool health_message::has_rtk_fix()
-{
-    return (this->rtk_status >= 2);
-}
-
-bool health_message::has_gyro_discrepancy()
-{
-    bool ret_val = false;
-
-    // if moving average not ready yet, return false
-    if (this->buffer_full)
-    {
-        double diff = this->wz_mems_moving_average - this->wz_fog_moving_average;
-        if (diff > GYRO_DISCREPANCY_THRESHOLD)
-        {
-            ret_val = true;
-        }
-    }
-
-    return ret_val;
-}
-
-bool health_message::has_stable_heading()
-{
-    bool ret_val = false;
-
-    // get difference between ins and hdg and ins and gps
-    double hdg_ins_diff = abs(this->ins_heading - this->hdg_heading);
-    double gps_ins_diff = abs(this->ins_heading - this->gps_heading);
-
-    // correct for wrap around errors
-    if (hdg_ins_diff > 180)
-    {
-        hdg_ins_diff = 360 - hdg_ins_diff;
-    }
-
-    if (gps_ins_diff > 180)
-    {
-        gps_ins_diff = 360 - gps_ins_diff;
-    }
-
-    // check if differences are within threshold
-    if (gps_ins_diff < HEADING_STABILITY_THRESHOLD)
-    {
-        ret_val = true;
-    }
-
-    // only include hdg if baseline is correct
-    if (this->is_baseline_correct())
-    {
-        ret_val = (ret_val) && (hdg_ins_diff < HEADING_STABILITY_THRESHOLD);
-    }
-
-    return ret_val;
-}
-
-bool health_message::has_good_gps_accuracy()
-{
-    return (this->gps_accuracy < GOOD_GPS_ACC_TRESHOLD);
-}
-
 void health_message::add_imu_message(double *imu_msg)
 {
     this->cur_imu_time = imu_msg[0];
@@ -186,6 +119,11 @@ void health_message::add_hdg_message(double *hdg_msg)
     this->hdg_heading = hdg_msg[6];
     if (this->hdg_heading > 180)
         this->hdg_heading -= 360;
+}
+
+void health_message::set_baseline(double baseline)
+{
+    this->configured_baseline = baseline;
 }
 
 //TODO: Implement baseline check

@@ -18,6 +18,10 @@ extern "C"
 {
 #endif
 
+#ifndef MAXFIELD
+#define MAXFIELD 20
+#endif
+
 #include <stdint.h>
 
     unsigned int crc24q(const unsigned char *buff, int len);
@@ -46,4 +50,5 @@ extern "C"
 
 #include <string>
 extern std::string compute_checksum(const char *buff, int len);
+extern int parse_fields(char *const buffer, char **val);
 #endif

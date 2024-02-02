@@ -73,6 +73,7 @@ public:
     void add_ins_message(double *data);
     void add_gps_message(double *data);
     void add_hdg_message(double *data);
+    void set_baseline(double baseline);
 
     uint8_t get_health_status();
     void get_csv_line(char *buffer, int len);

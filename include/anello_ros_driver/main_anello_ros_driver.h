@@ -22,14 +22,12 @@
 #if COMPILE_WITH_ROS
 #include <ros/ros.h>
 #endif
+
+#include "bit_tools.h"
 #include "serial_interface.h"
 
 #ifndef MAX_BUF_LEN
 #define MAX_BUF_LEN (1200)
-#endif
-
-#ifndef MAXFIELD
-#define MAXFIELD 20
 #endif
 
 #ifndef DEBUG_MAIN
