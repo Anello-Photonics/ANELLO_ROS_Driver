@@ -34,6 +34,7 @@ enum HEALTH_STATUS_FLAGS
 class health_message {
 private:
     // imu message information
+    double cur_imu_time;
     bool buffer_full;
     double wz_mems_circular_buffer[IMU_MOVING_AVERAGE_SIZE];
     double wz_fog_circular_buffer[IMU_MOVING_AVERAGE_SIZE];
@@ -48,12 +49,14 @@ private:
 
     // gps message information
     double gps_heading;
-    double gps_accuracy;
+    double gps_heading_acc;
+    double gps_hacc;
     double rtk_status;
 
     // hdg message information
     double hdg_baseline;
     double hdg_heading;
+    double configured_baseline;
 
     // helper functions
     bool has_rtk_fix();
@@ -61,6 +64,7 @@ private:
     bool has_stable_heading();
     bool has_good_gps_accuracy();
 
+    bool is_single_antenna_heading_valid();
     bool is_baseline_correct();
 public:
     health_message();
@@ -69,7 +73,10 @@ public:
     void add_ins_message(double *data);
     void add_gps_message(double *data);
     void add_hdg_message(double *data);
+
     uint8_t get_health_status();
+    void get_csv_line(char *buffer, int len);
+    const char *get_csv_header();
 };
 
 
