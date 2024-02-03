@@ -22,13 +22,23 @@
 
 
 
-enum HEALTH_STATUS_FLAGS
+enum POSITION_STATUS_FLAGS
 {
     CM_LEVEL_ACCURACY,
     SUB_METER_LEVEL_ACCURACY,
-    GPS_ACC_POOR,
-    HEADING_UNSTABLE,
-    GYRO_DISCREPANCY
+    GPS_ACC_POOR
+};
+
+enum HEADING_STATUS_FLAGS
+{
+    HEADING_STABLE,
+    HEADING_UNSTABLE
+};
+
+enum GYRO_STATUS_FLAGS
+{
+    GYRO_GOOD,
+    GYRO_BAD
 };
 
 class health_message {
@@ -75,7 +85,11 @@ public:
     void add_hdg_message(double *data);
     void set_baseline(double baseline);
 
-    uint8_t get_health_status();
+    uint8_t get_position_status();
+    uint8_t get_heading_status();
+    uint8_t get_gyro_status();
+
+    // debug functions
     void get_csv_line(char *buffer, int len);
     const char *get_csv_header();
 };

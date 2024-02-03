@@ -195,7 +195,7 @@ bool health_message::has_good_gps_accuracy()
     return (this->gps_hacc < GOOD_GPS_ACC_TRESHOLD);
 }
 
-uint8_t health_message::get_health_status()
+uint8_t health_message::get_position_status()
 {
     uint8_t ret_val = GPS_ACC_POOR;
 
@@ -203,14 +203,6 @@ uint8_t health_message::get_health_status()
     {
         ret_val = CM_LEVEL_ACCURACY;
     }
-    else if (this->has_gyro_discrepancy())
-    {
-        ret_val = GYRO_DISCREPANCY;
-    }
-    else if (!this->has_stable_heading())
-    {
-        ret_val = HEADING_UNSTABLE;
-    } 
     else if (this->has_good_gps_accuracy())
     {
         ret_val = SUB_METER_LEVEL_ACCURACY;
@@ -223,9 +215,33 @@ uint8_t health_message::get_health_status()
     return ret_val;
 }
 
+uint8_t health_message::get_heading_status()
+{
+    uint8_t ret_val = HEADING_UNSTABLE;
+
+    if (this->has_stable_heading())
+    {
+        ret_val = HEADING_STABLE;
+    }
+
+    return ret_val;
+}
+
+uint8_t health_message::get_gyro_status()
+{
+    uint8_t ret_val = GYRO_BAD;
+
+    if (!this->has_gyro_discrepancy())
+    {
+        ret_val = GYRO_GOOD;
+    }
+
+    return ret_val;
+}
+
 const char* health_message::get_csv_header()
 {
-    return "cur_imu_time,mems_avg,fog_avg,ins_heading,gps_heading,hdg_heading,ins_gps_heading_diff,ins_hdg_heading_diff,hdg_baseline,gps_accuracy,gps_heading_acc,rtk,has_fix,gyro_disc,stable_heading,good_gps_acc,health_status\n";
+    return "cur_imu_time,mems_avg,fog_avg,ins_heading,gps_heading,hdg_heading,ins_gps_heading_diff,ins_hdg_heading_diff,hdg_baseline,gps_accuracy,gps_heading_acc,rtk,has_fix,gyro_disc,stable_heading,good_gps_acc,position_status,heading_status,gyro_status\n";
 }
 
 void health_message::get_csv_line(char *buffer, int len)
@@ -239,12 +255,12 @@ void health_message::get_csv_line(char *buffer, int len)
         ins_hdg_heading_diff = 360 - ins_hdg_heading_diff;
 
 
-    sprintf(buffer, "%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%i,%i,%i,%i,%i\n", 
+    sprintf(buffer, "%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%i,%i,%i,%i,%i,%i,%i\n", 
                                                                                                     this->cur_imu_time,
                                                                                                     this->wz_mems_moving_average, this->wz_fog_moving_average, 
                                                                                                     this->ins_heading, this->gps_heading, this->hdg_heading, 
                                                                                                     ins_gps_heading_diff, ins_hdg_heading_diff, 
                                                                                                     this->hdg_baseline, this->gps_hacc, this->gps_heading_acc, this->rtk_status,
                                                                                                     this->has_rtk_fix(), this->has_gyro_discrepancy(),this->has_stable_heading(),this->has_good_gps_accuracy(),
-                                                                                                    this->get_health_status());
+                                                                                                    this->get_position_status(), this->get_heading_status(), this->get_gyro_status());
 }
