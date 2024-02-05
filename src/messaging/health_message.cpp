@@ -57,7 +57,7 @@ health_message::health_message()
     this->hdg_heading = 0.0;
 
     this->hdg_baseline = 0;
-    this->configured_baseline = 2.02;
+    this->configured_baseline = 0.0;
 
     this->gps_hacc = 0.0;
     this->gps_heading_acc = 0.0;
@@ -241,10 +241,10 @@ uint8_t health_message::get_gyro_status()
 
 const char* health_message::get_csv_header()
 {
-    return "cur_imu_time,mems_avg,fog_avg,ins_heading,gps_heading,hdg_heading,ins_gps_heading_diff,ins_hdg_heading_diff,hdg_baseline,gps_accuracy,gps_heading_acc,rtk,has_fix,gyro_disc,stable_heading,good_gps_acc,position_status,heading_status,gyro_status\n";
+    return "cur_imu_time,lat,lon,alt,mems_avg,fog_avg,ins_heading,gps_heading,hdg_heading,ins_gps_heading_diff,ins_hdg_heading_diff,hdg_baseline,gps_accuracy,gps_heading_acc,rtk,has_fix,gyro_disc,stable_heading,good_gps_acc,health_status,position_status,heading_status,gyro_status\n";
 }
 
-void health_message::get_csv_line(char *buffer, int len)
+void health_message::get_csv_line(double *llh, char *buffer, int len)
 {
     double ins_gps_heading_diff = abs(this->ins_heading - this->gps_heading);
     double ins_hdg_heading_diff = abs(this->ins_heading - this->hdg_heading);
@@ -254,13 +254,15 @@ void health_message::get_csv_line(char *buffer, int len)
     if (ins_hdg_heading_diff > 180)
         ins_hdg_heading_diff = 360 - ins_hdg_heading_diff;
 
-
-    sprintf(buffer, "%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%i,%i,%i,%i,%i,%i,%i\n", 
+    sprintf(buffer, "%10.4f,%14.9f,%14.9f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%i,%i,%i,%i,%i,%i,%i,%i\n", 
                                                                                                     this->cur_imu_time,
+                                                                                                    llh[0], llh[1], llh[2],
                                                                                                     this->wz_mems_moving_average, this->wz_fog_moving_average, 
                                                                                                     this->ins_heading, this->gps_heading, this->hdg_heading, 
                                                                                                     ins_gps_heading_diff, ins_hdg_heading_diff, 
                                                                                                     this->hdg_baseline, this->gps_hacc, this->gps_heading_acc, this->rtk_status,
                                                                                                     this->has_rtk_fix(), this->has_gyro_discrepancy(),this->has_stable_heading(),this->has_good_gps_accuracy(),
+                                                                                                    this->get_health_status(),
                                                                                                     this->get_position_status(), this->get_heading_status(), this->get_gyro_status());
+
 }

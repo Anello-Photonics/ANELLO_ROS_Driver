@@ -90,7 +90,7 @@ public:
     uint8_t get_gyro_status();
 
     // debug functions
-    void get_csv_line(char *buffer, int len);
+    void health_message::get_csv_line(double *llh, char *buffer, int len);
     const char *get_csv_header();
 };
 
