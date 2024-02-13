@@ -52,6 +52,10 @@ private:
     double wz_fog_current_sum;
     double wz_mems_moving_average;
     double wz_fog_moving_average;
+
+    double wz_fog_std_dev;
+    double wz_mems_std_dev;
+    
     int circular_buffer_index;
 
     // ins message information

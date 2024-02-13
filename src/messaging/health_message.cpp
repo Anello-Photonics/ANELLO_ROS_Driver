@@ -17,7 +17,7 @@
 #include "health_message.h"
 
 #ifndef GYRO_DISCREPANCY_THRESHOLD
-#define GYRO_DISCREPANCY_THRESHOLD .2   // deg/s
+#define GYRO_DISCREPANCY_THRESHOLD 2   // deg/s
 #endif
 
 #ifndef HEADING_STABILITY_THRESHOLD
@@ -48,6 +48,8 @@ health_message::health_message()
     this->wz_fog_current_sum = 0.0;
     this->wz_mems_moving_average = 0.0;
     this->wz_fog_moving_average = 0.0;
+    this->wz_mems_std_dev = 1.0;
+    this->wz_fog_std_dev = 1.0;
     this->circular_buffer_index = 0.0;
 
     for (int i = 0; i < IMU_MOVING_AVERAGE_SIZE; i++)
@@ -104,11 +106,23 @@ void health_message::add_imu_message(double *imu_msg)
     {
         this->wz_mems_moving_average = this->wz_mems_current_sum / IMU_MOVING_AVERAGE_SIZE;
         this->wz_fog_moving_average = this->wz_fog_current_sum / IMU_MOVING_AVERAGE_SIZE;
+
+        // calculate standard deviation
+        double wz_mems_std_dev_sum = 0;
+        double wz_fog_std_dev_sum = 0;
+        for (int i = 0; i < IMU_MOVING_AVERAGE_SIZE; i++)
+        {
+            wz_mems_std_dev_sum += pow(this->wz_mems_circular_buffer[i] - this->wz_mems_moving_average, 2);
+            wz_fog_std_dev_sum += pow(this->wz_fog_circular_buffer[i] - this->wz_fog_moving_average, 2);
+        }
+        
+        this->wz_mems_std_dev = sqrt(wz_mems_std_dev_sum / IMU_MOVING_AVERAGE_SIZE);
+        this->wz_fog_std_dev = sqrt(wz_fog_std_dev_sum / IMU_MOVING_AVERAGE_SIZE);
     }
 }
 
 void health_message::add_ins_message(double* ins_msg)
-{
+{ 
     this->ins_heading = ins_msg[11];
     double ins_status = ins_msg[2];
 
@@ -245,6 +259,11 @@ bool health_message::has_gyro_discrepancy()
         {
             ret_val = true;
         }
+
+        if (wz_mems_std_dev < 1e-4 || wz_fog_std_dev < 1e-4)
+        {
+            ret_val = true;
+        }
     }
 
     return ret_val;
@@ -306,7 +325,7 @@ uint8_t health_message::get_gyro_status()
 
 const char* health_message::get_csv_header()
 {
-    return "cur_imu_time,lat,lon,alt,mems_avg,fog_avg,ins_heading,gps_heading,hdg_heading,ins_gps_heading_diff,ins_hdg_heading_diff,gps_streak,hdg_streak,hdg_baseline,gps_accuracy,gps_heading_acc,rtk,has_fix,gyro_disc,good_gps_acc,position_status,heading_status,gyro_status\n";
+    return "cur_imu_time,lat,lon,alt,mems_avg,fog_avg,mems_std,fog_std,ins_heading,gps_heading,hdg_heading,ins_gps_heading_diff,ins_hdg_heading_diff,gps_streak,hdg_streak,hdg_baseline,gps_accuracy,gps_heading_acc,rtk,has_fix,gyro_disc,good_gps_acc,position_status,heading_status,gyro_status\n";
 }
 
 void health_message::get_csv_line(double *llh, char *buffer, int len)
@@ -315,10 +334,11 @@ void health_message::get_csv_line(double *llh, char *buffer, int len)
     this->get_current_diff(&ins_gps_heading_diff, &ins_hdg_heading_diff);
 
   //sprintf(buffer, "%10.4f,%14.9f,%14.9f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%i,%i,%i,%i,%i,%i,%i,%i\n",
-    sprintf(buffer, "%10.4f,%14.9f,%14.9f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%i,%i,%10.4f,%10.4f,%10.4f,%10.4f,%i,%i,%i,%i,%i,%i,\n",
+    sprintf(buffer, "%10.4f,%14.9f,%14.9f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%i,%i,%10.4f,%10.4f,%10.4f,%10.4f,%i,%i,%i,%i,%i,%i,\n",
                                                                                                     this->cur_imu_time,
                                                                                                     llh[0], llh[1], llh[2],
                                                                                                     this->wz_mems_moving_average, this->wz_fog_moving_average, 
+                                                                                                    this->wz_mems_std_dev, this->wz_fog_std_dev,
                                                                                                     this->ins_heading, this->gps_heading, this->hdg_heading, 
                                                                                                     ins_gps_heading_diff, ins_hdg_heading_diff,
                                                                                                     this->gps_ins_mismatch_streak, this->hdg_ins_mismatch_streak,
