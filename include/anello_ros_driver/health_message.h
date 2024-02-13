@@ -62,6 +62,12 @@ private:
     double gps_heading_acc;
     double gps_hacc;
     double rtk_status;
+    
+    bool gps_read_flag;
+    bool hdg_read_flag;
+    int gps_ins_mismatch_streak;
+    int hdg_ins_mismatch_streak;
+
 
     // hdg message information
     double hdg_baseline;
@@ -71,8 +77,9 @@ private:
     // helper functions
     bool has_rtk_fix();
     bool has_gyro_discrepancy();
-    bool has_stable_heading();
     bool has_good_gps_accuracy();
+
+    void get_current_diff(double *gps_diff, double *hdg_diff);
 
     bool is_single_antenna_heading_valid();
     bool is_baseline_correct();
@@ -90,7 +97,7 @@ public:
     uint8_t get_gyro_status();
 
     // debug functions
-    void health_message::get_csv_line(double *llh, char *buffer, int len);
+    void get_csv_line(double *llh, char *buffer, int len);
     const char *get_csv_header();
 };
 

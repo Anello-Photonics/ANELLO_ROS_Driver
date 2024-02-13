@@ -33,7 +33,11 @@
 #endif
 
 #ifndef GPS_HEADING_ACC_GOOD_THRESHOLD
-#define GPS_HEADING_ACC_GOOD_THRESHOLD 3
+#define GPS_HEADING_ACC_GOOD_THRESHOLD 1
+#endif
+
+#ifndef HEADING_MISMATCH_COUNT_TH
+#define HEADING_MISMATCH_COUNT_TH 4
 #endif
 
 health_message::health_message()
@@ -57,11 +61,16 @@ health_message::health_message()
     this->hdg_heading = 0.0;
 
     this->hdg_baseline = 0;
-    this->configured_baseline = 0.0;
+    this->configured_baseline = 2.01;
 
     this->gps_hacc = 0.0;
     this->gps_heading_acc = 0.0;
     this->rtk_status = 0;
+
+    this->gps_read_flag = false;
+    this->hdg_read_flag = false;
+    this->gps_ins_mismatch_streak = 0;
+    this->hdg_ins_mismatch_streak = 0;
 }
 
 void health_message::add_imu_message(double *imu_msg)
@@ -98,9 +107,70 @@ void health_message::add_imu_message(double *imu_msg)
     }
 }
 
-void health_message::add_ins_message(double *ins_msg)
+void health_message::add_ins_message(double* ins_msg)
 {
     this->ins_heading = ins_msg[11];
+    double ins_status = ins_msg[2];
+
+    double gps_ins_diff, hdg_ins_diff;
+    this->get_current_diff(&gps_ins_diff, &hdg_ins_diff);
+
+    // if gps has been read recently update mismatch streak accordingly
+    if (this->gps_read_flag)
+    {
+        this->gps_read_flag = false;
+
+        if (this->is_single_antenna_heading_valid())
+        {
+            this->gps_read_flag = false;
+            //check backward direction as well
+            bool match = ((HEADING_STABILITY_THRESHOLD > gps_ins_diff) || ((180 - HEADING_STABILITY_THRESHOLD) < gps_ins_diff));
+            if (!match)
+            {
+                this->gps_ins_mismatch_streak++;
+            }
+            else
+            {
+                this->gps_ins_mismatch_streak = 0;
+            }
+        }
+        else
+        {
+            // what to do in this case?
+            this->gps_ins_mismatch_streak = 0;
+        }
+    }
+
+    // If hdg has been read recently update mismatch streak accordingly
+    if (this->hdg_read_flag)
+    {
+        this->hdg_read_flag = false;
+        if (this->is_baseline_correct())
+        {
+
+            bool match = (HEADING_STABILITY_THRESHOLD > hdg_ins_diff);
+            if (!match)
+            {
+                this->hdg_ins_mismatch_streak++;
+            }
+            else
+            {
+                this->hdg_ins_mismatch_streak = 0;
+            }
+        }
+        else
+        {
+            // what to do in this case?
+            this->hdg_ins_mismatch_streak = 0;
+        }
+    }
+
+    //reset streak to 0 when INS is not initialized
+    if (ins_status < 2)
+    {
+        this->gps_ins_mismatch_streak = 0;
+        this->hdg_ins_mismatch_streak = 0;
+    }
 }
 
 void health_message::add_gps_message(double *gps_msg)
@@ -111,6 +181,9 @@ void health_message::add_gps_message(double *gps_msg)
     this->gps_hacc = gps_msg[8];
     this->gps_heading_acc = gps_msg[14];
     this->rtk_status = gps_msg[15];
+
+    // tell the system to check gps vs ins at next ins message
+    this->gps_read_flag = true;
 }
 
 void health_message::add_hdg_message(double *hdg_msg)
@@ -119,6 +192,9 @@ void health_message::add_hdg_message(double *hdg_msg)
     this->hdg_heading = hdg_msg[6];
     if (this->hdg_heading > 180)
         this->hdg_heading -= 360;
+
+    // Tell the system to check hdg vs ins at next ins message
+    this->hdg_read_flag = true;
 }
 
 void health_message::set_baseline(double baseline)
@@ -126,15 +202,30 @@ void health_message::set_baseline(double baseline)
     this->configured_baseline = baseline;
 }
 
+void health_message::get_current_diff(double *gps_diff_out, double *hdg_diff_out)
+{
+    double hdg_ins_diff = abs(this->ins_heading - this->hdg_heading);
+    double gps_ins_diff = abs(this->ins_heading - this->gps_heading);
+
+    if (hdg_ins_diff > 180)
+        hdg_ins_diff = 360 - hdg_ins_diff;
+    if (gps_ins_diff > 180)
+        gps_ins_diff = 360 - gps_ins_diff;
+
+    *gps_diff_out = gps_ins_diff;
+    *hdg_diff_out = hdg_ins_diff;
+    return;
+}
+
 //TODO: Implement baseline check
 bool health_message::is_baseline_correct()
 {
-    return (abs(this->hdg_baseline - this->configured_baseline) < BASELINE_ACC_THRESHOLD);
+    return (abs(this->hdg_baseline - this->configured_baseline) < BASELINE_ACC_THRESHOLD) && (abs(this->wz_fog_moving_average) < 5);
 }
 
 bool health_message::is_single_antenna_heading_valid()
 {
-    return (this->gps_heading_acc < GPS_HEADING_ACC_GOOD_THRESHOLD);
+    return (this->gps_heading_acc < GPS_HEADING_ACC_GOOD_THRESHOLD) && (abs(this->wz_fog_moving_average) < 5);
 }
 
 bool health_message::has_rtk_fix()
@@ -154,37 +245,6 @@ bool health_message::has_gyro_discrepancy()
         {
             ret_val = true;
         }
-    }
-
-    return ret_val;
-}
-
-bool health_message::has_stable_heading()
-{
-    bool ret_val = true;
-
-    double hdg_ins_diff = abs(this->ins_heading - this->hdg_heading);
-    double gps_ins_diff = abs(this->ins_heading - this->gps_heading);
-
-    if (hdg_ins_diff > 180)
-        hdg_ins_diff = 360 - hdg_ins_diff;
-    if (gps_ins_diff > 180)
-        gps_ins_diff = 360 - gps_ins_diff;
-
-    if (this->is_single_antenna_heading_valid())
-    {
-        ret_val = (ret_val) && ((HEADING_STABILITY_THRESHOLD > gps_ins_diff) || ((180 - HEADING_STABILITY_THRESHOLD) < gps_ins_diff));
-    }
-    
-    if (this->is_baseline_correct())
-    {
-        ret_val = (ret_val) && (HEADING_STABILITY_THRESHOLD > hdg_ins_diff);
-    }
-
-    //if neither can be determined set flag to false
-    if (!(this->is_single_antenna_heading_valid() || this->is_baseline_correct()))
-    {
-        ret_val = true;
     }
 
     return ret_val;
@@ -217,11 +277,16 @@ uint8_t health_message::get_position_status()
 
 uint8_t health_message::get_heading_status()
 {
-    uint8_t ret_val = HEADING_UNSTABLE;
+    uint8_t ret_val = HEADING_STABLE;
 
-    if (this->has_stable_heading())
+    if (HEADING_MISMATCH_COUNT_TH <= this->gps_ins_mismatch_streak)
     {
-        ret_val = HEADING_STABLE;
+        ret_val = HEADING_UNSTABLE;
+    }
+
+    if (HEADING_MISMATCH_COUNT_TH <= this->hdg_ins_mismatch_streak)
+    {
+        ret_val = HEADING_UNSTABLE;
     }
 
     return ret_val;
@@ -241,28 +306,24 @@ uint8_t health_message::get_gyro_status()
 
 const char* health_message::get_csv_header()
 {
-    return "cur_imu_time,lat,lon,alt,mems_avg,fog_avg,ins_heading,gps_heading,hdg_heading,ins_gps_heading_diff,ins_hdg_heading_diff,hdg_baseline,gps_accuracy,gps_heading_acc,rtk,has_fix,gyro_disc,stable_heading,good_gps_acc,health_status,position_status,heading_status,gyro_status\n";
+    return "cur_imu_time,lat,lon,alt,mems_avg,fog_avg,ins_heading,gps_heading,hdg_heading,ins_gps_heading_diff,ins_hdg_heading_diff,gps_streak,hdg_streak,hdg_baseline,gps_accuracy,gps_heading_acc,rtk,has_fix,gyro_disc,good_gps_acc,position_status,heading_status,gyro_status\n";
 }
 
 void health_message::get_csv_line(double *llh, char *buffer, int len)
 {
-    double ins_gps_heading_diff = abs(this->ins_heading - this->gps_heading);
-    double ins_hdg_heading_diff = abs(this->ins_heading - this->hdg_heading);
+    double ins_gps_heading_diff, ins_hdg_heading_diff;
+    this->get_current_diff(&ins_gps_heading_diff, &ins_hdg_heading_diff);
 
-    if (ins_gps_heading_diff > 180)
-        ins_gps_heading_diff = 360 - ins_gps_heading_diff;
-    if (ins_hdg_heading_diff > 180)
-        ins_hdg_heading_diff = 360 - ins_hdg_heading_diff;
-
-    sprintf(buffer, "%10.4f,%14.9f,%14.9f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%i,%i,%i,%i,%i,%i,%i,%i\n", 
+  //sprintf(buffer, "%10.4f,%14.9f,%14.9f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%i,%i,%i,%i,%i,%i,%i,%i\n",
+    sprintf(buffer, "%10.4f,%14.9f,%14.9f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%i,%i,%10.4f,%10.4f,%10.4f,%10.4f,%i,%i,%i,%i,%i,%i,\n",
                                                                                                     this->cur_imu_time,
                                                                                                     llh[0], llh[1], llh[2],
                                                                                                     this->wz_mems_moving_average, this->wz_fog_moving_average, 
                                                                                                     this->ins_heading, this->gps_heading, this->hdg_heading, 
-                                                                                                    ins_gps_heading_diff, ins_hdg_heading_diff, 
+                                                                                                    ins_gps_heading_diff, ins_hdg_heading_diff,
+                                                                                                    this->gps_ins_mismatch_streak, this->hdg_ins_mismatch_streak,
                                                                                                     this->hdg_baseline, this->gps_hacc, this->gps_heading_acc, this->rtk_status,
-                                                                                                    this->has_rtk_fix(), this->has_gyro_discrepancy(),this->has_stable_heading(),this->has_good_gps_accuracy(),
-                                                                                                    this->get_health_status(),
+                                                                                                    this->has_rtk_fix(), this->has_gyro_discrepancy(),this->has_good_gps_accuracy(),
                                                                                                     this->get_position_status(), this->get_heading_status(), this->get_gyro_status());
 
 }
