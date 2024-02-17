@@ -14,6 +14,7 @@
 
 #include <stdio.h>
 #include <cstdlib>
+#include <cmath>
 #include "health_message.h"
 
 #ifndef GYRO_DISCREPANCY_THRESHOLD
@@ -63,7 +64,7 @@ health_message::health_message()
     this->hdg_heading = 0.0;
 
     this->hdg_baseline = 0;
-    this->configured_baseline = 2.01;
+    this->configured_baseline = 0.0;
 
     this->gps_hacc = 0.0;
     this->gps_heading_acc = 0.0;
@@ -244,12 +245,12 @@ bool health_message::is_single_antenna_heading_valid()
     return (this->gps_heading_acc < GPS_HEADING_ACC_GOOD_THRESHOLD) && (abs(this->wz_fog_moving_average) < 5);
 }
 
-bool health_message::has_rtk_fix()
+bool health_message::has_rtk_fix() const
 {
     return (this->rtk_status >= 2);
 }
 
-bool health_message::has_gyro_discrepancy()
+bool health_message::has_gyro_discrepancy() const
 {
     bool ret_val = false;
 
@@ -271,12 +272,12 @@ bool health_message::has_gyro_discrepancy()
     return ret_val;
 }
 
-bool health_message::has_good_gps_accuracy()
+bool health_message::has_good_gps_accuracy() const
 {
     return (this->gps_hacc < GOOD_GPS_ACC_TRESHOLD);
 }
 
-uint8_t health_message::get_position_status()
+uint8_t health_message::get_position_status() const 
 {
     uint8_t ret_val = GPS_ACC_POOR;
 
@@ -296,7 +297,7 @@ uint8_t health_message::get_position_status()
     return ret_val;
 }
 
-uint8_t health_message::get_heading_status()
+uint8_t health_message::get_heading_status() const 
 {
     uint8_t ret_val = HEADING_STABLE;
 
@@ -313,7 +314,7 @@ uint8_t health_message::get_heading_status()
     return ret_val;
 }
 
-uint8_t health_message::get_gyro_status()
+uint8_t health_message::get_gyro_status() const 
 {
     uint8_t ret_val = GYRO_BAD;
 

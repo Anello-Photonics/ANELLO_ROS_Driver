@@ -60,6 +60,7 @@ add_message_files(
   APGPS.msg
   APHDG.msg
   APODO.msg
+  APHEALTH.msg
 #   Message2.msg
 )
 

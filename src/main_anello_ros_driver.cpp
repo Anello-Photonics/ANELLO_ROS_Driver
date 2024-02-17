@@ -34,6 +34,7 @@
 #include "anello_ros_driver/APGPS.h"
 #include "anello_ros_driver/APHDG.h"
 #include "anello_ros_driver/APODO.h"
+#include "anello_ros_driver/APHEALTH.h"
 #include "nmea_msgs/Sentence.h"
 #endif
 
@@ -244,13 +245,18 @@ static void ros_driver_main_loop()
 	ros::Publisher pub_ins = nh.advertise<anello_ros_driver::APINS>("APINS", 10);
 	ros::Publisher pub_gps = nh.advertise<anello_ros_driver::APGPS>("APGPS", 10);
 	ros::Publisher pub_hdg = nh.advertise<anello_ros_driver::APHDG>("APHDG", 10);
+	ros::Publisher pub_health = nh.advertise<anello_ros_driver::APHEALTH>("APHEALTH", 1);
 	ros::Publisher pub_gga = nh.advertise<nmea_msgs::Sentence>("ntrip_client/nmea", 1);
 
 	ros::Subscriber sub_rtcm = nh.subscribe("ntrip_client/rtcm", 1, ntrip_rtcm_callback);
 	ros::Subscriber sub_odo = nh.subscribe("APODO", 1, apodo_callback);
 
+#if APINI_UPD
 	ros::ServiceServer srv_init_heading = nh.advertiseService("ini_heading", init_heading_callback);
 	ros::ServiceServer srv_upd_heading = nh.advertiseService("upd_heading", upd_heading_callback);
+#endif
+
+	
 	ROS_DEBUG("Anello ROS Driver Started\n");
 
 
@@ -265,6 +271,7 @@ static void ros_driver_main_loop()
 
 	// init health message class
 	health_message health_msg;
+	uint32_t INS_message_count = 0;
 
 	FILE *log_file_fp = nullptr;
 	if (LOG_LATEST_SET)
@@ -298,8 +305,8 @@ static void ros_driver_main_loop()
 	string data_port_name;
 	string config_port_name;
 
-#if COMPILE_WITH_ROS
 	// get data port name from parameter server
+#if COMPILE_WITH_ROS
 	if (!nh.getParam(DATA_PORT_PARAMETER_NAME, data_port_name))
 	{
 		ROS_ERROR("Failed to get data port name from parameter server -> %s", DATA_PORT_PARAMETER_NAME);
@@ -473,12 +480,18 @@ static void ros_driver_main_loop()
 						// ascii ins
 						decode_ascii_ins(val, decoded_val);
 						health_msg.add_ins_message(decoded_val);
+						INS_message_count++;
 #if COMPILE_WITH_ROS
 						publish_ins(decoded_val, pub_ins);
 #else
 						printf("APINSa\n");
 #endif
 
+						if (INS_message_count > 100)
+						{
+							publish_health(&health_msg, pub_health);
+							INS_message_count = 0;
+						}
 						isOK = 1;
 					}
 					else if (!isOK && ((strstr(val[0], "APINI") != NULL ) || (strstr(val[0], "APUPD") != NULL)))
@@ -538,11 +551,18 @@ static void ros_driver_main_loop()
 						{
 							decode_rtcm_ins_msg(decoded_val, a1buff);
 							health_msg.add_ins_message(decoded_val);
+							INS_message_count++;
 #if COMPILE_WITH_ROS
 							publish_ins(decoded_val, pub_ins);
 #else
 							printf("APINSr\n");
 #endif
+
+							if (INS_message_count > 100)
+							{
+								publish_health(&health_msg, pub_health);
+								INS_message_count = 0;
+							}
 
 							isOK = 1;
 						}

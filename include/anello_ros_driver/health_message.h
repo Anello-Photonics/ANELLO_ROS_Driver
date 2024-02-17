@@ -81,9 +81,9 @@ private:
     double configured_baseline;
 
     // helper functions
-    bool has_rtk_fix();
-    bool has_gyro_discrepancy();
-    bool has_good_gps_accuracy();
+    bool has_rtk_fix() const;
+    bool has_gyro_discrepancy() const;
+    bool has_good_gps_accuracy() const;
 
     void get_current_diff(double *gps_diff, double *hdg_diff);
 
@@ -98,9 +98,9 @@ public:
     void add_hdg_message(double *data);
     void set_baseline(double baseline);
 
-    uint8_t get_position_status();
-    uint8_t get_heading_status();
-    uint8_t get_gyro_status();
+    uint8_t get_position_status() const;
+    uint8_t get_heading_status() const;
+    uint8_t get_gyro_status() const;
 
     // debug functions
     void get_csv_line(double *llh, char *buffer, int len);

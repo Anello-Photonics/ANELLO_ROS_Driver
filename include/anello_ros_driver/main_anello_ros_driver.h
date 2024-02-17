@@ -50,6 +50,10 @@
 #define OLD_MESSAGING 1
 #endif
 
+#ifndef APINI_UPD
+#define APINI_UPD 0
+#endif
+
 extern anello_config_port *gp_global_config_port;
 
 typedef struct
