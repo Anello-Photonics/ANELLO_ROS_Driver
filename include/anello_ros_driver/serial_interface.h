@@ -128,6 +128,8 @@ public:
      */
     void init();
 
+    double get_baseline();
+
 };
 
 class anello_data_port : public serial_interface

@@ -24,6 +24,7 @@
 #include <unistd.h>
 #include "main_anello_ros_driver.h"
 #include "message_subscriber.h"
+#include "health_message.h"
 
 #if COMPILE_WITH_ROS
 #include <ros/ros.h>
@@ -33,6 +34,7 @@
 #include "anello_ros_driver/APGPS.h"
 #include "anello_ros_driver/APHDG.h"
 #include "anello_ros_driver/APODO.h"
+#include "anello_ros_driver/APHEALTH.h"
 #include "nmea_msgs/Sentence.h"
 #endif
 
@@ -83,6 +85,8 @@ const char *serial_port_name = DEFAULT_DATA_INTERFACE;
 #define LOG_FILE_NAME "latest_anello_log.txt"
 #endif
 
+anello_config_port *gp_global_config_port;
+
 using namespace std;
 
 typedef struct
@@ -93,7 +97,6 @@ typedef struct
 } file_read_buf_t;
 
 static int input_a1_data(a1buff_t *a1, uint8_t data, FILE *log_file);
-static int parse_fields(char *const buffer, char **val);
 static void ros_driver_main_loop();
 
 int main(int argc, char *argv[])
@@ -221,39 +224,6 @@ static int input_a1_data(a1buff_t *a1, uint8_t data, FILE *log_file)
 	return ret;
 }
 
-/*
- * Parameters
- * char *const buffer : A single valid ASCII message
- * char ** val : Empty arr of strings. Each string will be input with one of the distinct fields in the ASCII message
- *
- * Return
- * number of sections that detected and put into val
- *
- */
-static int parse_fields(char *const buffer, char **val)
-{
-	char *p, *q;
-	int n = 0;
-
-	/* parse fields */
-	for (p = buffer; *p && n < MAXFIELD; p = q + 1)
-	{
-		if (p == NULL)
-			break;
-		if ((q = strchr(p, ',')) || (q = strchr(p, '*')) || (q = strchr(p, '\n')) || (q = strchr(p, '\r')))
-		{
-			val[n++] = p;
-			*q = '\0';
-		}
-		else
-			break;
-	}
-	if (p != NULL)
-	{
-		val[n++] = p;
-	}
-	return n;
-}
 
 /*
  * Main loop for the driver
@@ -275,10 +245,18 @@ static void ros_driver_main_loop()
 	ros::Publisher pub_ins = nh.advertise<anello_ros_driver::APINS>("APINS", 10);
 	ros::Publisher pub_gps = nh.advertise<anello_ros_driver::APGPS>("APGPS", 10);
 	ros::Publisher pub_hdg = nh.advertise<anello_ros_driver::APHDG>("APHDG", 10);
+	ros::Publisher pub_health = nh.advertise<anello_ros_driver::APHEALTH>("APHEALTH", 1);
 	ros::Publisher pub_gga = nh.advertise<nmea_msgs::Sentence>("ntrip_client/nmea", 1);
 
 	ros::Subscriber sub_rtcm = nh.subscribe("ntrip_client/rtcm", 1, ntrip_rtcm_callback);
 	ros::Subscriber sub_odo = nh.subscribe("APODO", 1, apodo_callback);
+
+#if APINI_UPD
+	ros::ServiceServer srv_init_heading = nh.advertiseService("ini_heading", init_heading_callback);
+	ros::ServiceServer srv_upd_heading = nh.advertiseService("upd_heading", upd_heading_callback);
+#endif
+
+	
 	ROS_DEBUG("Anello ROS Driver Started\n");
 
 
@@ -290,6 +268,10 @@ static void ros_driver_main_loop()
 	
 	const char *ntrip_data;
 #endif
+
+	// init health message class
+	health_message health_msg;
+	uint32_t INS_message_count = 0;
 
 	FILE *log_file_fp = nullptr;
 	if (LOG_LATEST_SET)
@@ -320,12 +302,11 @@ static void ros_driver_main_loop()
 	a1buff_t a1buff = {0};
 
 	// initialize interface with anello unit
-
 	string data_port_name;
 	string config_port_name;
 
-#if COMPILE_WITH_ROS
 	// get data port name from parameter server
+#if COMPILE_WITH_ROS
 	if (!nh.getParam(DATA_PORT_PARAMETER_NAME, data_port_name))
 	{
 		ROS_ERROR("Failed to get data port name from parameter server -> %s", DATA_PORT_PARAMETER_NAME);
@@ -345,10 +326,12 @@ static void ros_driver_main_loop()
 
 	anello_config_port anello_device_config(config_port_name.c_str());
 	anello_device_config.init();
+	gp_global_config_port = &anello_device_config;
 
 	anello_data_port anello_device_data(data_port_name.c_str());
 	anello_device_data.init();
 
+	health_msg.set_baseline(anello_device_config.get_baseline());
 #if DEBUG_MAIN
 #if COMPILE_WITH_ROS
 	ROS_INFO("Anello ROS Driver Started\n");
@@ -431,6 +414,7 @@ static void ros_driver_main_loop()
 					{
 						// ascii gps
 						decode_ascii_gps(val, decoded_val);
+						health_msg.add_gps_message(decoded_val);
 #if COMPILE_WITH_ROS
 						publish_gps(decoded_val, pub_gps);
 						publish_gga(decoded_val, pub_gga);
@@ -457,6 +441,7 @@ static void ros_driver_main_loop()
 					{
 						// ascii hdg
 						decode_ascii_hdr(val, decoded_val);
+						health_msg.add_hdg_message(decoded_val);
 #if COMPILE_WITH_ROS
 						publish_hdr(decoded_val, pub_hdg);
 #else
@@ -469,6 +454,7 @@ static void ros_driver_main_loop()
 					{
 						// ascii imu
 						decode_ascii_imu(val, num, decoded_val);
+						health_msg.add_imu_message(decoded_val);
 #if COMPILE_WITH_ROS
 						publish_imu(decoded_val, pub_imu);
 #else
@@ -480,9 +466,7 @@ static void ros_driver_main_loop()
 					else if (!isOK && num >= 10 && strstr(val[0], "APIM1") != NULL)
 					{
 						// ascii imu
-#if 1
 						decode_ascii_im1(val, num, decoded_val);
-#endif
 #if COMPILE_WITH_ROS
 						publish_im1(decoded_val, pub_im1);
 #else
@@ -495,12 +479,23 @@ static void ros_driver_main_loop()
 					{
 						// ascii ins
 						decode_ascii_ins(val, decoded_val);
+						health_msg.add_ins_message(decoded_val);
+						INS_message_count++;
 #if COMPILE_WITH_ROS
 						publish_ins(decoded_val, pub_ins);
 #else
 						printf("APINSa\n");
 #endif
 
+						if (INS_message_count > 100)
+						{
+							publish_health(&health_msg, pub_health);
+							INS_message_count = 0;
+						}
+						isOK = 1;
+					}
+					else if (!isOK && ((strstr(val[0], "APINI") != NULL ) || (strstr(val[0], "APUPD") != NULL)))
+					{
 						isOK = 1;
 					}
 				}
@@ -513,6 +508,7 @@ static void ros_driver_main_loop()
 						if (a1buff.subtype == 1) /* IMU */
 						{
 							decode_rtcm_imu_msg(decoded_val, a1buff);
+							health_msg.add_imu_message(decoded_val);
 #if COMPILE_WITH_ROS
 							publish_imu(decoded_val, pub_imu);
 #else
@@ -523,7 +519,13 @@ static void ros_driver_main_loop()
 						}
 						else if (a1buff.subtype == 2) /* GPS PVT */
 						{
-							decode_rtcm_gps_msg(decoded_val, a1buff);
+							int ant_id = decode_rtcm_gps_msg(decoded_val, a1buff);
+
+							// only add gps1 to health message
+							if (GPS1 == ant_id)
+							{
+								health_msg.add_gps_message(decoded_val);
+							}
 #if COMPILE_WITH_ROS
 							publish_gps(decoded_val, pub_gps);
 							publish_gga(decoded_val, pub_gga);
@@ -536,6 +538,7 @@ static void ros_driver_main_loop()
 						else if (a1buff.subtype == 3) /* DUAL ANTENNA */
 						{
 							decode_rtcm_hdg_msg(decoded_val, a1buff);
+							health_msg.add_hdg_message(decoded_val);
 #if COMPILE_WITH_ROS
 							publish_hdr(decoded_val, pub_hdg);
 #else
@@ -547,11 +550,19 @@ static void ros_driver_main_loop()
 						else if (a1buff.subtype == 4) /* INS */
 						{
 							decode_rtcm_ins_msg(decoded_val, a1buff);
+							health_msg.add_ins_message(decoded_val);
+							INS_message_count++;
 #if COMPILE_WITH_ROS
 							publish_ins(decoded_val, pub_ins);
 #else
 							printf("APINSr\n");
 #endif
+
+							if (INS_message_count > 100)
+							{
+								publish_health(&health_msg, pub_health);
+								INS_message_count = 0;
+							}
 
 							isOK = 1;
 						}

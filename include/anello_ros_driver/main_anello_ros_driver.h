@@ -23,12 +23,11 @@
 #include <ros/ros.h>
 #endif
 
+#include "bit_tools.h"
+#include "serial_interface.h"
+
 #ifndef MAX_BUF_LEN
 #define MAX_BUF_LEN (1200)
-#endif
-
-#ifndef MAXFIELD
-#define MAXFIELD 20
 #endif
 
 #ifndef DEBUG_MAIN
@@ -46,6 +45,16 @@
 #ifndef DEBUG_SUBSCRIBERS
 #define DEBUG_SUBSCRIBERS 0
 #endif
+
+#ifndef OLD_MESSAGING
+#define OLD_MESSAGING 1
+#endif
+
+#ifndef APINI_UPD
+#define APINI_UPD 0
+#endif
+
+extern anello_config_port *gp_global_config_port;
 
 typedef struct
 {

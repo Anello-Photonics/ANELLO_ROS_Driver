@@ -158,3 +158,37 @@ extern std::string compute_checksum(const char *buff, int len)
 
     return ck_final;
 }
+
+/*
+ * Parameters
+ * char *const buffer : A single valid ASCII message
+ * char ** val : Empty arr of strings. Each string will be input with one of the distinct fields in the ASCII message
+ *
+ * Return
+ * number of sections that detected and put into val
+ *
+ */
+extern int parse_fields(char *const buffer, char **val)
+{
+	char *p, *q;
+	int n = 0;
+
+	/* parse fields */
+	for (p = buffer; *p && n < MAXFIELD; p = q + 1)
+	{
+		if (p == NULL)
+			break;
+		if ((q = strchr(p, ',')) || (q = strchr(p, '*')) || (q = strchr(p, '\n')) || (q = strchr(p, '\r')))
+		{
+			val[n++] = p;
+			*q = '\0';
+		}
+		else
+			break;
+	}
+	if (p != NULL)
+	{
+		val[n++] = p;
+	}
+	return n;
+}

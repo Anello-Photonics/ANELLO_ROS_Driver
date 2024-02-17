@@ -60,15 +60,18 @@ add_message_files(
   APGPS.msg
   APHDG.msg
   APODO.msg
+  APHEALTH.msg
 #   Message2.msg
 )
 
 ## Generate services in the 'srv' folder
-# add_service_files(
-#   FILES
+add_service_files(
+  FILES
+  initHeading.srv
+  updHeading.srv
 #   Service1.srv
 #   Service2.srv
-# )
+)
 
 ## Generate actions in the 'action' folder
 # add_action_files(
@@ -155,6 +158,7 @@ add_executable(anello_ros_driver
   src/messaging/message_publisher.cpp 
   src/messaging/message_subscriber.cpp
   src/messaging/ntrip_buffer.cpp
+  src/messaging/health_message.cpp
   
   src/comm/serial_interface.cpp
 )

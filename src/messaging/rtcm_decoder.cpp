@@ -124,11 +124,11 @@ int decode_rtcm_gps_msg(double gps[], a1buff_t a1buff)
 
     if (rtcm_apgps.Antenna_ID == 0)
     {
-        return 1;
+        return GPS1;
     }
     else
     {
-        return 2;
+        return GPS2;
     }
 }
 

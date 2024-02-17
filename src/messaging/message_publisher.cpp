@@ -13,6 +13,7 @@
 
 #include "message_publisher.h"
 #include "main_anello_ros_driver.h"
+#include "health_message.h"
 #include "bit_tools.h"
 
 #include <string.h>
@@ -24,6 +25,7 @@
 #include <anello_ros_driver/APGPS.h>
 #include <anello_ros_driver/APINS.h>
 #include <anello_ros_driver/APHDG.h>
+#include <anello_ros_driver/APHEALTH.h>
 
 #include <nmea_msgs/Sentence.h>
 #include <mavros_msgs/RTCM.h>
@@ -307,10 +309,15 @@ void publish_imu(double *imu, ros::Publisher pub)
 	msg.wy = imu[5];
 	msg.wz = imu[6];
 	msg.wz_fog = imu[7];
+#if OLD_MESSAGING
+	msg.odometer_speed = imu[8];
+	msg.odometer_time = imu[9];
+#else
 	msg.odo_speed = imu[8];
 	msg.odo_time = imu[9];
-	msg.temp = imu[10];
 	msg.T_Sync = imu[11];
+#endif
+	msg.temp = imu[10];
 
 	pub.publish(msg);
 
@@ -403,4 +410,17 @@ void publish_ins(double *ins, ros::Publisher pub)
 	ROS_INFO("APINS,%10.3f,%14.7f,%10.4f,%14.9f,%14.9f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f\n", ins[0], ins[1], ins[2], ins[3], ins[4], ins[5], ins[6], ins[7], ins[8], ins[9], ins[10], ins[11], ins[12]);
 #endif
 }
+
+void publish_health(const health_message *health_msg, ros::Publisher pub)
+{
+	// Publish the health message
+	anello_ros_driver::APHEALTH msg;
+	msg.position_acc_flag = health_msg->get_position_status();
+	msg.heading_health_flag = health_msg->get_heading_status();
+	msg.gyro_health_flag = health_msg->get_gyro_status();
+
+	pub.publish(msg);
+}
+
+
 #endif
