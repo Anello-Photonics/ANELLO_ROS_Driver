@@ -67,6 +67,7 @@ health_message::health_message()
 
     this->gps_hacc = 0.0;
     this->gps_heading_acc = 0.0;
+    this->hdg_heading_acc = 0.0;
     this->rtk_status = 0;
 
     this->gps_read_flag = false;
@@ -204,6 +205,7 @@ void health_message::add_hdg_message(double *hdg_msg)
 {
     this->hdg_baseline = hdg_msg[5];
     this->hdg_heading = hdg_msg[6];
+    this->hdg_heading_acc = hdg_msg[8];
     if (this->hdg_heading > 180)
         this->hdg_heading -= 360;
 
@@ -325,7 +327,7 @@ uint8_t health_message::get_gyro_status()
 
 const char* health_message::get_csv_header()
 {
-    return "cur_imu_time,lat,lon,alt,mems_avg,fog_avg,mems_std,fog_std,ins_heading,gps_heading,hdg_heading,ins_gps_heading_diff,ins_hdg_heading_diff,gps_streak,hdg_streak,hdg_baseline,gps_accuracy,gps_heading_acc,rtk,has_fix,gyro_disc,good_gps_acc,position_status,heading_status,gyro_status\n";
+    return "cur_imu_time,lat,lon,alt,mems_avg,fog_avg,mems_std,fog_std,ins_heading,gps_heading,hdg_heading,ins_gps_heading_diff,ins_hdg_heading_diff,gps_streak,hdg_streak,hdg_baseline,gps_accuracy,gps_heading_acc,hdg_heading_acc,rtk,has_fix,gyro_disc,good_gps_acc,position_status,heading_status,gyro_status\n";
 }
 
 void health_message::get_csv_line(double *llh, char *buffer, int len)
@@ -333,8 +335,7 @@ void health_message::get_csv_line(double *llh, char *buffer, int len)
     double ins_gps_heading_diff, ins_hdg_heading_diff;
     this->get_current_diff(&ins_gps_heading_diff, &ins_hdg_heading_diff);
 
-  //sprintf(buffer, "%10.4f,%14.9f,%14.9f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%i,%i,%i,%i,%i,%i,%i,%i\n",
-    sprintf(buffer, "%10.4f,%14.9f,%14.9f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%i,%i,%10.4f,%10.4f,%10.4f,%10.4f,%i,%i,%i,%i,%i,%i,\n",
+    sprintf(buffer, "%10.4f,%14.9f,%14.9f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%i,%i,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%i,%i,%i,%i,%i,%i,\n",
                                                                                                     this->cur_imu_time,
                                                                                                     llh[0], llh[1], llh[2],
                                                                                                     this->wz_mems_moving_average, this->wz_fog_moving_average, 
@@ -342,7 +343,7 @@ void health_message::get_csv_line(double *llh, char *buffer, int len)
                                                                                                     this->ins_heading, this->gps_heading, this->hdg_heading, 
                                                                                                     ins_gps_heading_diff, ins_hdg_heading_diff,
                                                                                                     this->gps_ins_mismatch_streak, this->hdg_ins_mismatch_streak,
-                                                                                                    this->hdg_baseline, this->gps_hacc, this->gps_heading_acc, this->rtk_status,
+                                                                                                    this->hdg_baseline, this->gps_hacc, this->gps_heading_acc, this->hdg_heading_acc, this->rtk_status,
                                                                                                     this->has_rtk_fix(), this->has_gyro_discrepancy(),this->has_good_gps_accuracy(),
                                                                                                     this->get_position_status(), this->get_heading_status(), this->get_gyro_status());
 

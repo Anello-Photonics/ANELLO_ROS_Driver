@@ -74,8 +74,10 @@ private:
 
 
     // hdg message information
-    double hdg_baseline;
     double hdg_heading;
+    double hdg_heading_acc;
+    double hdg_baseline;
+
     double configured_baseline;
 
     // helper functions
