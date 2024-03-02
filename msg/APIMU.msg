@@ -1,5 +1,4 @@
 float64 mcu_time
-float64 T_Sync
 float64 ax
 float64 ay
 float64 az
@@ -7,6 +6,6 @@ float64 wx
 float64 wy
 float64 wz
 float64 wz_fog
-float64 odo_speed
-float64 odo_time
+float64 odometer_speed
+float64 odometer_time
 float64 temp

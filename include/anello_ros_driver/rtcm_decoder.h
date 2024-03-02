@@ -15,6 +15,12 @@
 
 #include "main_anello_ros_driver.h"
 
+enum RECEIVER_ID
+{
+    GPS1 = 1,
+    GPS2 = 2
+};
+
 /*
  * Parameters:
  * double imu[] : pointer to an array of size 'MAXFIELDS' which will be filled with the values of the message

@@ -13,6 +13,7 @@
 #ifndef MESSAGE_PUBLISHER_H
 #define MESSAGE_PUBLISHER_H
 #include "main_anello_ros_driver.h"
+#include "health_message.h"
 
 
 #if COMPILE_WITH_ROS
@@ -78,6 +79,17 @@ void publish_hdr(double *hdg, ros::Publisher pub);
  * The publisher is called here
  */
 void publish_gga(double *gps, ros::Publisher pub);
+
+
+/*
+ * Parameters:
+ * health_message *health_msg : Pointer to the health message object used to create statistics
+ * ros::Publisher pub : Publisher used to publish the health message
+ *
+ * Notes:
+ * The publisher is called here
+ */
+void publish_health(const health_message *health_msg, ros::Publisher pub);
 #endif
 
 #endif

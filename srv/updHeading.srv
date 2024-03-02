@@ -1,0 +1,4 @@
+float32 upd_heading
+float32 heading_uncertainty
+---
+bool is_success

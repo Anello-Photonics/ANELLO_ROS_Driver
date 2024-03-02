@@ -12,6 +12,7 @@
  ********************************************************************************/
 
 #include "main_anello_ros_driver.h"
+#include "bit_tools.h"
 
 #if COMPILE_WITH_ROS
 #include <ros/ros.h>
@@ -257,6 +258,46 @@ void anello_config_port::init()
     {
         serial_interface::init();
     }
+}
+
+
+double anello_config_port::get_baseline()
+{
+    if (!this->port_enabled)
+    {
+        return 0.0;
+    }
+
+    std::string command = "#APVEH,R,bsl*65\r\n";
+    char *field_array[MAXFIELD];
+    char buf[100];
+    int num_fields;
+    double baseline;
+
+    this->write_data(command.c_str(), command.length()*sizeof(char));
+    usleep(500 * 1000); // 500 ms
+    this->get_data(buf, 100);
+
+    num_fields = parse_fields(buf, field_array);
+
+
+    if ((strstr(field_array[0], "APVEH") == nullptr) || (strstr(field_array[1], "bsl") == nullptr))
+    {
+        baseline = 0.0;
+    }
+    else
+    {
+        baseline = atof(field_array[2]);
+    }
+
+
+#if DEBUG_SERIAL
+    ROS_INFO("Sent: %s", command.c_str());
+    ROS_INFO("Received: %s", buf);
+    ROS_INFO("Baseline: %f", baseline);
+#endif
+
+    return baseline;
 }
 
 anello_data_port::anello_data_port(const char *ser_port_name) : serial_interface(ser_port_name)
