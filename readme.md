@@ -114,6 +114,18 @@ Topic definitions are defined in the [ANELLO Developer Manual](https://docs-a1.r
 * `/APINS`
 * `/APGPS`
 * `/APHDG`
+* `/APHEALTH`
+  * Message Definitions:
+    * `position_acc_flag`
+      * 0 = CM accuracy
+      * 1 = Submeter accuracy
+      * 2 = Meter level accuracy
+    * `heading_health_flag`
+      * 0 = Confirmed good heading
+      * 1 = Unable to confirm heading
+    * `gyro_health_flag`
+      * 0 = Gyro is operational
+      * 1 = Gyro may have issue
 * `/ntrip_client/nmea`
 
 #### Subscribed Topics
