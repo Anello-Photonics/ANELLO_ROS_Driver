@@ -257,7 +257,7 @@ bool health_message::has_gyro_discrepancy() const
     // if moving average not ready yet, return false
     if (this->buffer_full)
     {
-        double diff = this->wz_mems_moving_average - this->wz_fog_moving_average;
+        double diff = fabs(this->wz_mems_moving_average - this->wz_fog_moving_average);
         if (diff > GYRO_DISCREPANCY_THRESHOLD)
         {
             ret_val = true;

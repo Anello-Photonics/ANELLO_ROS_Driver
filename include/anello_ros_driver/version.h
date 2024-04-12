@@ -10,11 +10,13 @@
 #endif
 
 #ifndef PATCH_VERSION
-#define PATCH_VERSION 3
+#define PATCH_VERSION 4
 #endif
 
 
 /*
+v1.2.4 : Gyro discrepancy fix
+
 v1.2.3 : Added health message topic
 
 v1.2.2 : Added option for config port to be disabled if the parameter is set to "OFF"
