@@ -6,15 +6,17 @@
 #endif
 
 #ifndef MINOR_VERSION
-#define MINOR_VERSION 2
+#define MINOR_VERSION 3
 #endif
 
 #ifndef PATCH_VERSION
-#define PATCH_VERSION 3
+#define PATCH_VERSION 0
 #endif
 
 
 /*
+v1.3.0 : Update Version Number
+
 v1.2.3 : Added health message topic
 
 v1.2.2 : Added option for config port to be disabled if the parameter is set to "OFF"
