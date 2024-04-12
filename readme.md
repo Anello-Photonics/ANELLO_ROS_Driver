@@ -117,15 +117,15 @@ Topic definitions are defined in the [ANELLO Developer Manual](https://docs-a1.r
 * `/APHEALTH`
   * Message Definitions:
     * `position_acc_flag`
-      * 0 = CM accuracy
-      * 1 = Submeter accuracy
-      * 2 = Meter level accuracy
+      * 0 = Centimeter-level accuracy
+      * 1 = Meter-level accuracy
+      * 2 = Poor GPS accuracy (< 1m)
     * `heading_health_flag`
-      * 0 = Confirmed good heading
-      * 1 = Unable to confirm heading
+      * 0 = Heading stability confirmed (GPS and INS headings match)
+      * 1 = Unable to confirm heading stability (may be due to poor GPS signal or driving too slow to get reliable GPS heading)
     * `gyro_health_flag`
-      * 0 = Gyro is operational
-      * 1 = Gyro may have issue
+      * 0 = Rate sensor stable
+      * 1 = Rate sensor unstable (large discrepancy between optical and MEMS gyros)
 * `/ntrip_client/nmea`
 
 #### Subscribed Topics

@@ -10,11 +10,12 @@
 #endif
 
 #ifndef PATCH_VERSION
-#define PATCH_VERSION 0
-#endif
+#define PATCH_VERSION 1
 
 
 /*
+v1.3.1 : Gyro discrepancy fix
+
 v1.3.0 : Update Version Number
 
 v1.2.3 : Added health message topic
