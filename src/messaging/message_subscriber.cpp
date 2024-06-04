@@ -19,8 +19,11 @@
 #include <ros/ros.h>
 #include "mavros_msgs/RTCM.h"
 #include "anello_ros_driver/APODO.h"
+
+#if APINI_UPD
 #include "anello_ros_driver/init_heading.h"
 #include "anello_ros_driver/upd_heading.h"
+#endif
 
 #ifndef APODO_HEADER
 #define APODO_HEADER "APODO"
@@ -88,6 +91,7 @@ bool static is_success_message(const char *resp_message)
     return (strstr(resp_message, "err") == NULL) && (strstr(resp_message, "ERR") == NULL) && (strstr(resp_message, "APUPD") != NULL);
 }
 
+#if APINI_UPD
 //TODO update for uncertainty parameter
 bool init_heading_callback(anello_ros_driver::init_heading::Request &req, anello_ros_driver::init_heading::Response &res)
 {
@@ -182,6 +186,7 @@ bool upd_heading_callback(anello_ros_driver::upd_heading::Request &req, anello_r
 
     return true;
 }
+#endif
 
 #endif
 
