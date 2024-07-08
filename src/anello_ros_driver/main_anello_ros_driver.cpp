@@ -244,6 +244,7 @@ static void ros_driver_main_loop()
 	ros::Publisher pub_im1 = nh.advertise<anello_ros_driver::APIM1>("APIM1", 10);
 	ros::Publisher pub_ins = nh.advertise<anello_ros_driver::APINS>("APINS", 10);
 	ros::Publisher pub_gps = nh.advertise<anello_ros_driver::APGPS>("APGPS", 10);
+	ros::Publisher pub_gp2 = nh.advertise<anello_ros_driver::APGPS>("APGP2", 10);
 	ros::Publisher pub_hdg = nh.advertise<anello_ros_driver::APHDG>("APHDG", 10);
 	ros::Publisher pub_health = nh.advertise<anello_ros_driver::APHEALTH>("APHEALTH", 1);
 	ros::Publisher pub_gga = nh.advertise<nmea_msgs::Sentence>("ntrip_client/nmea", 1);
@@ -264,6 +265,7 @@ static void ros_driver_main_loop()
 	pub_arr.imu = &pub_imu;
 	pub_arr.ins = &pub_ins;
 	pub_arr.gps = &pub_gps;
+	pub_arr.gp2 = &pub_gp2;
 	pub_arr.hdg = &pub_hdg;
 	
 	const char *ntrip_data;
@@ -429,8 +431,7 @@ static void ros_driver_main_loop()
 						// ascii gp2 (goes to the same place for now)
 						decode_ascii_gps(val, decoded_val);
 #if COMPILE_WITH_ROS
-						publish_gps(decoded_val, pub_gps);
-						publish_gga(decoded_val, pub_gga);
+						publish_gp2(decoded_val, pub_gp2);
 #else
 						printf("APGP2a\n");
 #endif
@@ -525,13 +526,21 @@ static void ros_driver_main_loop()
 							if (GPS1 == ant_id)
 							{
 								health_msg.add_gps_message(decoded_val);
-							}
 #if COMPILE_WITH_ROS
-							publish_gps(decoded_val, pub_gps);
-							publish_gga(decoded_val, pub_gga);
+								publish_gps(decoded_val, pub_gps);
+								publish_gga(decoded_val, pub_gga);
 #else
 							printf("APGPSr\n");
 #endif
+							}
+							else
+							{
+#if COMPILE_WITH_ROS
+								publish_gp2(decoded_val, pub_gp2);
+#else
+								printf("APGP2r\n");
+#endif
+							}
 
 							isOK = 1;
 						}

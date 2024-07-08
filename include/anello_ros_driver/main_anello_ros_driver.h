@@ -176,6 +176,7 @@ typedef struct
 	ros::Publisher *imu;
 	ros::Publisher *ins;
 	ros::Publisher *gps;
+	ros::Publisher *gp2;
 	ros::Publisher *hdg;
 } ros_publishers_t;
 #endif
