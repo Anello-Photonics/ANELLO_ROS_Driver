@@ -61,6 +61,16 @@ void publish_gps(double *gps, ros::Publisher pub);
 
 /*
  * Parameters:
+ * double *gp2 : Double array at least 16 items long that contains the gps msg fields
+ * ros::Publisher pub : Publisher used to publish the gps message
+ *
+ * Notes:
+ * The publisher is called here
+ */
+void publish_gp2(double *gp2, ros::Publisher pub);
+
+/*
+ * Parameters:
  * double *hdg : Double array at least 10 items long that contains the hdg msg fields
  * ros::Publisher pub : Publisher used to publish the hdg message
  *
