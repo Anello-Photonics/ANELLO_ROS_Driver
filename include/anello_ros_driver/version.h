@@ -11,6 +11,7 @@
 
 #ifndef PATCH_VERSION
 #define PATCH_VERSION 3
+#endif
 
 
 /*
