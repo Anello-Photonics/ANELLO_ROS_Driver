@@ -10,10 +10,14 @@
 #endif
 
 #ifndef PATCH_VERSION
-#define PATCH_VERSION 1
+#define PATCH_VERSION 3
 
 
 /*
+v1.3.3 : Add GP2 topic
+
+v1.3.2 : Better version control of ntrip client
+
 v1.3.1 : Gyro discrepancy fix
 
 v1.3.0 : Update Version Number
