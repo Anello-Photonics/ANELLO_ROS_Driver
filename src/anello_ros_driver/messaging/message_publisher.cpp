@@ -194,6 +194,59 @@ void publish_gps(double *gps, ros::Publisher pub)
 #endif
 }
 
+void publish_gp2(double *gp2, ros::Publisher pub)
+{
+	/*
+	 * gp2[0] = MCU_Time [ms]
+	 * gp2[1] = GPS_Time [ns]
+	 * gp2[2] = Latitude [deg]
+	 * gp2[3] = Longitude [deg]
+	 * gp2[4] = Alt_ellipsoid [m]
+	 * gp2[5] = Alt_msl [m]
+	 * gp2[6] = Speed [m/s]
+	 * gp2[7] = heading [deg]
+	 * gp2[8] = Hacc [m]
+	 * gp2[9] = Vacc [m]
+	 * gp2[10] = PDOP
+	 * gp2[11] = FixType (0=No Fix, 2=2D Fix, 3=3D Fix, 5=Time only)
+	 * gp2[12] = SatNum
+	 * gp2[13] = Speed Accuracy [m/s]
+	 * gp2[14] = Heading Accuracy [deg]
+	 * gp2[15] = RTK Fix Status (0=SPP, 1=RTK Float, 2=RTK Fix)
+	 *
+	 */
+
+	anello_ros_driver::APGPS msg;
+
+	msg.mcu_time = gp2[0];
+	msg.gps_time = gp2[1];
+
+	msg.lat = gp2[2];
+	msg.lon = gp2[3];
+	msg.alt_ellipsoid = gp2[4];
+	msg.alt_msl = gp2[5];
+
+	msg.speed = gp2[6];
+	msg.heading = gp2[7];
+
+	msg.hacc = gp2[8];
+	msg.vacc = gp2[9];
+
+	msg.pdop = gp2[10];
+	msg.fix_type = (uint8_t)gp2[11];
+	msg.sat_num = (uint8_t)gp2[12];
+
+	msg.speed_accuracy = gp2[13];
+	msg.heading_accuracy = gp2[14];
+
+	msg.rtk_fix_status = (uint8_t)gp2[15];
+
+	pub.publish(msg);
+#if DEBUG_PUBLISHERS
+	ROS_INFO("APGP2,%10.3f,%14.9f,%14.9f,%14.9f,%10.4f,%10.3f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f\n", gps[0], gps[1], gps[2], gps[3], gps[4], gps[5], gps[6], gps[7], gps[8], gps[9], gps[10], gps[11], gps[12], gps[13], gps[14], gps[15]);
+#endif
+}
+
 void publish_hdr(double *hdr, ros::Publisher pub)
 {
 	/*
