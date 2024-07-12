@@ -1,14 +1,13 @@
 /********************************************************************************
- * File Name:   serial_interface.cpp
- * Description: Defines the serial_interface class.
+ * File Name:   anello_config_port.cpp
+ * Description: Defines the anello_config_port class.
  *
  * Author:      Austin Johnson
- * Date:        7/1/23
+ * Date:        7/12/24
  *
  * License:     MIT License
  *
- * Note:        set the baud rate in the constructor to default EVK baud of 921600.
- *              This can be changed in the constructor.
+ * Note:        
  ********************************************************************************/
 
 #include "main_anello_ros_driver.h"
@@ -28,10 +27,6 @@
 #include <vector>
 
 #include "anello_config_port.h"
-
-#define DEBUG 0
-#define MAX_READ_NUM 1000
-#define SER_PORT_FLUSH_COUNT 20
 
 anello_config_port::anello_config_port(const interface_config_t *config) : uart_port()
 {
