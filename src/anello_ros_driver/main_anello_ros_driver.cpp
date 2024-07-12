@@ -62,11 +62,11 @@ const char *serial_port_name = DEFAULT_DATA_INTERFACE;
 #endif
 
 #ifndef DATA_PORT_NAME
-#define DATA_PORT_NAME "/data_port"
+#define DATA_PORT_NAME "/uart_data_port"
 #endif
 
 #ifndef CONFIG_PORT_NAME
-#define CONFIG_PORT_NAME "/config_port"
+#define CONFIG_PORT_NAME "/uart_config_port"
 #endif
 
 #ifndef DATA_PORT_PARAMETER_NAME
@@ -225,6 +225,88 @@ static int input_a1_data(a1buff_t *a1, uint8_t data, FILE *log_file)
 }
 
 
+#if COMPILE_WITH_ROS
+static void get_interface_config(ros::NodeHandle *nh, interface_config_t *config)
+{
+#else
+static void get_interface_config(interface_config_t *config)
+{
+#endif
+#if COMPILE_WITH_ROS
+	string config_type;
+	
+	if (!nh->getParam("interface_type", config_type))
+	{
+		ROS_ERROR("Failed to get interface type from parameter server");
+		exit(1);
+	}
+
+	// UART specific parameters
+	if (!nh->getParam("data_port_name", config->data_port_name))
+	{
+		ROS_ERROR("Failed to get data port name from parameter server");
+		exit(1);
+	}
+
+	if (!nh->getParam("config_port_name", config->config_port_name))
+	{
+		ROS_ERROR("Failed to get config port name from parameter server");
+		exit(1);
+	}
+
+
+	// ETH specific parameters
+	if (!nh->getParam("remote_ip", config->remote_ip))
+	{
+		ROS_ERROR("Failed to get remote ip from parameter server");
+		exit(1);
+	}
+
+	if (!nh->getParam("local_data_port", config->local_data_port))
+	{
+		ROS_ERROR("Failed to get local data port from parameter server");
+		exit(1);
+	}
+
+	if (!nh->getParam("local_config_port", config->local_config_port))
+	{
+		ROS_ERROR("Failed to get local config port from parameter server");
+		exit(1);
+	}
+
+	if (!nh->getParam("local_odometer_port", config->local_odometer_port))
+	{
+		ROS_ERROR("Failed to get local odometer port from parameter server");
+		exit(1);
+	}
+
+	switch(config_type)
+	{
+		case "UART":
+			config->type = UART;
+			break;
+		case "ETH":
+			config->type = ETH;
+			break;
+		default:
+			ROS_ERROR("Invalid interface type");
+			config->type = UART;
+			break;
+	}
+	
+#else
+	config->type = UART;
+	config->data_port_name = "AUTO";
+	config->config_port_name = "AUTO";
+	config->remote_ip = ""
+	config->local_data_port = 0;
+	config->local_config_port = 0;
+	config->local_odometer_port = 0;
+#endif
+}
+
+
+
 /*
  * Main loop for the driver
  * Handles calling all of the modules in the program.
@@ -296,42 +378,39 @@ static void ros_driver_main_loop()
 	// init buffer
 	file_read_buf_t serial_read_buf = {0};
 
+	// MESSAGE PARSING VARIABLES
 	char *val[MAXFIELD];
 	double decoded_val[MAXFIELD];
 	bool checksum_passed;
-
-	// buffer for individual message
 	a1buff_t a1buff = {0};
 
-	// initialize interface with anello unit
-	string data_port_name;
-	string config_port_name;
 
-	// get data port name from parameter server
+	// COMMUNICATION VARIABLES
+	interface_config_t interface_config;
+
 #if COMPILE_WITH_ROS
-	if (!nh.getParam(DATA_PORT_PARAMETER_NAME, data_port_name))
-	{
-		ROS_ERROR("Failed to get data port name from parameter server -> %s", DATA_PORT_PARAMETER_NAME);
-		exit(1);
-	}
-
-	if (!nh.getParam(CONFIG_PORT_PARAMETER_NAME, config_port_name))
-	{
-		ROS_ERROR("Failed to get config port name from parameter server -> %s", CONFIG_PORT_PARAMETER_NAME);
-		exit(1);
-	}
+	get_interface_config(&nh, &interface_config);
 #else
-	// data_port_name = DEFAULT_DATA_INTERFACE;
-	data_port_name = "AUTO";	
-	config_port_name = "AUTO";
+	get_interface_config(&interface_config);
 #endif
 
-	anello_config_port anello_device_config(config_port_name.c_str());
-	anello_device_config.init();
-	gp_global_config_port = &anello_device_config;
 
-	anello_data_port anello_device_data(data_port_name.c_str());
-	anello_device_data.init();
+	if (interface_config.type == UART)
+	{
+		// UART
+		anello_config_port anello_device_config(interface_config.config_port_name.c_str());
+		anello_device_config.init();
+		gp_global_config_port = &anello_device_config;
+
+		anello_data_port anello_device_data(interface_config.data_port_name.c_str());
+		anello_device_data.init();
+	}
+	else
+	{
+		// ETH
+		ROS_ERROR("ETH interface not implemented");
+		exit(1);
+	}
 
 	health_msg.set_baseline(anello_device_config.get_baseline());
 #if DEBUG_MAIN

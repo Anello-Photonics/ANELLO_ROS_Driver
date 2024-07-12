@@ -13,6 +13,25 @@
 #ifndef BASE_INTERFACE_H
 #define BASE_INTERFACE_H
 
+// enum with options UART and ETH
+enum interface_type
+{
+	UART,
+	ETH
+};
+
+typedef struct
+{
+	interface_type type;
+	std::string data_port_name;
+	std::string config_port_name;
+
+	std::string remote_ip;
+	int local_data_port;
+	int local_config_port;
+	int local_odometer_port;
+} interface_config_t;
+
 class base_interface
 {
 
