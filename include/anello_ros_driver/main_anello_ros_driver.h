@@ -25,6 +25,8 @@
 
 #include "bit_tools.h"
 #include "serial_interface.h"
+#include "anello_config_port.h"
+#include "anello_data_port.h"
 
 #ifndef MAX_BUF_LEN
 #define MAX_BUF_LEN (1200)
@@ -48,6 +50,14 @@
 
 #ifndef OLD_MESSAGING
 #define OLD_MESSAGING 1
+#endif
+
+#ifndef DEBUG_PRING
+#if COMPILE_WITH_ROS
+#define DEBUG_PRINT(...) ROS_INFO(__VA_ARGS__)
+#else
+#define DEBUG_PRINT(...) printf(__VA_ARGS__)
+#endif
 #endif
 
 #ifndef APINI_UPD

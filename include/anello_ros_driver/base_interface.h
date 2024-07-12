@@ -14,7 +14,7 @@
 #define BASE_INTERFACE_H
 
 // enum with options UART and ETH
-enum interface_type
+enum interface_type_t
 {
 	UART,
 	ETH
@@ -22,7 +22,7 @@ enum interface_type
 
 typedef struct
 {
-	interface_type type;
+	interface_type_t type;
 	std::string data_port_name;
 	std::string config_port_name;
 
@@ -34,6 +34,8 @@ typedef struct
 
 class base_interface
 {
+protected:
+    interface_config_t config;
 
 public:
     /*

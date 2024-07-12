@@ -61,12 +61,36 @@ const char *serial_port_name = DEFAULT_DATA_INTERFACE;
 #define NODE_NAME "anello_ros_driver"
 #endif
 
+#ifndef COM_TYPE_NAME 
+#define COM_TYPE_NAME "/anello_com_type"
+#endif
+
 #ifndef DATA_PORT_NAME
-#define DATA_PORT_NAME "/uart_data_port"
+#define DATA_PORT_NAME "/anello_uart_data_port"
 #endif
 
 #ifndef CONFIG_PORT_NAME
-#define CONFIG_PORT_NAME "/uart_config_port"
+#define CONFIG_PORT_NAME "/anello_uart_config_port"
+#endif
+
+#ifndef REMOTE_IP_NAME
+#define REMOTE_IP_NAME "/anello_remote_ip"
+#endif
+
+#ifndef LOCAL_DATA_PORT_NAME
+#define LOCAL_DATA_PORT_NAME "/anello_local_data_port"
+#endif
+
+#ifndef LOCAL_CONFIG_PORT_NAME
+#define LOCAL_CONFIG_PORT_NAME "/anello_local_config_port"
+#endif
+
+#ifndef LOCAL_ODOMETER_PORT_NAME
+#define LOCAL_ODOMETER_PORT_NAME "/anello_local_odometer_port"
+#endif
+
+#ifndef COM_TYPE_PARAMETER_NAME
+#define COM_TYPE_PARAMETER_NAME NODE_NAME COM_TYPE_NAME
 #endif
 
 #ifndef DATA_PORT_PARAMETER_NAME
@@ -75,6 +99,22 @@ const char *serial_port_name = DEFAULT_DATA_INTERFACE;
 
 #ifndef CONFIG_PORT_PARAMETER_NAME
 #define CONFIG_PORT_PARAMETER_NAME NODE_NAME CONFIG_PORT_NAME
+#endif
+
+#ifndef REMOTE_IP_PARAMETER_NAME
+#define REMOTE_IP_PARAMETER_NAME NODE_NAME REMOTE_IP_NAME
+#endif
+
+#ifndef LOCAL_DATA_PORT_PARAMETER_NAME
+#define LOCAL_DATA_PORT_PARAMETER_NAME NODE_NAME LOCAL_DATA_PORT_NAME
+#endif
+
+#ifndef LOCAL_CONFIG_PORT_PARAMETER_NAME
+#define LOCAL_CONFIG_PORT_PARAMETER_NAME NODE_NAME LOCAL_CONFIG_PORT_NAME
+#endif
+
+#ifndef LOCAL_ODOMETER_PORT_PARAMETER_NAME
+#define LOCAL_ODOMETER_PORT_PARAMETER_NAME NODE_NAME LOCAL_ODOMETER_PORT_NAME
 #endif
 
 #ifndef LOG_LATEST_SET
@@ -103,6 +143,7 @@ int main(int argc, char *argv[])
 {
 #if COMPILE_WITH_ROS
 	ros::init(argc, argv, NODE_NAME);
+	ROS_INFO("Anello ROS Driver Started\n");
 #endif
 	ros_driver_main_loop();
 }
@@ -235,20 +276,20 @@ static void get_interface_config(interface_config_t *config)
 #if COMPILE_WITH_ROS
 	string config_type;
 	
-	if (!nh->getParam("interface_type", config_type))
+	if (!nh->getParam(COM_TYPE_PARAMETER_NAME, config_type))
 	{
-		ROS_ERROR("Failed to get interface type from parameter server");
+		ROS_ERROR("Failed to get anello_com_type from parameter server");
 		exit(1);
 	}
 
 	// UART specific parameters
-	if (!nh->getParam("data_port_name", config->data_port_name))
+	if (!nh->getParam(DATA_PORT_PARAMETER_NAME, config->data_port_name))
 	{
-		ROS_ERROR("Failed to get data port name from parameter server");
+		ROS_ERROR("Failed to get uart data port name from parameter server");
 		exit(1);
 	}
 
-	if (!nh->getParam("config_port_name", config->config_port_name))
+	if (!nh->getParam(CONFIG_PORT_PARAMETER_NAME, config->config_port_name))
 	{
 		ROS_ERROR("Failed to get config port name from parameter server");
 		exit(1);
@@ -256,49 +297,49 @@ static void get_interface_config(interface_config_t *config)
 
 
 	// ETH specific parameters
-	if (!nh->getParam("remote_ip", config->remote_ip))
+	if (!nh->getParam(REMOTE_IP_PARAMETER_NAME, config->remote_ip))
 	{
 		ROS_ERROR("Failed to get remote ip from parameter server");
 		exit(1);
 	}
 
-	if (!nh->getParam("local_data_port", config->local_data_port))
+	if (!nh->getParam(LOCAL_DATA_PORT_PARAMETER_NAME, config->local_data_port))
 	{
 		ROS_ERROR("Failed to get local data port from parameter server");
 		exit(1);
 	}
 
-	if (!nh->getParam("local_config_port", config->local_config_port))
+	if (!nh->getParam(LOCAL_CONFIG_PORT_PARAMETER_NAME, config->local_config_port))
 	{
 		ROS_ERROR("Failed to get local config port from parameter server");
 		exit(1);
 	}
 
-	if (!nh->getParam("local_odometer_port", config->local_odometer_port))
+	if (!nh->getParam(LOCAL_ODOMETER_PORT_PARAMETER_NAME, config->local_odometer_port))
 	{
 		ROS_ERROR("Failed to get local odometer port from parameter server");
 		exit(1);
 	}
 
-	switch(config_type)
+	if ("ETH" == config_type)
 	{
-		case "UART":
-			config->type = UART;
-			break;
-		case "ETH":
-			config->type = ETH;
-			break;
-		default:
-			ROS_ERROR("Invalid interface type");
-			config->type = UART;
-			break;
+		config->type = ETH;
 	}
-	
+	else if ("UART" == config_type)
+	{
+		config->type = UART;
+	}
+	else
+	{
+		ROS_ERROR("Invalid interface type");
+		config->type = UART;
+	}
+
 #else
 	config->type = UART;
-	config->data_port_name = "AUTO";
-	config->config_port_name = "AUTO";
-	config->remote_ip = ""
+	config->data_port_name = "/dev/ttyUSB0";
+	config->config_port_name = "/dev/ttyUSB3";
+	config->remote_ip = "";
 	config->local_data_port = 0;
 	config->local_config_port = 0;
 	config->local_odometer_port = 0;
@@ -394,23 +435,19 @@ static void ros_driver_main_loop()
 	get_interface_config(&interface_config);
 #endif
 
+	// DEBUG_PRINT("Interface Type: %d", interface_config.type);
 
-	if (interface_config.type == UART)
-	{
-		// UART
-		anello_config_port anello_device_config(interface_config.config_port_name.c_str());
-		anello_device_config.init();
-		gp_global_config_port = &anello_device_config;
+	anello_config_port anello_device_config(&interface_config);
+	// DEBUG_PRINT("Config post declared");
+	anello_device_config.init();
+	// DEBUG_PRINT("Config post initialized");
+	gp_global_config_port = &anello_device_config;
 
-		anello_data_port anello_device_data(interface_config.data_port_name.c_str());
-		anello_device_data.init();
-	}
-	else
-	{
-		// ETH
-		ROS_ERROR("ETH interface not implemented");
-		exit(1);
-	}
+	// DEBUG_PRINT("Config post set");
+	anello_data_port anello_device_data(&interface_config);
+	// DEBUG_PRINT("Data post declared");
+	anello_device_data.init();
+	// DEBUG_PRINT("Data post initialized");
 
 	health_msg.set_baseline(anello_device_config.get_baseline());
 #if DEBUG_MAIN
@@ -569,8 +606,10 @@ static void ros_driver_main_loop()
 
 						if (INS_message_count > 100)
 						{
+#if COMPILE_WITH_ROS
 							publish_health(&health_msg, pub_health);
 							INS_message_count = 0;
+#endif
 						}
 						isOK = 1;
 					}
@@ -648,8 +687,10 @@ static void ros_driver_main_loop()
 
 							if (INS_message_count > 100)
 							{
+#if COMPILE_WITH_ROS
 								publish_health(&health_msg, pub_health);
 								INS_message_count = 0;
+#endif
 							}
 
 							isOK = 1;
