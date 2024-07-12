@@ -146,6 +146,14 @@ int main(int argc, char *argv[])
 	ROS_INFO("Anello ROS Driver Started\n");
 #endif
 	ros_driver_main_loop();
+
+	// ethernet_interface eth_interface("192.168.1.111", 2, 2222);
+	// eth_interface.init();
+	// std::string command = "#APPNG*48\r\n";
+	// eth_interface.write_data(command.c_str(), command.length());
+	// char buf[1000];
+	// eth_interface.get_data(buf, 1000);
+	// printf("%s\n", buf);
 }
 
 /*

@@ -129,6 +129,7 @@ add_executable(anello_ros_driver
   src/anello_ros_driver/messaging/health_message.cpp
   
   src/anello_ros_driver/comm/serial_interface.cpp
+  src/anello_ros_driver/comm/ethernet_interface.cpp
   src/anello_ros_driver/comm/anello_config_port.cpp
   src/anello_ros_driver/comm/anello_data_port.cpp
 )

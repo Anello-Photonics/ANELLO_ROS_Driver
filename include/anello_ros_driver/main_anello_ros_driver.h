@@ -25,6 +25,7 @@
 
 #include "bit_tools.h"
 #include "serial_interface.h"
+#include "ethernet_interface.h"
 #include "anello_config_port.h"
 #include "anello_data_port.h"
 
@@ -38,6 +39,10 @@
 
 #ifndef DEBUG_SERIAL
 #define DEBUG_SERIAL 0
+#endif
+
+#ifndef DEBUG_ETHERNET
+#define DEBUG_ETHERNET 1
 #endif
 
 #ifndef DEBUG_PUBLISHERS
