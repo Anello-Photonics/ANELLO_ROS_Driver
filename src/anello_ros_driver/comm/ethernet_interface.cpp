@@ -37,7 +37,10 @@ ethernet_interface::ethernet_interface(std::string remote_ip_address, int remote
 
 ethernet_interface::~ethernet_interface()
 {
-    close(this->sockfd);
+    if (this->sockfd != -1)
+    {
+        close(this->sockfd);
+    }
 }
 
 void ethernet_interface::init()
@@ -47,6 +50,11 @@ void ethernet_interface::init()
     DEBUG_PRINT("Remote Port: %d\n", this->remote_port);
     DEBUG_PRINT("Local Port: %d\n", this->local_port);
 #endif
+
+    if (this->sockfd != -1)
+    {
+        close(this->sockfd);
+    }
 
     // Creating socket file descriptor
     if ((this->sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
@@ -77,6 +85,15 @@ void ethernet_interface::init()
     this->cliaddr.sin_port = htons(this->remote_port);
     this->cliaddr.sin_addr.s_addr = inet_addr(this->remote_ip_address.c_str());
 
+    // Set the timeout for the socket
+    struct timeval tv;
+    tv.tv_sec = 0;
+    tv.tv_usec = 100 * 1000; // 100 ms
+    setsockopt(this->sockfd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
+
+#if DEBUG_ETHERNET
+    DEBUG_PRINT("Ethernet interface initialized\n");
+#endif
 }
 
 void ethernet_interface::write_data(const char *buf, size_t buf_len)
@@ -86,8 +103,12 @@ void ethernet_interface::write_data(const char *buf, size_t buf_len)
 
 size_t ethernet_interface::get_data(char *buf, size_t buf_len)
 {
-    socklen_t len;
+    socklen_t len = sizeof(this->cliaddr);
     int n = recvfrom(this->sockfd, buf, buf_len, 0, (struct sockaddr *)&(this->cliaddr), &len);
+    if (n < 0)
+    {
+        return 0;
+    }
     buf[n] = '\0';
     return n;
 }

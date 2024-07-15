@@ -22,6 +22,7 @@
 #include <cstdlib>
 #include <fstream>
 #include <unistd.h>
+#include <csignal>
 #include "main_anello_ros_driver.h"
 #include "message_subscriber.h"
 #include "health_message.h"
@@ -125,6 +126,13 @@ const char *serial_port_name = DEFAULT_DATA_INTERFACE;
 #define LOG_FILE_NAME "latest_anello_log.txt"
 #endif
 
+volatile sig_atomic_t sigint_received = 0;
+
+void sigint_handler(int sig)
+{
+	sigint_received = 1;
+}
+
 anello_config_port *gp_global_config_port;
 
 using namespace std;
@@ -146,14 +154,6 @@ int main(int argc, char *argv[])
 	ROS_INFO("Anello ROS Driver Started\n");
 #endif
 	ros_driver_main_loop();
-
-	// ethernet_interface eth_interface("192.168.1.111", 2, 2222);
-	// eth_interface.init();
-	// std::string command = "#APPNG*48\r\n";
-	// eth_interface.write_data(command.c_str(), command.length());
-	// char buf[1000];
-	// eth_interface.get_data(buf, 1000);
-	// printf("%s\n", buf);
 }
 
 /*
@@ -344,13 +344,13 @@ static void get_interface_config(interface_config_t *config)
 	}
 
 #else
-	config->type = UART;
+	config->type = ETH;
 	config->data_port_name = "/dev/ttyUSB0";
 	config->config_port_name = "/dev/ttyUSB3";
-	config->remote_ip = "";
-	config->local_data_port = 0;
-	config->local_config_port = 0;
-	config->local_odometer_port = 0;
+	config->remote_ip = "192.168.1.111";
+	config->local_data_port = 1111;
+	config->local_config_port = 2222;
+	config->local_odometer_port = 3333;
 #endif
 }
 
@@ -367,6 +367,9 @@ static void get_interface_config(interface_config_t *config)
  */
 static void ros_driver_main_loop()
 {
+	// init signal handler
+	signal(SIGINT, sigint_handler);
+
 	// init ros publishers
 #if COMPILE_WITH_ROS
 	ros::NodeHandle nh;
@@ -476,15 +479,14 @@ static void ros_driver_main_loop()
 #endif
 
 #if COMPILE_WITH_ROS
-    while (ros::ok())
+    while (ros::ok() && !sigint_received)
 	{
 		// allow ROS to process callbacks
 		ros::spinOnce();
 #else
-	while (1)
+	while (!sigint_received)
 	{
 #endif
-
 		// when data is available write it to the serial port
 		if (global_ntrip_buffer.is_read_ready())
 		{
@@ -735,6 +737,9 @@ static void ros_driver_main_loop()
 			}
 		}
 	}
+
+	anello_device_data.~anello_data_port();
+	anello_device_config.~anello_config_port();
 
 	if (LOG_LATEST_SET)
 	{

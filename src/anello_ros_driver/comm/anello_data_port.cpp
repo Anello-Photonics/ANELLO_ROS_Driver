@@ -28,7 +28,7 @@
 
 #include "anello_data_port.h"
 
-anello_data_port::anello_data_port(const interface_config_t *config) : uart_port()
+anello_data_port::anello_data_port(const interface_config_t *config) : uart_port(), ethernet_port(config->remote_ip, 1, config->local_data_port)
 {
     this->config.type = config->type;
     this->config.data_port_name = config->data_port_name;
@@ -85,6 +85,12 @@ anello_data_port::anello_data_port(const interface_config_t *config) : uart_port
     }
 }
 
+anello_data_port::~anello_data_port()
+{
+    this->ethernet_port.~ethernet_interface();
+    this->uart_port.~serial_interface();
+}
+
 void anello_data_port::init()
 {
     if (this->config.type == ETH)
@@ -118,7 +124,7 @@ void anello_data_port::init_uart()
 
 void anello_data_port::init_ethernet()
 {
-    DEBUG_PRINT("Ethernet not implemented");
+    this->ethernet_port.init();
 }
 
 void anello_data_port::port_parse_fail()
@@ -176,7 +182,7 @@ void anello_data_port::port_parse_fail_uart()
 
 void anello_data_port::port_parse_fail_ethernet()
 {
-    DEBUG_PRINT("Ethernet not implemented");
+    /* Nothing to do */
 }
 
 void anello_data_port::port_confirm()
@@ -214,7 +220,7 @@ void anello_data_port::port_confirm_uart()
 
 void anello_data_port::port_confirm_ethernet()
 {
-    DEBUG_PRINT("Ethernet not implemented");
+    /* Nothing to do */
 }
 
 size_t anello_data_port::get_data(char *buf, size_t buf_len)
@@ -243,8 +249,7 @@ size_t anello_data_port::get_data_uart(char *buf, size_t buf_len)
 
 size_t anello_data_port::get_data_ethernet(char *buf, size_t buf_len)
 {
-    DEBUG_PRINT("Ethernet not implemented");
-    return 0;
+    return this->ethernet_port.get_data(buf, buf_len);
 }
 
 void anello_data_port::write_data(const char *buf, size_t buf_len)
@@ -266,5 +271,5 @@ void anello_data_port::write_data_uart(const char *buf, size_t buf_len)
 
 void anello_data_port::write_data_ethernet(const char *buf, size_t buf_len)
 {
-    DEBUG_PRINT("Ethernet not implemented");
+    this->ethernet_port.write_data(buf, buf_len);
 }

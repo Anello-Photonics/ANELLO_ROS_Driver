@@ -15,7 +15,8 @@
 #ifndef ANELLO_CONFIG_PORT_H
 #define ANELLO_CONFIG_PORT_H
 
-# include "serial_interface.h"
+#include "serial_interface.h"
+#include "ethernet_interface.h"
 
 class anello_config_port
 {
@@ -25,6 +26,8 @@ public:
      * This constructor does not initialize its port.
      */
     anello_config_port(const interface_config_t *config);
+
+    ~anello_config_port();
 
     /*
      * Notes:
@@ -40,6 +43,7 @@ public:
 private:
     interface_config_t config;
     serial_interface uart_port;
+    ethernet_interface ethernet_port;
 
     void init_ethernet();
     void init_uart();

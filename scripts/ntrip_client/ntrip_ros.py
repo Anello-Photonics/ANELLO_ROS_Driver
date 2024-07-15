@@ -113,15 +113,22 @@ class NTRIPRos:
     self._client.send_nmea(nmea.sentence)
 
   def publish_rtcm(self, event):
-    for raw_rtcm in self._client.recv_rtcm():
-      self._rtcm_pub.publish(RTCM(
-        header=Header(
-          stamp=rospy.Time.now(),
-          frame_id=self._rtcm_frame_id
-        ),
-        data=raw_rtcm
-      ))
+    rtcm_data = self._client.recv_rtcm()
 
+    if len(rtcm_data) > 0:
+      # split bytes into chunks of 1024
+      rtcm_chunks = [rtcm_data[i:i+1024] for i in range(0, len(rtcm_data), 1024)]
+
+      for chunk in rtcm_chunks:
+        rtcm_msg = RTCM(
+          header=Header(
+            stamp=rospy.Time.now(),
+            frame_id=self._rtcm_frame_id
+          ),
+          data=chunk
+        )
+
+        self._rtcm_pub.publish(rtcm_msg)
 
 if __name__ == '__main__':
   ntrip_ros = NTRIPRos()

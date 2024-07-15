@@ -7,6 +7,8 @@ import socket
 import select
 import logging
 
+import rospy
+
 from .nmea_parser import NMEAParser
 from .rtcm_parser import RTCMParser
 
@@ -284,7 +286,7 @@ class NTRIPClient:
       self._first_rtcm_received = True
 
     # Send the data to the RTCM parser to parse it
-    return self._rtcm_parser.parse(data) if data else []
+    return data if data else []
 
   def shutdown(self):
     # Set some state, and then disconnect

@@ -35,6 +35,7 @@ public:
     void init();
 
     size_t get_data(char *buf, size_t buf_len);
+    size_t get_data(char *buf, size_t buf_len, int timeout_ms);
     void write_data(const char *buf, size_t buf_len);
 };
 

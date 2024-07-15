@@ -43,8 +43,9 @@
 void ntrip_rtcm_callback(const mavros_msgs::RTCM::ConstPtr& msg)
 {
 #if DEBUG_SUBSCRIBERS
-    ROS_INFO("RTCM callback");
+    ROS_INFO("RTCM callback: %d bytes\n", msg->data.size());
 #endif
+    ROS_ERROR("RTCM callback: %zu bytes\n", msg->data.size());
     global_ntrip_buffer.add_data_to_buffer(msg->data.data(), msg->data.size());
 }
 

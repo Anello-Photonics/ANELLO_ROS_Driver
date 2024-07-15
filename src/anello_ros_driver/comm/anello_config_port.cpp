@@ -28,7 +28,7 @@
 
 #include "anello_config_port.h"
 
-anello_config_port::anello_config_port(const interface_config_t *config) : uart_port()
+anello_config_port::anello_config_port(const interface_config_t *config) : uart_port(), ethernet_port(config->remote_ip, 2, config->local_config_port)
 {
     this->config.type = config->type;
     this->config.data_port_name = config->data_port_name;
@@ -37,6 +37,11 @@ anello_config_port::anello_config_port(const interface_config_t *config) : uart_
     this->config.local_data_port = config->local_data_port;
     this->config.local_config_port = config->local_config_port;
     this->config.local_odometer_port = config->local_odometer_port;
+}
+
+anello_config_port::~anello_config_port() {
+    this->ethernet_port.~ethernet_interface();
+    this->uart_port.~serial_interface();
 }
 
 void anello_config_port::init()
@@ -106,10 +111,10 @@ void anello_config_port::init_uart()
                 this->uart_port.init(this->config.config_port_name);
                 char buf[100];
 
-                this->uart_port.get_data(buf, 100);
+                this->uart_port.get_data(buf, 100, 10);
                 this->uart_port.write_data(command.c_str(), command.length()*sizeof(char));
                 usleep(500 * 1000); // 500 ms
-                this->uart_port.get_data(buf, 100);
+                this->uart_port.get_data(buf, 100, 10);
 
 #if DEBUG_SERIAL
 #if COMPILE_WITH_ROS
@@ -145,7 +150,19 @@ void anello_config_port::init_uart()
 
 void anello_config_port::init_ethernet()
 {
-    DEBUG_PRINT("Ethernet not implemented");
+    this->ethernet_port.init();
+
+    std::string command = "#APPNG*48\r\n";
+    char buf[100];
+
+    this->ethernet_port.write_data(command.c_str(), command.length()*sizeof(char));
+    usleep(500 * 1000); // 500 ms
+    this->ethernet_port.get_data(buf, 100); 
+
+#if DEBUG_ETHERNET
+    DEBUG_PRINT("Sent: %s", command.c_str());
+    DEBUG_PRINT("Received: %s", buf);
+#endif
 }
 
 size_t anello_config_port::get_data(char *buf, size_t buf_len)
@@ -167,8 +184,7 @@ size_t anello_config_port::get_data_uart(char *buf, size_t buf_len)
 
 size_t anello_config_port::get_data_ethernet(char *buf, size_t buf_len)
 {
-    DEBUG_PRINT("Ethernet not implemented");
-    return 0;
+    return this->ethernet_port.get_data(buf, buf_len);
 }
 
 void anello_config_port::write_data(const char *buf, size_t buf_len)
@@ -190,15 +206,11 @@ void anello_config_port::write_data_uart(const char *buf, size_t buf_len)
 
 void anello_config_port::write_data_ethernet(const char *buf, size_t buf_len)
 {
-    DEBUG_PRINT("Ethernet not implemented");
+    this->ethernet_port.write_data(buf, buf_len);
 }
 
 double anello_config_port::get_baseline()
 {
-    if (!this->uart_port.get_port_enabled())
-    {
-        return 0.0;
-    }
 
     std::string command = "#APVEH,R,bsl*65\r\n";
     char *field_array[MAXFIELD];
