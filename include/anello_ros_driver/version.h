@@ -10,11 +10,13 @@
 #endif
 
 #ifndef PATCH_VERSION
-#define PATCH_VERSION 3
+#define PATCH_VERSION 4
 #endif
 
 
 /*
+v1.3.4 : Add ethernet support along with NTRIP bug fixes
+
 v1.3.3 : Add GP2 topic
 
 v1.3.2 : Better version control of ntrip client
