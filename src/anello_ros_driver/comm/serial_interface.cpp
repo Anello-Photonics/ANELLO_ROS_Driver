@@ -41,15 +41,11 @@ serial_interface::serial_interface()
     this->port_enabled = false;
 }
 
-serial_interface::serial_interface(const char *portname)
+void serial_interface::init(std::string portname)
 {
     this->portname = portname;
-    this->usb_fd = -1;
-    this->port_enabled = true;
-}
 
-void serial_interface::init()
-{
+
     //Check for disabled port
     if (strcmp(this->portname.c_str(), "OFF") == 0)
     {
@@ -121,6 +117,7 @@ void serial_interface::init()
     printf("Serial port %s initialized\n", this->portname.c_str());
 #endif
 #endif
+    this->port_enabled = true;
 }
 
 size_t serial_interface::get_data(char *buf, size_t buf_len)
@@ -144,297 +141,7 @@ size_t serial_interface::get_data(char *buf, size_t buf_len)
     return bytes_read;
 }
 
-void serial_interface::write_data(const char *buf, size_t buf_len) 
-{ 
-    if (!this->port_enabled)
-    {
-        return;
-    }
-    write(usb_fd, buf, buf_len);
-}
-
-const std::string serial_interface::get_portname()
-{
-    return this->portname;
-}
-
-serial_interface::~serial_interface()
-{
-    if (this->usb_fd > 0)
-    {
-        tcflush(this->usb_fd, TCIOFLUSH);
-        close(this->usb_fd);
-        this->usb_fd = -1;
-    }
-}
-
-void anello_config_port::init()
-{
-    if (strcmp(this->portname.c_str(), "AUTO") == 0)
-    {
-#if DEBUG_SERIAL
-#if COMPILE_WITH_ROS
-        ROS_INFO("Auto detect config port enabled");
-#else
-        printf("Auto detect config port enabled");
-#endif 
-#endif
-
-        // get all /dev/ttyUSB* ports
-        DIR *dir = opendir(PORT_DIR);
-        if (nullptr == dir)
-        {
-#if COMPILE_WITH_ROS
-            ROS_ERROR("Failed to open port directory");
-#else
-            printf("Failed to open port directory");
-#endif
-            exit(1);
-        }
-
-        struct dirent *entry;
-        std::vector<std::string> port_names;
-        while ((entry = readdir(dir)) != nullptr)
-        {
-            std::string temp_port_name = PORT_DIR;
-            if (strncmp(entry->d_name, PORT_PREFIX, strlen(PORT_PREFIX)) == 0)
-            {
-                temp_port_name += entry->d_name;
-                port_names.insert(port_names.begin(), temp_port_name);  
-            }
-        }
-        closedir(dir);
-
-        // try to open each port and send a command to it
-        std::string command = "#APPNG*48\r\n";
-        bool port_found = false;
-        while (!port_found)
-        {        
-            for (std::string port_name : port_names)
-            {
-#if DEBUG_SERIAL
-#if COMPILE_WITH_ROS
-                ROS_INFO("config_port: Trying port %s", port_name.c_str());
-#else
-                printf("config_port: Trying port %s", port_name.c_str());
-#endif
-#endif
-                this->portname = port_name;
-                serial_interface::init();
-                char buf[100];
-
-                this->get_data(buf, 100);
-                this->write_data(command.c_str(), command.length()*sizeof(char));
-                usleep(500 * 1000); // 500 ms
-                this->get_data(buf, 100);
-
-#if DEBUG_SERIAL
-#if COMPILE_WITH_ROS
-                ROS_INFO("config_port: Received: %s", buf);
-#else
-                printf("config_port: Received: %s", buf);
-#endif
-#endif
-                if (strstr(buf, "#APPNG") != nullptr)
-                {
-                    port_found = true;
-                    break;
-                }
-                else
-                {
-                    this->~anello_config_port();
-                }
-            }
-            if (!port_found)
-            {
-#if COMPILE_WITH_ROS
-                ROS_DEBUG("No port found");
-#endif
-            }
-        }
-
-    }
-    else
-    {
-        serial_interface::init();
-    }
-}
-
-
-double anello_config_port::get_baseline()
-{
-    if (!this->port_enabled)
-    {
-        return 0.0;
-    }
-
-    std::string command = "#APVEH,R,bsl*65\r\n";
-    char *field_array[MAXFIELD];
-    char buf[100];
-    int num_fields;
-    double baseline;
-
-    this->write_data(command.c_str(), command.length()*sizeof(char));
-    usleep(500 * 1000); // 500 ms
-    this->get_data(buf, 100);
-
-    num_fields = parse_fields(buf, field_array);
-
-
-    if ((strstr(field_array[0], "APVEH") == nullptr) || (strstr(field_array[1], "bsl") == nullptr))
-    {
-        baseline = 0.0;
-    }
-    else
-    {
-        baseline = atof(field_array[2]);
-    }
-
-
-#if DEBUG_SERIAL
-    ROS_INFO("Sent: %s", command.c_str());
-    ROS_INFO("Received: %s", buf);
-    ROS_INFO("Baseline: %f", baseline);
-#endif
-
-    return baseline;
-}
-
-anello_data_port::anello_data_port(const char *ser_port_name) : serial_interface(ser_port_name)
-{
-    this->decode_success = false;
-    this->port_index = 0;
-
-    // get all /dev/ttyUSB* ports
-    DIR *dir = opendir(PORT_DIR);
-    if (nullptr == dir)
-    {
-#if COMPILE_WITH_ROS
-        ROS_ERROR("Failed to open port directory");
-#else
-        printf("Failed to open port directory");
-#endif
-        exit(1);
-    }
-
-    struct dirent *entry;
-    while ((entry = readdir(dir)) != nullptr)
-    {
-        std::string temp_port_name = PORT_DIR;
-        if (strncmp(entry->d_name, PORT_PREFIX, strlen(PORT_PREFIX)) == 0)
-        {
-            // port_name = PORT_DIR;
-            temp_port_name += entry->d_name;
-            port_names.push_back(temp_port_name);
-        }
-    }
-    closedir(dir);
-
-    //check for auto-detect
-    if (strcmp(this->portname.c_str(), "AUTO") == 0)
-    {
-#if DEBUG_SERIAL
-#if COMPILE_WITH_ROS
-        ROS_INFO("Auto detect data port enabled");
-#else
-        printf("Auto detect data port enabled");
-#endif
-#endif
-        this->auto_detect = true;
-    }
-    else
-    {
-        this->auto_detect = false;
-    }
-}
-
-void anello_data_port::init()
-{
-    if (this->auto_detect)
-    {
-        /**/
-        this->portname = this->port_names[this->port_index];
-    }
-
-#if DEBUG_SERIAL
-#if COMPILE_WITH_ROS
-    ROS_INFO("Data: Trying port %s", this->portname.c_str());
-#else
-    printf("Data: Trying port %s", this->portname.c_str());
-#endif
-#endif
-
-    serial_interface::init();
-}
-
-void anello_data_port::port_parse_fail()
-{
-    //exit if auto detect is off or decode success is true
-    if (this->decode_success || !this->auto_detect || !this->port_enabled)
-    {
-        return;
-    }
-
-#if DEBUG_SERIAL
-#if COMPILE_WITH_ROS
-    ROS_INFO("Data: Failed to parse data on port %s", this->portname.c_str());
-#else
-    printf("Data: Failed to parse data on port %s", this->portname.c_str());
-#endif
-#endif
-
-    this->fail_count++;
-    
-    //move on to next port
-    //if max fail count is reached
-    if (MAX_PORT_PARSE_FAIL < this->fail_count)
-    {
-        //reset fail count
-        this->fail_count = 0;
-
-        //move to next port
-        this->port_index++;
-        if (this->port_index >= this->port_names.size())
-        {
-            this->port_index = 0;
-        }
-
-        //set port name
-        this->portname = this->port_names[this->port_index];
-
-        //reset port
-        // this->~anello_data_port();
-        tcflush(this->usb_fd, TCIOFLUSH);
-        close(this->usb_fd);
-        this->usb_fd = -1;
-        
-        //reinitialize port
-        this->init();
-    }
-}
-
-void anello_data_port::port_confirm()
-{
-    //reset fail count
-    this->fail_count = 0;
-    if (this->decode_success)
-    {
-        return;
-    }
-
-    //set decode success
-    this->decode_success = true;
-
-#if DEBUG_SERIAL
-#if COMPILE_WITH_ROS
-    ROS_INFO("Data: Confirmed port %s", this->portname.c_str());
-#else
-    printf("Data: Confirmed port %s", this->portname.c_str());
-#endif
-#endif
-}
-
-size_t anello_data_port::get_data(char *buf, size_t buf_len)
+size_t serial_interface::get_data(char *buf, size_t buf_len, int timeout)
 {
     if (!this->port_enabled)
     {
@@ -449,15 +156,16 @@ size_t anello_data_port::get_data(char *buf, size_t buf_len)
 #endif
         exit(1);
     }
+
     fd_set readSet;
     FD_ZERO(&readSet);
     FD_SET(this->usb_fd, &readSet);
 
-    struct timeval timeout;
-    timeout.tv_sec = 0;
-    timeout.tv_usec = 10 * 1000; // 10 ms
+    struct timeval tv;
+    tv.tv_sec = 0;
+    tv.tv_usec = timeout * 1000;
 
-    int ready = select(this->usb_fd + 1, &readSet, NULL, NULL, &timeout);
+    int ready = select(this->usb_fd + 1, &readSet, NULL, NULL, &tv);
     if (ready < 0)
     {
 #if COMPILE_WITH_ROS
@@ -465,14 +173,46 @@ size_t anello_data_port::get_data(char *buf, size_t buf_len)
 #else
         printf("Error from select: %s\n", strerror(errno));
 #endif
-        // exit(1);
-        return 0;
+        exit(1);
     }
     else if (ready == 0)
     {
-        this->port_parse_fail();
         return 0;
     }
 
-    return serial_interface::get_data(buf, buf_len);    
+    return serial_interface::get_data(buf, buf_len);
+}
+
+void serial_interface::write_data(const char *buf, size_t buf_len) 
+{ 
+    if (!this->port_enabled)
+    {
+        return;
+    }
+    write(usb_fd, buf, buf_len);
+}
+
+const std::string serial_interface::get_portname()
+{
+    return this->portname;
+}
+
+bool serial_interface::get_port_enabled()
+{
+    return this->port_enabled;
+}
+
+void serial_interface::close_port()
+{
+    if (this->usb_fd > 0)
+    {
+        tcflush(this->usb_fd, TCIOFLUSH);
+        close(this->usb_fd);
+        this->usb_fd = -1;
+    }
+}
+
+serial_interface::~serial_interface()
+{
+    this->close_port();
 }

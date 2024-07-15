@@ -22,6 +22,7 @@
 #include <cstdlib>
 #include <fstream>
 #include <unistd.h>
+#include <csignal>
 #include "main_anello_ros_driver.h"
 #include "message_subscriber.h"
 #include "health_message.h"
@@ -61,12 +62,36 @@ const char *serial_port_name = DEFAULT_DATA_INTERFACE;
 #define NODE_NAME "anello_ros_driver"
 #endif
 
+#ifndef COM_TYPE_NAME 
+#define COM_TYPE_NAME "/anello_com_type"
+#endif
+
 #ifndef DATA_PORT_NAME
-#define DATA_PORT_NAME "/data_port"
+#define DATA_PORT_NAME "/anello_uart_data_port"
 #endif
 
 #ifndef CONFIG_PORT_NAME
-#define CONFIG_PORT_NAME "/config_port"
+#define CONFIG_PORT_NAME "/anello_uart_config_port"
+#endif
+
+#ifndef REMOTE_IP_NAME
+#define REMOTE_IP_NAME "/anello_remote_ip"
+#endif
+
+#ifndef LOCAL_DATA_PORT_NAME
+#define LOCAL_DATA_PORT_NAME "/anello_local_data_port"
+#endif
+
+#ifndef LOCAL_CONFIG_PORT_NAME
+#define LOCAL_CONFIG_PORT_NAME "/anello_local_config_port"
+#endif
+
+#ifndef LOCAL_ODOMETER_PORT_NAME
+#define LOCAL_ODOMETER_PORT_NAME "/anello_local_odometer_port"
+#endif
+
+#ifndef COM_TYPE_PARAMETER_NAME
+#define COM_TYPE_PARAMETER_NAME NODE_NAME COM_TYPE_NAME
 #endif
 
 #ifndef DATA_PORT_PARAMETER_NAME
@@ -77,6 +102,22 @@ const char *serial_port_name = DEFAULT_DATA_INTERFACE;
 #define CONFIG_PORT_PARAMETER_NAME NODE_NAME CONFIG_PORT_NAME
 #endif
 
+#ifndef REMOTE_IP_PARAMETER_NAME
+#define REMOTE_IP_PARAMETER_NAME NODE_NAME REMOTE_IP_NAME
+#endif
+
+#ifndef LOCAL_DATA_PORT_PARAMETER_NAME
+#define LOCAL_DATA_PORT_PARAMETER_NAME NODE_NAME LOCAL_DATA_PORT_NAME
+#endif
+
+#ifndef LOCAL_CONFIG_PORT_PARAMETER_NAME
+#define LOCAL_CONFIG_PORT_PARAMETER_NAME NODE_NAME LOCAL_CONFIG_PORT_NAME
+#endif
+
+#ifndef LOCAL_ODOMETER_PORT_PARAMETER_NAME
+#define LOCAL_ODOMETER_PORT_PARAMETER_NAME NODE_NAME LOCAL_ODOMETER_PORT_NAME
+#endif
+
 #ifndef LOG_LATEST_SET
 #define LOG_LATEST_SET 0
 #endif
@@ -84,6 +125,13 @@ const char *serial_port_name = DEFAULT_DATA_INTERFACE;
 #ifndef LOG_FILE_NAME
 #define LOG_FILE_NAME "latest_anello_log.txt"
 #endif
+
+volatile sig_atomic_t sigint_received = 0;
+
+void sigint_handler(int sig)
+{
+	sigint_received = 1;
+}
 
 anello_config_port *gp_global_config_port;
 
@@ -103,6 +151,7 @@ int main(int argc, char *argv[])
 {
 #if COMPILE_WITH_ROS
 	ros::init(argc, argv, NODE_NAME);
+	ROS_INFO("Anello ROS Driver Started\n");
 #endif
 	ros_driver_main_loop();
 }
@@ -225,6 +274,88 @@ static int input_a1_data(a1buff_t *a1, uint8_t data, FILE *log_file)
 }
 
 
+#if COMPILE_WITH_ROS
+static void get_interface_config(ros::NodeHandle *nh, interface_config_t *config)
+{
+#else
+static void get_interface_config(interface_config_t *config)
+{
+#endif
+#if COMPILE_WITH_ROS
+	string config_type;
+	
+	if (!nh->getParam(COM_TYPE_PARAMETER_NAME, config_type))
+	{
+		ROS_ERROR("Failed to get anello_com_type from parameter server");
+		exit(1);
+	}
+
+	// UART specific parameters
+	if (!nh->getParam(DATA_PORT_PARAMETER_NAME, config->data_port_name))
+	{
+		ROS_ERROR("Failed to get uart data port name from parameter server");
+		exit(1);
+	}
+
+	if (!nh->getParam(CONFIG_PORT_PARAMETER_NAME, config->config_port_name))
+	{
+		ROS_ERROR("Failed to get config port name from parameter server");
+		exit(1);
+	}
+
+
+	// ETH specific parameters
+	if (!nh->getParam(REMOTE_IP_PARAMETER_NAME, config->remote_ip))
+	{
+		ROS_ERROR("Failed to get remote ip from parameter server");
+		exit(1);
+	}
+
+	if (!nh->getParam(LOCAL_DATA_PORT_PARAMETER_NAME, config->local_data_port))
+	{
+		ROS_ERROR("Failed to get local data port from parameter server");
+		exit(1);
+	}
+
+	if (!nh->getParam(LOCAL_CONFIG_PORT_PARAMETER_NAME, config->local_config_port))
+	{
+		ROS_ERROR("Failed to get local config port from parameter server");
+		exit(1);
+	}
+
+	if (!nh->getParam(LOCAL_ODOMETER_PORT_PARAMETER_NAME, config->local_odometer_port))
+	{
+		ROS_ERROR("Failed to get local odometer port from parameter server");
+		exit(1);
+	}
+
+	if ("ETH" == config_type)
+	{
+		config->type = ETH;
+	}
+	else if ("UART" == config_type)
+	{
+		config->type = UART;
+	}
+	else
+	{
+		ROS_ERROR("Invalid interface type");
+		config->type = UART;
+	}
+
+#else
+	config->type = ETH;
+	config->data_port_name = "/dev/ttyUSB0";
+	config->config_port_name = "/dev/ttyUSB3";
+	config->remote_ip = "192.168.1.111";
+	config->local_data_port = 1111;
+	config->local_config_port = 2222;
+	config->local_odometer_port = 3333;
+#endif
+}
+
+
+
 /*
  * Main loop for the driver
  * Handles calling all of the modules in the program.
@@ -236,6 +367,9 @@ static int input_a1_data(a1buff_t *a1, uint8_t data, FILE *log_file)
  */
 static void ros_driver_main_loop()
 {
+	// init signal handler
+	signal(SIGINT, sigint_handler);
+
 	// init ros publishers
 #if COMPILE_WITH_ROS
 	ros::NodeHandle nh;
@@ -296,42 +430,35 @@ static void ros_driver_main_loop()
 	// init buffer
 	file_read_buf_t serial_read_buf = {0};
 
+	// MESSAGE PARSING VARIABLES
 	char *val[MAXFIELD];
 	double decoded_val[MAXFIELD];
 	bool checksum_passed;
-
-	// buffer for individual message
 	a1buff_t a1buff = {0};
 
-	// initialize interface with anello unit
-	string data_port_name;
-	string config_port_name;
 
-	// get data port name from parameter server
+	// COMMUNICATION VARIABLES
+	interface_config_t interface_config;
+
 #if COMPILE_WITH_ROS
-	if (!nh.getParam(DATA_PORT_PARAMETER_NAME, data_port_name))
-	{
-		ROS_ERROR("Failed to get data port name from parameter server -> %s", DATA_PORT_PARAMETER_NAME);
-		exit(1);
-	}
-
-	if (!nh.getParam(CONFIG_PORT_PARAMETER_NAME, config_port_name))
-	{
-		ROS_ERROR("Failed to get config port name from parameter server -> %s", CONFIG_PORT_PARAMETER_NAME);
-		exit(1);
-	}
+	get_interface_config(&nh, &interface_config);
 #else
-	// data_port_name = DEFAULT_DATA_INTERFACE;
-	data_port_name = "AUTO";	
-	config_port_name = "AUTO";
+	get_interface_config(&interface_config);
 #endif
 
-	anello_config_port anello_device_config(config_port_name.c_str());
+	// DEBUG_PRINT("Interface Type: %d", interface_config.type);
+
+	anello_config_port anello_device_config(&interface_config);
+	// DEBUG_PRINT("Config post declared");
 	anello_device_config.init();
+	// DEBUG_PRINT("Config post initialized");
 	gp_global_config_port = &anello_device_config;
 
-	anello_data_port anello_device_data(data_port_name.c_str());
+	// DEBUG_PRINT("Config post set");
+	anello_data_port anello_device_data(&interface_config);
+	// DEBUG_PRINT("Data post declared");
 	anello_device_data.init();
+	// DEBUG_PRINT("Data post initialized");
 
 	health_msg.set_baseline(anello_device_config.get_baseline());
 #if DEBUG_MAIN
@@ -352,15 +479,14 @@ static void ros_driver_main_loop()
 #endif
 
 #if COMPILE_WITH_ROS
-    while (ros::ok())
+    while (ros::ok() && !sigint_received)
 	{
 		// allow ROS to process callbacks
 		ros::spinOnce();
 #else
-	while (1)
+	while (!sigint_received)
 	{
 #endif
-
 		// when data is available write it to the serial port
 		if (global_ntrip_buffer.is_read_ready())
 		{
@@ -490,8 +616,10 @@ static void ros_driver_main_loop()
 
 						if (INS_message_count > 100)
 						{
+#if COMPILE_WITH_ROS
 							publish_health(&health_msg, pub_health);
 							INS_message_count = 0;
+#endif
 						}
 						isOK = 1;
 					}
@@ -569,8 +697,10 @@ static void ros_driver_main_loop()
 
 							if (INS_message_count > 100)
 							{
+#if COMPILE_WITH_ROS
 								publish_health(&health_msg, pub_health);
 								INS_message_count = 0;
+#endif
 							}
 
 							isOK = 1;
@@ -607,6 +737,9 @@ static void ros_driver_main_loop()
 			}
 		}
 	}
+
+	anello_device_data.~anello_data_port();
+	anello_device_config.~anello_config_port();
 
 	if (LOG_LATEST_SET)
 	{

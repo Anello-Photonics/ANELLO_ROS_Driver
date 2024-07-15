@@ -57,11 +57,6 @@ protected:
     std::string portname;
 
 public:
-    /*
-     * Notes:
-     * This constructor does not initialize its port and should not be used.
-     */
-    serial_interface();
 
     /*
      * Parameters:
@@ -70,13 +65,13 @@ public:
      * Notes:
      * This just sets the variables. To initialize the port, call init().
      */
-    serial_interface(const char *ser_port);
+    serial_interface();
 
     /*
      * Notes:
      * This function initializes the serial port interface including configuring the port.
      */
-    void init();
+    void init(std::string portname);
 
     /*
      * Parameters:
@@ -87,6 +82,17 @@ public:
      * Number of bytes written 'char *buf'
      */
     size_t get_data(char *buf, size_t buf_len);
+
+    /*
+     * Parameters:
+     * char *buf : char array that will be written to the connected device
+     * size_t buf_len : amount of bytes to be written to the port
+     * int timeout : time in milliseconds to wait for data
+     *
+     * Return:
+     * Number of bytes written to the port
+     */
+    size_t get_data(char *buf, size_t buf_len, int timeout);
 
     /*
      * Parameters:
@@ -105,57 +111,23 @@ public:
     const std::string get_portname();
 
     /*
+     * Parameters:
+     *
+     * Return:
+     * bool value of the port status
+     */
+    bool get_port_enabled();
+
+    /*
+     * Notes:
+     * Closes the port serial port
+     */
+    void close_port();
+
+    /*
      * Notes:
      * Closes the port serial port
      */
     ~serial_interface();
 };
-
-class anello_config_port : public serial_interface
-{
-
-public:
-    /*
-     * Notes:
-     * This constructor does not initialize its port.
-     */
-    anello_config_port() : serial_interface(){};
-    anello_config_port(const char *ser_port_name) : serial_interface(ser_port_name){};
-
-    /*
-     * Notes:
-     * This function initializes the serial port interface including configuring the port.
-     */
-    void init();
-
-    double get_baseline();
-
-};
-
-class anello_data_port : public serial_interface
-{
-    bool decode_success;
-    bool auto_detect;
-    std::vector<std::string> port_names;
-    uint32_t port_index;
-    int fail_count;
-public:
-    /*
-     * Notes:
-     * This constructor does not initialize its port.
-     */
-    anello_data_port() : serial_interface(){};
-    anello_data_port(const char *ser_port_name);
-
-    /*
-     * Notes:
-     * This function initializes the serial port interface including configuring the port.
-     */
-    void init();
-    size_t get_data(char *buf, size_t buf_len);
-
-    void port_parse_fail();
-    void port_confirm();
-
-};     
 #endif
