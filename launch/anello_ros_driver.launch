@@ -1,11 +1,30 @@
 <launch>
+    <!-- Set the COM_TYPE to UART or ETH -->
+    <arg name="anello_com_type" default="ETH"/>
+
+    <!-- Uart port names -->
+    <arg name="anello_uart_data_port" default="AUTO"/>
+    <arg name="anello_uart_config_port" default="AUTO"/>
+
+    <!-- Ethernet port names -->
+    <arg name="anello_remote_ip" default="192.168.1.111"/>
+    <arg name="anello_local_data_port" default="1111"/>
+    <arg name="anello_local_config_port" default="2222"/>
+    <arg name="anello_local_odometer_port" default="3333"/>
+
     <!--Launch anello ros driver-->
     <!--Update data and config port values to the ports in your system-->
     <node name="anello_ros_driver" pkg="anello_ros_driver" type="anello_ros_driver">
-        <param name="data_port" value="AUTO"/>
-        <param name="config_port" value="AUTO"/>
+        <param name="anello_com_type" value="$(arg anello_com_type)"/>
+        <param name="anello_uart_data_port" value="$(arg anello_uart_data_port)"/>
+        <param name="anello_uart_config_port" value="$(arg anello_uart_config_port)"/>
+        <param name="anello_remote_ip" value="$(arg anello_remote_ip)"/>
+        <param name="anello_local_data_port" value="$(arg anello_local_data_port)"/>
+        <param name="anello_local_config_port" value="$(arg anello_local_config_port)"/>
+        <param name="anello_local_odometer_port" value="$(arg anello_local_odometer_port)"/>
     </node>
 
+    <!-- NTRIP CLIENT PARAMTERS -->
     <arg name="host" value="127.0.0.1"/>
     <arg name="port" value="1111"/>
     <arg name="mountpoint" value="AUTO"/>
