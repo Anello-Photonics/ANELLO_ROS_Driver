@@ -1,6 +1,6 @@
 <launch>
     <!-- Set the COM_TYPE to UART or ETH -->
-    <arg name="anello_com_type" default="ETH"/>
+    <arg name="anello_com_type" default="UART"/>
 
     <!-- Uart port names -->
     <arg name="anello_uart_data_port" default="AUTO"/>
