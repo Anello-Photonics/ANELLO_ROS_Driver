@@ -6,7 +6,7 @@
 #endif
 
 #ifndef MINOR_VERSION
-#define MINOR_VERSION 2
+#define MINOR_VERSION 3
 #endif
 
 #ifndef PATCH_VERSION
@@ -15,7 +15,15 @@
 
 
 /*
-v1.2.4 : Gyro discrepancy fix
+v1.3.4 : Add ethernet support along with NTRIP bug fixes
+
+v1.3.3 : Add GP2 topic
+
+v1.3.2 : Better version control of ntrip client
+
+v1.3.1 : Gyro discrepancy fix
+
+v1.3.0 : Update Version Number
 
 v1.2.3 : Added health message topic
 

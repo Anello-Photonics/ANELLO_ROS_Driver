@@ -10,7 +10,7 @@ BIN_DIR = makefile_compilation/bin
 
 SUBDIRS = comm messaging
 
-SRC_DIR = src
+SRC_DIR = src/anello_ros_driver
 # srcs = $(wildcard $(SRC_DIR)/**/*.cpp)
 srcs = $(wildcard $(SRC_DIR)/**/*.cpp) $(wildcard $(SRC_DIR)/*.cpp)
 

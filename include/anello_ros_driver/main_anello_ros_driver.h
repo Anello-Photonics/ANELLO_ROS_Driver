@@ -25,6 +25,9 @@
 
 #include "bit_tools.h"
 #include "serial_interface.h"
+#include "ethernet_interface.h"
+#include "anello_config_port.h"
+#include "anello_data_port.h"
 
 #ifndef MAX_BUF_LEN
 #define MAX_BUF_LEN (1200)
@@ -38,6 +41,10 @@
 #define DEBUG_SERIAL 0
 #endif
 
+#ifndef DEBUG_ETHERNET
+#define DEBUG_ETHERNET 1
+#endif
+
 #ifndef DEBUG_PUBLISHERS
 #define DEBUG_PUBLISHERS 0
 #endif
@@ -48,6 +55,14 @@
 
 #ifndef OLD_MESSAGING
 #define OLD_MESSAGING 1
+#endif
+
+#ifndef DEBUG_PRING
+#if COMPILE_WITH_ROS
+#define DEBUG_PRINT(...) ROS_INFO(__VA_ARGS__)
+#else
+#define DEBUG_PRINT(...) printf(__VA_ARGS__)
+#endif
 #endif
 
 #ifndef APINI_UPD
@@ -176,6 +191,7 @@ typedef struct
 	ros::Publisher *imu;
 	ros::Publisher *ins;
 	ros::Publisher *gps;
+	ros::Publisher *gp2;
 	ros::Publisher *hdg;
 } ros_publishers_t;
 #endif

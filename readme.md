@@ -21,15 +21,15 @@ git clone https://github.com/Anello-Photonics/ANELLO_ROS_Driver.git
 
 ### Install ANELLO ROS Driver Dependencies
 
-Install the following dependencies:
+Install rosdeps for the package
 
-#### ntrip_client Node
-
-Follow the build instructions on the [ntrip_client github page](https://github.com/LORD-MicroStrain/ntrip_client)
+```bash
+rosdep install --from-paths ~/catkin_ws/src --ignore-src -r -y
+```
 
 ### Configure ANELLO ROS Driver
 
-#### Required Actions
+#### Required Actions for Communications
 
 Product Type:
 
@@ -37,7 +37,7 @@ GNSS/INS: None
 
 IMU+: None
 
-EVK: Update baud rate to 921600 in "anello_ros_driver/include/serial_interface.h"
+EVK: Update baud rate to 921600 in "anello_ros_driver/include/serial_interface.h" if serial communication are being used.
 
 ```c++
 #ifndef BAUDRATE
@@ -46,47 +46,88 @@ EVK: Update baud rate to 921600 in "anello_ros_driver/include/serial_interface.h
 #endif
 ```
 
-Update the serial port values in the launch file to match the ports in your system.
-If the value is AUTO the program will automatically connect that port. The config port can be set to "OFF" if odometer correction are not being used.
+#### Setting up serial communication
+
+1. Ensure that the ```anello_com_type``` arg is set to ```UART```.
+2. Leave the UART port name configs on ```AUTO``` if you want to use the automatic connection procedure, or manually set the path to the virtual port (```/dev/ttyUSB0```)
+
+Launch file sample:
 
 ```xml
-    <!--Update data and config port values to the ports in your system-->
-    <node name="anello_ros_driver" pkg="anello_ros_driver" type="anello_ros_driver">
-        <param name="data_port" value="/dev/ttyUSB0"/>
-        <param name="config_port" value="/dev/ttyUSB3"/>
-    </node>
+    <!-- Set the COM_TYPE to UART or ETH -->
+    <arg name="anello_com_type" default="UART"/>
+
+    <!-- Uart port names -->
+    <arg name="anello_uart_data_port" default="AUTO"/>
+    <arg name="anello_uart_config_port" default="AUTO"/>
+```
+
+#### Setting up ethernet communication
+
+1. Ensure that the ```anello_com_type``` arg is set to ```ETH```.
+2. Set the IP address of the Anello device in the ```anello_remote_ip``` arg.
+3. Ensure that the IP address of the system running the ROS driver is set in the Anello device corretly under the "Computer IP" configuration.
+4. Set the ports for data, config, and odometer in the launch file. Make sure this matches the configuration in the Anello device.
+
+Launch file sample:
+
+```xml
+    <!-- Set the COM_TYPE to UART or ETH -->
+    <arg name="anello_com_type" default="ETH"/>
 ```
 
 ```xml
-    <!--Update data and config port values to the ports in your system-->
-    <node name="anello_ros_driver" pkg="anello_ros_driver" type="anello_ros_driver">
-        <param name="data_port" value="AUTO"/>
-        <param name="config_port" value="AUTO"/>
-    </node>
+    <!-- Ethernet port names -->
+    <arg name="anello_remote_ip" default="192.168.1.111"/>
+    <arg name="anello_local_data_port" default="1111"/>
+    <arg name="anello_local_config_port" default="2222"/>
+    <arg name="anello_local_odometer_port" default="3333"/>
 ```
 
-Update the ntrip_client parameters in the launch file to match your system:
+#### Setting up NTRIP client
+
+Update the NTRIP client parametres in the launch file to point to your NTRIP caster:
 
 ```xml
-    <!--Launch ntrip client-->
-    <include file="$(find ntrip_client)/launch/ntrip_client.launch">
-        <arg name="host" value="127.0.0.1"/>
-        <arg name="port" value="1111"/>
-        <arg name="mountpoint" value="AUTO"/>
-        <arg name="authenticate" value="true"/>
-        <arg name="username" value=""/>
-        <arg name="password" value=""/>
-        <arg name="ntrip_version" value=""/>
-        <arg name="ssl" value="false"/>
-        <arg name="cert" value=""/>
-        <arg name="key" value=""/>
-        <arg name="ca_cert" value=""/>
-        <arg name="debug" value="false"/>
-        <arg name="rtcm_message_package" value="mavros_msgs"/>
-    </include>
+    <!-- NTRIP CLIENT PARAMTERS -->
+    <arg name="host" value="127.0.0.1"/>
+    <arg name="port" value="1111"/>
+    <arg name="mountpoint" value="AUTO"/>
+    <arg name="authenticate" value="true"/>
+    <arg name="username" value=""/>
+    <arg name="password" value=""/>
+    <arg name="ntrip_version" value=""/>
+    <arg name="ssl" value="false"/>
+    <arg name="cert" value=""/>
+    <arg name="key" value=""/>
+    <arg name="ca_cert" value=""/>
+    <arg name="debug" value="false"/>
+    <arg name="rtcm_message_package" value="mavros_msgs"/>
 ```
 
 ### Build the code
+
+```bash
+cd ~/catkin_ws
+catkin_make
+```
+
+### Upgrading from older ros driver versions
+
+If you are upgrading from an older version of the driver (<= v1.2.2), you may need to recompile the code to ensure that the new changes are applied. First, ensure that the instance of the ntrip_client package is deleted from the workspace. This node has been moved within the anello_ros_driver package.
+
+```bash
+rm -rf ~/catkin_ws/src/ntrip_client
+```
+
+update the driver code to the latest version:
+
+```bash
+cd ~/catkin_ws/src/ANELLO_ROS_Driver
+git pull
+```
+
+Recompile the code:
 
 ```bash
 cd ~/catkin_ws
@@ -113,6 +154,7 @@ Topic definitions are defined in the [ANELLO Developer Manual](https://docs-a1.r
 * `/APIM1`
 * `/APINS`
 * `/APGPS`
+* `/APGP2`
 * `/APHDG`
 * `/APHEALTH`
   * Message Definitions:

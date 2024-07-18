@@ -1,6 +1,11 @@
 *.o
 *.out
+*.pyc
+__pycache__
+
+.*.sw*
 .vscode/
 build/
 launch/internal_*
+
 TODO.txt

@@ -1,25 +1,81 @@
 <launch>
+    <!-- Set the COM_TYPE to UART or ETH -->
+    <arg name="anello_com_type" default="UART"/>
+
+    <!-- Uart port names -->
+    <arg name="anello_uart_data_port" default="AUTO"/>
+    <arg name="anello_uart_config_port" default="AUTO"/>
+
+    <!-- Ethernet port names -->
+    <arg name="anello_remote_ip" default="192.168.1.111"/>
+    <arg name="anello_local_data_port" default="1111"/>
+    <arg name="anello_local_config_port" default="2222"/>
+    <arg name="anello_local_odometer_port" default="3333"/>
+
     <!--Launch anello ros driver-->
     <!--Update data and config port values to the ports in your system-->
     <node name="anello_ros_driver" pkg="anello_ros_driver" type="anello_ros_driver">
-        <param name="data_port" value="AUTO"/>
-        <param name="config_port" value="AUTO"/>
+        <param name="anello_com_type" value="$(arg anello_com_type)"/>
+        <param name="anello_uart_data_port" value="$(arg anello_uart_data_port)"/>
+        <param name="anello_uart_config_port" value="$(arg anello_uart_config_port)"/>
+        <param name="anello_remote_ip" value="$(arg anello_remote_ip)"/>
+        <param name="anello_local_data_port" value="$(arg anello_local_data_port)"/>
+        <param name="anello_local_config_port" value="$(arg anello_local_config_port)"/>
+        <param name="anello_local_odometer_port" value="$(arg anello_local_odometer_port)"/>
     </node>
 
-    <!--Launch ntrip client-->
-    <include file="$(find ntrip_client)/launch/ntrip_client.launch">
-        <arg name="host" value="127.0.0.1"/>
-        <arg name="port" value="1111"/>
-        <arg name="mountpoint" value="AUTO"/>
-        <arg name="authenticate" value="true"/>
-        <arg name="username" value=""/>
-        <arg name="password" value=""/>
-        <arg name="ntrip_version" value=""/>
-        <arg name="ssl" value="false"/>
-        <arg name="cert" value=""/>
-        <arg name="key" value=""/>
-        <arg name="ca_cert" value=""/>
-        <arg name="debug" value="false"/>
-        <arg name="rtcm_message_package" value="mavros_msgs"/>
-    </include>
+    <!-- NTRIP CLIENT PARAMTERS -->
+    <arg name="host" value="127.0.0.1"/>
+    <arg name="port" value="1111"/>
+    <arg name="mountpoint" value="AUTO"/>
+    <arg name="authenticate" value="true"/>
+    <arg name="username" value=""/>
+    <arg name="password" value=""/>
+    <arg name="ntrip_version" value=""/>
+    <arg name="ssl" value="false"/>
+    <arg name="cert" value=""/>
+    <arg name="key" value=""/>
+    <arg name="ca_cert" value=""/>
+    <arg name="debug" value="false"/>
+    <arg name="rtcm_message_package" value="mavros_msgs"/>
+
+    <node name="ntrip_client_node" pkg="anello_ros_driver" type="ntrip_ros.py" output="screen" ns="ntrip_client">
+        <!-- Required parameters used to connect to the NTRIP server -->
+        <param name="host"       value="$(arg host)" />
+        <param name="port"       value="$(arg port)" />
+        <param name="mountpoint" value="$(arg mountpoint)" />
+
+        <!-- Optional parameter that will set the NTRIP version in the initial HTTP request to the NTRIP caster. -->
+        <param name="ntrip_version" value="$(arg ntrip_version)" />
+
+        <!-- If this is set to true, we will read the username and password and attempt to authenticate. If not, we will attempt to connect unauthenticated -->
+        <param name="authenticate" value="$(arg authenticate)" />
+
+        <!-- If authenticate is set to true, we will use these to authenticate with the server -->
+        <param name="username" value="$(arg username)" />
+        <param name="password" value="$(arg password)" />
+
+        <!-- Whether to connect with SSL. cert, key, and ca_cert options will only take effect if this is true -->
+        <param name="ssl" value="$(arg ssl)" />
+
+        <!-- If the NTRIP caster uses cert based authentication, you can specify the cert and keys to use with these options -->
+        <param name="cert" value="$(arg cert)" />
+        <param name="key"  value="$(arg key)" />
+
+        <!-- If the NTRIP caster uses self signed certs, or you need to use a different CA chain, specify the path to the file here -->
+        <param name="ca_cert" value="$(arg ca_cert)" />
+
+        <!-- Not sure if this will be looked at, but this frame ID will be added to the RTCM messages published by this node -->
+        <param name="rtcm_frame_id" value="odom" />
+
+        <!-- Will affect how many times the node will attempt to reconnect before exiting, and how long it will wait in between attempts when a reconnect occurs -->
+        <param name="reconnect_attempt_max" value="10" />
+        <param name="reconnect_attempt_wait_seconds" value="5" />
+
+        <!-- How many seconds is acceptable in between receiving RTCM. If RTCM is not received for this duration, the node will attempt to reconnect -->
+        <param name="rtcm_timeout_seconds" value="4" />
+
+        <!-- Uncomment the following section and replace "/gx5/nmea/sentence" with the topic you are sending NMEA on if it is not the one we requested -->
+        <!--<remap from="/ntrip_client/nmea" to="/gx5/nmea/sentence" />-->
+    </node>
 </launch>
