@@ -37,7 +37,7 @@ GNSS/INS: None
 
 IMU+: None
 
-EVK: Update baud rate to 921600 in "anello_ros_driver/include/serial_interface.h" if serial communication are being used.
+EVK: Update baud rate to 921600 in "anello_ros_driver/include/serial_interface.h" if serial communications are being used.
 
 ```c++
 #ifndef BAUDRATE
@@ -67,7 +67,7 @@ Launch file sample:
 1. Ensure that the ```anello_com_type``` arg is set to ```ETH```.
 2. Set the IP address of the Anello device in the ```anello_remote_ip``` arg.
 3. Ensure that the IP address of the system running the ROS driver is set in the Anello device corretly under the "Computer IP" configuration.
-4. Set the ports for data, config, and odometer in the launch file. Make sure this matches the configuration in the Anello device.
+4. Set the ports for data, config, and odometer in the launch file. Make sure this matches the configuration in the Anello device configuration.
 
 Launch file sample:
 
@@ -114,7 +114,7 @@ catkin_make
 
 ### Upgrading from older ros driver versions
 
-If you are upgrading from an older version of the driver (<= v1.2.2), you may need to recompile the code to ensure that the new changes are applied. First, ensure that the instance of the ntrip_client package is deleted from the workspace. This node has been moved within the anello_ros_driver package.
+If you are upgrading from an older version of the anello ros driver (<= v1.2.2), you may need to recompile the code to ensure that the new changes are applied. First, ensure that the instance of the ntrip_client previously at ```~/catkin_ws/src/ntrip_client``` is deleted from the workspace. This node has been moved within the anello_ros_driver package src and script directory.
 
 ```bash
 rm -rf ~/catkin_ws/src/ntrip_client
