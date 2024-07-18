@@ -7,9 +7,9 @@
  *
  * License:     MIT License
  *
- * Note:        This file contains the scalings for RTCM messagesbased on the ANELLO firmware.
+ * Note:        This file contains the scalings for RTCM messages based on the ANELLO firmware.
  *
- *              The rtcm messages are decoded into a double array defined in rtcm_decoder.h.
+ *              The RTCM messages are decoded into a double array defined in rtcm_decoder.h.
  *
  ********************************************************************************/
 

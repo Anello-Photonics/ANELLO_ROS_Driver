@@ -392,7 +392,7 @@ static void ros_driver_main_loop()
 #endif
 
 	
-	ROS_DEBUG("Anello ROS Driver Started\n");
+	ROS_DEBUG("ANELLO ROS Driver Started\n");
 
 
 	ros_publishers_t pub_arr;
