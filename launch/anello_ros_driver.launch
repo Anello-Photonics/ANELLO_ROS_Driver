@@ -12,7 +12,7 @@
     <arg name="anello_local_config_port" default="2222"/>
     <arg name="anello_local_odometer_port" default="3333"/>
 
-    <!--Launch anello ros driver-->
+    <!--Launch ANELLO ros driver-->
     <!--Update data and config port values to the ports in your system-->
     <node name="anello_ros_driver" pkg="anello_ros_driver" type="anello_ros_driver">
         <param name="anello_com_type" value="$(arg anello_com_type)"/>

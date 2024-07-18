@@ -151,7 +151,7 @@ int main(int argc, char *argv[])
 {
 #if COMPILE_WITH_ROS
 	ros::init(argc, argv, NODE_NAME);
-	ROS_INFO("Anello ROS Driver Started\n");
+	ROS_INFO("ANELLO ROS Driver Started\n");
 #endif
 	ros_driver_main_loop();
 }
@@ -463,10 +463,10 @@ static void ros_driver_main_loop()
 	health_msg.set_baseline(anello_device_config.get_baseline());
 #if DEBUG_MAIN
 #if COMPILE_WITH_ROS
-	ROS_INFO("Anello ROS Driver Started\n");
+	ROS_INFO("ANELLO ROS Driver Started\n");
 	ROS_INFO("Data Port: %s", anello_device_data.get_portname().c_str());
 #else
-	printf("Anello ROS Driver Started\n");
+	printf("ANELLO ROS Driver Started\n");
 	printf("Data Port: %s", anello_device_data.get_portname().c_str());
 #endif	
 

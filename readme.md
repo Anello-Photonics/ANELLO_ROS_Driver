@@ -1,10 +1,10 @@
 # ANELLO ROS Driver
 
-## Supported Firmware
+## ANELLO Products Supported
 
-Support FW Versions >= v1.1.1
+The ANELLO ROS driver supports the ANELLO EVK, GNSS INS, and IMU+ running firmware versions >= v1.1.1. 
 
-## Installation
+## ANELLO ROS Driver Installation
 
 ### Install ROS
 
@@ -12,7 +12,7 @@ Follow the instructions on the [ROS Wiki](http://wiki.ros.org/ROS/Installation) 
 
 ### Install ANELLO ROS Driver
 
-Clone this repository into your catkin workspace and build it:
+Clone this repository into your catkin workspace:
 
 ```bash
 cd ~/catkin_ws/src
@@ -21,35 +21,55 @@ git clone https://github.com/Anello-Photonics/ANELLO_ROS_Driver.git
 
 ### Install ANELLO ROS Driver Dependencies
 
-Install rosdeps for the package
+Install rosdeps for the package:
 
 ```bash
 rosdep install --from-paths ~/catkin_ws/src --ignore-src -r -y
 ```
 
-### Configure ANELLO ROS Driver
+### Upgrading from Older ANELLO ROS Driver Versions
 
-#### Required Actions for Communications
+If you are upgrading from an older version of the ANELLO ROS driver (<= v1.2.2), please use the following steps to ensure that the new changes are applied. 
 
-Product Type:
+1. Ensure that the instance of the ntrip_client previously at ```~/catkin_ws/src/ntrip_client``` is deleted from the workspace. This node has been moved within the anello_ros_driver package src and script directory.
 
-GNSS/INS: None
+```bash
+rm -rf ~/catkin_ws/src/ntrip_client
+```
 
-IMU+: None
+2. Update to the latest version:
 
-EVK: Update baud rate to 921600 in "anello_ros_driver/include/serial_interface.h" if serial communications are being used.
+```bash
+cd ~/catkin_ws/src/ANELLO_ROS_Driver
+git pull
+```
+
+3. Reset compilation:
+
+```bash
+cd ~/catkin_ws
+rm -rf build/ devel/
+catkin_make
+```
+
+## ANELLO ROS Driver Configuration
+
+### Serial Communications
+
+The ANELLO ROS driver defaults serial communications baud rate to 230400. 
+If you are using the ANELLO EVK or have changed the baud rate in the GNSS INS or IMU+, you will need to update the ```BAUDRATE``` in "anello_ros_driver/include/serial_interface.h".
 
 ```c++
 #ifndef BAUDRATE
-#define BAUDRATE B230400    //Default baudrate for anello GNSS/INS and IMU+
-// #define BAUDRATE B921600    //Default baudrate for anello EVK
+#define BAUDRATE B230400    //Default baudrate for ANELLO GNSS INS and IMU+
+// #define BAUDRATE B921600    //Default baudrate for ANELLO EVK
 #endif
 ```
 
-#### Setting up serial communication
+To set up serial communications:
 
 1. Ensure that the ```anello_com_type``` arg is set to ```UART```.
-2. Leave the UART port name configs on ```AUTO``` if you want to use the automatic connection procedure, or manually set the path to the virtual port (```/dev/ttyUSB0```)
+2. Leave the UART port name configurations on ```AUTO``` to use the automatic connection procedure, or manually set the path (```/dev/ttyUSB0```).
 
 Launch file sample:
 
@@ -62,12 +82,14 @@ Launch file sample:
     <arg name="anello_uart_config_port" default="AUTO"/>
 ```
 
-#### Setting up ethernet communication
+### Ethernet Communications
+
+To set up ethernet communications:
 
 1. Ensure that the ```anello_com_type``` arg is set to ```ETH```.
-2. Set the IP address of the Anello device in the ```anello_remote_ip``` arg.
-3. Ensure that the IP address of the system running the ROS driver is set in the Anello device corretly under the "Computer IP" configuration.
-4. Set the ports for data, config, and odometer in the launch file. Make sure this matches the configuration in the Anello device configuration.
+2. Set the IP address of the ANELLO device in the ```anello_remote_ip``` arg.
+3. Ensure that the IP address of the system running the ROS driver is set in the ANELLO unit's "Computer IP" configuration.
+4. Set the data port, config port, and odometer port in the launch file. Ensure these match the ANELLO unit configuration.
 
 Launch file sample:
 
@@ -84,9 +106,9 @@ Launch file sample:
     <arg name="anello_local_odometer_port" default="3333"/>
 ```
 
-#### Setting up NTRIP client
+### Setting Up NTRIP client
 
-Update the NTRIP client parametres in the launch file to point to your NTRIP caster:
+Update the NTRIP client parameters in the launch file to point to your NTRIP caster:
 
 ```xml
     <!-- NTRIP CLIENT PARAMTERS -->
@@ -105,37 +127,14 @@ Update the NTRIP client parametres in the launch file to point to your NTRIP cas
     <arg name="rtcm_message_package" value="mavros_msgs"/>
 ```
 
-### Build the code
+### Build Code
 
 ```bash
 cd ~/catkin_ws
 catkin_make
 ```
 
-### Upgrading from older ros driver versions
-
-If you are upgrading from an older version of the anello ros driver (<= v1.2.2), you may need to recompile the code to ensure that the new changes are applied. First, ensure that the instance of the ntrip_client previously at ```~/catkin_ws/src/ntrip_client``` is deleted from the workspace. This node has been moved within the anello_ros_driver package src and script directory.
-
-```bash
-rm -rf ~/catkin_ws/src/ntrip_client
-```
-
-update the driver code to the latest version:
-
-```bash
-cd ~/catkin_ws/src/ANELLO_ROS_Driver
-git pull
-```
-
-Reset comilation:
-
-```bash
-cd ~/catkin_ws
-rm -rf build/ devel/
-catkin_make
-```
-
-## Usage
+## ANELLO ROS Driver Usage
 
 ### Launch ANELLO ROS Driver
 
@@ -149,7 +148,7 @@ ANELLO messages will be published to topics (see below). For information on how 
 
 #### Published Topics
 
-Topic definitions are defined in the [ANELLO Developer Manual](https://docs-a1.readthedocs.io/en/latest/) by the ASCII message format. Custom message definitions are used for Anello messages and can be found in the `/anello_ros_driver/msg` directory.
+Topic definitions are defined in the [ANELLO Developer Manual](https://docs-a1.readthedocs.io/en/latest/) by the ASCII message format. Custom message definitions are used for ANELLO messages and can be found in the `/anello_ros_driver/msg` directory.
 
 * `/APIMU`
 * `/APIM1`
@@ -162,7 +161,7 @@ Topic definitions are defined in the [ANELLO Developer Manual](https://docs-a1.r
     * `position_acc_flag`
       * 0 = Centimeter-level accuracy
       * 1 = Meter-level accuracy
-      * 2 = Poor GPS accuracy (< 1m)
+      * 2 = Poor GPS accuracy (> 1m)
     * `heading_health_flag`
       * 0 = Heading stability confirmed (GPS and INS headings match)
       * 1 = Unable to confirm heading stability (may be due to poor GPS signal or driving too slow to get reliable GPS heading)
@@ -173,21 +172,11 @@ Topic definitions are defined in the [ANELLO Developer Manual](https://docs-a1.r
 
 #### Subscribed Topics
 
-Use the custom message and topic below to send odometer speed to the Anello Photonics unit.
+Use the custom message and topic below to send odometer speed to the ANELLO unit.
 
 * `/APODO`
   * Use the custom message definition found in `/anello_ros_driver/msg/APODO.msg`
 * `/ntrip_client/rtcm_msg`
-
-### Services
-
-#### Provided Services
-
-* None
-
-#### Called Services
-
-* None
 
 ## License
 

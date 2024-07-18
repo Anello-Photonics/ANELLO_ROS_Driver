@@ -41,8 +41,8 @@
 #endif
 
 #ifndef BAUDRATE
-#define BAUDRATE B230400    //Default baudrate for anello GNSS/INS and IMU+
-// #define BAUDRATE B921600    //Default baudrate for anello EVK
+#define BAUDRATE B230400    //Default baudrate for ANELLO GNSS INS and IMU+
+// #define BAUDRATE B921600    //Default baudrate for ANELLO EVK
 #endif
 
 #ifndef MAX_PORT_PARSE_FAIL
@@ -75,7 +75,7 @@ public:
 
     /*
      * Parameters:
-     * char *buf : char array that will be written over with as much anello unit data as possible
+     * char *buf : char array that will be written over with as much ANELLO unit data as possible
      * size_t buf_len : size of the buffer in 'char *buf'
      *
      * Return:

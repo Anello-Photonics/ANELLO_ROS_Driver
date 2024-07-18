@@ -34,7 +34,7 @@ v1.2.1 : Added support for dynamic gga message generation
 v1.2.0 : Feature List:
             1. Added IMU+ support
             2. Update .msg files to include all available data
-            3. Update default values to match IMU+ and GNSS/INS defaults
+            3. Update default values to match IMU+ and GNSS INS defaults
 
 v1.1.3 : Fixed serial port connection on boot
 
