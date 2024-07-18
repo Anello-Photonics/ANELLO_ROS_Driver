@@ -127,10 +127,11 @@ cd ~/catkin_ws/src/ANELLO_ROS_Driver
 git pull
 ```
 
-Recompile the code:
+Reset comilation:
 
 ```bash
 cd ~/catkin_ws
+rm -rf build/ devel/
 catkin_make
 ```
 
