@@ -37,7 +37,7 @@ GNSS/INS: None
 
 IMU+: None
 
-EVK: Update baud rate to 921600 in "anello_ros_driver/include/serial_interface.h".
+EVK: Update baud rate to 921600 in "anello_ros_driver/include/serial_interface.h" if serial communication are being used.
 
 ```c++
 #ifndef BAUDRATE
@@ -106,6 +106,28 @@ Update the NTRIP client parametres in the launch file to point to your NTRIP cas
 ```
 
 ### Build the code
+
+```bash
+cd ~/catkin_ws
+catkin_make
+```
+
+### Upgrading from older ros driver versions
+
+If you are upgrading from an older version of the driver (<= v1.2.2), you may need to recompile the code to ensure that the new changes are applied. First, ensure that the instance of the ntrip_client package is deleted from the workspace. This node has been moved within the anello_ros_driver package.
+
+```bash
+rm -rf ~/catkin_ws/src/ntrip_client
+```
+
+update the driver code to the latest version:
+
+```bash
+cd ~/catkin_ws/src/ANELLO_ROS_Driver
+git pull
+```
+
+Recompile the code:
 
 ```bash
 cd ~/catkin_ws
