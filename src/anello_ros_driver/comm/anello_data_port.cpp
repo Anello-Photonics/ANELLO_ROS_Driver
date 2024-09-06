@@ -10,8 +10,8 @@
  * Note:        
  ********************************************************************************/
 
-#include "main_anello_ros_driver.h"
-#include "bit_tools.h"
+#include "../main_anello_ros_driver.h"
+#include "../bit_tools.h"
 
 #if COMPILE_WITH_ROS
 #include <ros/ros.h>

@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<package format="2">
+<package format="3">
   <name>anello_ros_driver</name>
   <version>1.3.4</version>
   <description>The anello_ros_driver package</description>
@@ -46,8 +46,8 @@
   <!--   <test_depend>gtest</test_depend> -->
   <!-- Use doc_depend for packages you need only for building documentation: -->
   <!--   <doc_depend>doxygen</doc_depend> -->
-  <depend>roscpp</depend>
-  <depend>rospy</depend>
+  <depend>rclcpp</depend>
+  <depend>rclpy</depend>
   <depend>std_msgs</depend>
   <depend>nmea_msgs</depend>
   <depend>mavros_msgs</depend>

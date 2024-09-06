@@ -24,8 +24,6 @@
 #include <unistd.h>
 #include <csignal>
 #include "main_anello_ros_driver.h"
-#include "message_subscriber.h"
-#include "health_message.h"
 
 #if COMPILE_WITH_ROS
 #include <ros/ros.h>
@@ -40,19 +38,15 @@
 #endif
 
 #include "bit_tools.h"
-#include "serial_interface.h"
-#include "rtcm_decoder.h"
-#include "ascii_decoder.h"
-#include "message_publisher.h"
-#include "ntrip_buffer.h"
-// extern NTRIP_buffer global_ntrip_buffer;
 
-// UPDATE THIS VARIABLE TO CHANGE SERIAL PORT
-// DEFAULT_DATA_INTERFACE found in anello_ros_driver/include/anello_ros_driver/serial_interface.h
-//
-// Example:
-// const char *serial_port_name = "/dev/ttyUSB0";
-const char *serial_port_name = DEFAULT_DATA_INTERFACE;
+#if 0
+#include "messaging/rtcm_decoder.h"
+#include "messaging/ascii_decoder.h"
+#include "messaging/message_publisher.h"
+#include "messaging/message_subscriber.h"
+#include "messaging/ntrip_buffer.h"
+#include "messaging/health_message.h"
+#endif
 
 #ifndef NO_GGA
 #define NO_GGA
@@ -126,13 +120,14 @@ const char *serial_port_name = DEFAULT_DATA_INTERFACE;
 #define LOG_FILE_NAME "latest_anello_log.txt"
 #endif
 
+#if !(COMPILE_WITH_ROS2)
 volatile sig_atomic_t sigint_received = 0;
 
 void sigint_handler(int sig)
 {
 	sigint_received = 1;
 }
-
+#endif
 anello_config_port *gp_global_config_port;
 
 using namespace std;
@@ -144,16 +139,35 @@ typedef struct
 	char buff[MAX_BUF_LEN]; // buffer from file
 } file_read_buf_t;
 
+#if !(COMPILE_WITH_ROS2)
 static int input_a1_data(a1buff_t *a1, uint8_t data, FILE *log_file);
 static void ros_driver_main_loop();
+#endif
+
+class AnelloRosDrive : public rclcpp::Node
+{
+public:
+	AnelloRosDrive()
+		: Node(NODE_NAME)
+	{
+		RCLCPP_INFO(this->get_logger(), "ANELLO ROS Driver Started\n");
+	}
+};
 
 int main(int argc, char *argv[])
 {
+
 #if COMPILE_WITH_ROS
 	ros::init(argc, argv, NODE_NAME);
 	ROS_INFO("ANELLO ROS Driver Started\n");
 #endif
+#if COMPILE_WITH_ROS2
+	rclcpp::init(argc, argv);
+	rclcpp::spin(std::make_shared<AnelloRosDrive>());
+	rclcpp::shutdown();
+#else
 	ros_driver_main_loop();
+#endif
 }
 
 /*
@@ -365,6 +379,9 @@ static void get_interface_config(interface_config_t *config)
  * Maintaining a buffer of input bytes
  * Calling correct decoder for each message
  */
+
+#if COMPILE_WITH_ROS2
+#else
 static void ros_driver_main_loop()
 {
 	// init signal handler
@@ -747,3 +764,4 @@ static void ros_driver_main_loop()
 		fclose(log_file_fp);
 	}
 }
+#endif

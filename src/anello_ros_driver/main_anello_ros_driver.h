@@ -15,7 +15,11 @@
 #define MAIN_ANELLO_ROS_DRIVER_H
 
 #ifndef COMPILE_WITH_ROS
-#define COMPILE_WITH_ROS 1
+#define COMPILE_WITH_ROS 0
+#endif
+
+#ifndef COMPILE_WITH_ROS2
+#define COMPILE_WITH_ROS2 1
 #endif
 
 #include <stdint.h>
@@ -23,11 +27,15 @@
 #include <ros/ros.h>
 #endif
 
+#if COMPILE_WITH_ROS2
+#include "rclcpp/rclcpp.hpp"
+#endif
+
 #include "bit_tools.h"
-#include "serial_interface.h"
-#include "ethernet_interface.h"
-#include "anello_config_port.h"
-#include "anello_data_port.h"
+#include "comm/serial_interface.h"
+#include "comm/ethernet_interface.h"
+#include "comm/anello_config_port.h"
+#include "comm/anello_data_port.h"
 
 #ifndef MAX_BUF_LEN
 #define MAX_BUF_LEN (1200)
@@ -184,16 +192,5 @@ typedef struct
 	uint8_t ZUPT;		   // UInt8	    1 � stationary, 0 - moving
 	uint8_t Status;		   // UInt8	    See ASCII packet
 } rtcm_apins_t;
-
-#if COMPILE_WITH_ROS
-typedef struct
-{
-	ros::Publisher *imu;
-	ros::Publisher *ins;
-	ros::Publisher *gps;
-	ros::Publisher *gp2;
-	ros::Publisher *hdg;
-} ros_publishers_t;
-#endif
 
 #endif

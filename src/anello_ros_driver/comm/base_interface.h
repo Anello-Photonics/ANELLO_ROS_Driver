@@ -46,7 +46,7 @@ public:
      * Return:
      * Number of bytes written 'char *buf'
      */
-    virtual size_t get_data(char *buf, size_t buf_len) { return 0; }
+    virtual size_t get_data(char *buf, size_t buf_len) { (void)buf; (void)buf_len; return 0; }
     
     /*
      * Parameters:
@@ -54,7 +54,7 @@ public:
      * size_t buf_len : amount of bytes to be written to the port
      *
      */
-    virtual void write_data(const char *buf, size_t buf_len) { return; }
+    virtual void write_data(const char *buf, size_t buf_len) { (void)buf; (void)buf_len; return; }
 };
 
 #endif
