@@ -10,11 +10,13 @@
 #endif
 
 #ifndef PATCH_VERSION
-#define PATCH_VERSION 4
+#define PATCH_VERSION 5
 #endif
 
 
 /*
+v1.3.5 : Remove unnecessary debug messages
+
 v1.3.4 : Add ethernet support along with NTRIP bug fixes
 
 v1.3.3 : Add GP2 topic
