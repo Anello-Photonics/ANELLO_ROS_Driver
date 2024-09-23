@@ -1,17 +1,15 @@
 /********************************************************************************
  * File Name:   rtcm_decoder.cpp
- * Description: This file contains the functions for decoding rtcm messages.
+ * Description: This file contains the functions for decoding ANELLO RTCM messages.
  *
  * Author:      Austin Johnson
  * Date:        7/1/23
  *
  * License:     MIT License
  *
- * Note:        This file contains the scalings for rtcm messages. These scalings
- *                 are based on the anello firmware.
+ * Note:        This file contains the scalings for RTCM messages based on the ANELLO firmware.
  *
- *              The rtcm messages are decoded into a double array. The array is
- *                defined in rtcm_decoder.h.
+ *              The RTCM messages are decoded into a double array defined in rtcm_decoder.h.
  *
  ********************************************************************************/
 

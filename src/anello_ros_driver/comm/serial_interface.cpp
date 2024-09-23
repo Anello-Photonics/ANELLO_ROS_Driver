@@ -129,9 +129,9 @@ size_t serial_interface::get_data(char *buf, size_t buf_len)
     if (this->usb_fd < 0)
     {
 #if COMPILE_WITH_ROS
-        ROS_ERROR("Anello ros driver serial port file descriptor not defined");
+        ROS_ERROR("ANELLO ROS driver serial port file descriptor not defined");
 #else
-        printf("Anello ros driver serial port file descriptor not defined");
+        printf("ANELLO ROS driver serial port file descriptor not defined");
 #endif
         exit(1);
     }
@@ -150,9 +150,9 @@ size_t serial_interface::get_data(char *buf, size_t buf_len, int timeout)
     if (this->usb_fd < 0)
     {
 #if COMPILE_WITH_ROS
-        ROS_ERROR("Anello ros driver serial port file descriptor not defined");
+        ROS_ERROR("ANELLO ROS driver serial port file descriptor not defined");
 #else
-        printf("Anello ros driver serial port file descriptor not defined");
+        printf("ANELLO ROS driver serial port file descriptor not defined");
 #endif
         exit(1);
     }

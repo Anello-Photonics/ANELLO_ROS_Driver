@@ -7,8 +7,8 @@
  *
  * License:     MIT License
  *
- * Note:        The anello data_port class is used to read/write data to the anello GNSS/INS, EVK, and IMU+.
- *              This class is meant to abstract the uart/ethernet communication with the anello devices.
+ * Note:        The anello_data_port class is used to read/write data to the anello GNSS INS, EVK, and IMU+.
+ *              This class is meant to abstract the UART/ethernet communication with the anello devices.
  *
  ********************************************************************************/
 

@@ -1,13 +1,13 @@
 /********************************************************************************
  * File Name:   base_interface.h
- * Description: Contains the base implementation used for all anello device interfaces.
+ * Description: Contains the base implementation used for all ANELLO device interfaces.
  *
  * Author:      Austin Johnson
  * Date:        7/1/23
  *
  * License:     MIT License
  *
- * Note:        All interfaces to the Anello devices should inherit from this class.
+ * Note:        All interfaces to the ANELLO devices should inherit from this class.
  ********************************************************************************/
 
 #ifndef BASE_INTERFACE_H

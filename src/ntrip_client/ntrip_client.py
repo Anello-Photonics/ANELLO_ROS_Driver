@@ -1,4 +1,8 @@
 #!/usr/bin/env python
+# Code has been adapted from https://github.com/LORD-MicroStrain/ntrip_client
+# Original Author: Parker Hannifin Corp
+# Date Forked: 2024-07-19
+# At time of forking, code was under the MIT License
 
 import ssl
 import time
