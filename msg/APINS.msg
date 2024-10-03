@@ -5,7 +5,7 @@ uint8 ins_status
 
 float64 lat
 float64 lon
-float64 Alt_ellipsoid
+float64 alt_ellipsoid
 
 float64 vn
 float64 ve

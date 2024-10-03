@@ -37,6 +37,18 @@
 #include "nmea_msgs/Sentence.h"
 #endif
 
+#if COMPILE_WITH_ROS2
+//anello output topics
+#include "anello_ros_driver/msg/apimu.hpp"
+#include "anello_ros_driver/msg/apim1.hpp"
+#include "anello_ros_driver/msg/apins.hpp"
+#include "anello_ros_driver/msg/apgps.hpp"
+#include "anello_ros_driver/msg/aphdg.hpp"
+#include "anello_ros_driver/msg/aphealth.hpp"
+
+#include "anello_ros_driver/msg/apodo.hpp"
+#endif
+
 #include "bit_tools.h"
 
 #if 0
@@ -144,14 +156,42 @@ static int input_a1_data(a1buff_t *a1, uint8_t data, FILE *log_file);
 static void ros_driver_main_loop();
 #endif
 
-class AnelloRosDrive : public rclcpp::Node
+class AnelloRosDriver : public rclcpp::Node
 {
 public:
-	AnelloRosDrive()
+	AnelloRosDriver()
 		: Node(NODE_NAME)
 	{
-		RCLCPP_INFO(this->get_logger(), "ANELLO ROS Driver Started\n");
+		RCLCPP_INFO(this->get_logger(), "ANELLO ROS Driver Started 100\n");
+#if 0
+		ros::Publisher pub_imu = nh.advertise<anello_ros_driver::APIMU>("APIMU", 10);
+		ros::Publisher pub_im1 = nh.advertise<anello_ros_driver::APIM1>("APIM1", 10);
+		ros::Publisher pub_ins = nh.advertise<anello_ros_driver::APINS>("APINS", 10);
+		ros::Publisher pub_gps = nh.advertise<anello_ros_driver::APGPS>("APGPS", 10);
+		ros::Publisher pub_gp2 = nh.advertise<anello_ros_driver::APGPS>("APGP2", 10);
+		ros::Publisher pub_hdg = nh.advertise<anello_ros_driver::APHDG>("APHDG", 10);
+		ros::Publisher pub_health = nh.advertise<anello_ros_driver::APHEALTH>("APHEALTH", 1);
+		ros::Publisher pub_gga = nh.advertise<nmea_msgs::Sentence>("ntrip_client/nmea", 1);
+
+		ros::Subscriber sub_rtcm = nh.subscribe("ntrip_client/rtcm", 1, ntrip_rtcm_callback);
+		ros::Subscriber sub_odo = nh.subscribe("APODO", 1, apodo_callback);
+#endif
+		// _imu_publisher = this->create_publisher<anello_ros_driver::msg::APIMU>("APIMU", 10);
+		// timer_ = this->create_wall_timer(500ms, std::bind(&AnelloRosDriver::timer_callback, this));
 	}
+
+private:
+	// void timer_callback()
+	// {
+	// 	auto message = anello_ros_driver::msg::APIMU();
+	// 	message.mcu_time = (float)count;
+	// 	_imu_publisher->publish(message);
+	// 	count++;
+	// }
+	
+	// rclcpp::Publisher<anello_ros_driver::msg::APIMU>::SharedPtr _imu_publisher;
+	// rclcpp::TimerBase::SharedPtr timer_;
+	size_t count;
 };
 
 int main(int argc, char *argv[])
@@ -163,7 +203,7 @@ int main(int argc, char *argv[])
 #endif
 #if COMPILE_WITH_ROS2
 	rclcpp::init(argc, argv);
-	rclcpp::spin(std::make_shared<AnelloRosDrive>());
+	rclcpp::spin(std::make_shared<AnelloRosDriver>());
 	rclcpp::shutdown();
 #else
 	ros_driver_main_loop();

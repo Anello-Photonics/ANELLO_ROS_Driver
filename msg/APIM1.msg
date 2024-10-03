@@ -1,5 +1,5 @@
 float64 mcu_time
-float64 T_Sync
+float64 t_sync
 float64 ax
 float64 ay
 float64 az
