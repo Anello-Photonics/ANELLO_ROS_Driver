@@ -125,7 +125,8 @@ void publish_gga(double *gps, ros::Publisher pub)
 	gngga_message << ",";
 
 /*************************Diff. Ref. Station ID*************************/
-	gngga_message << ",";
+	// No comma for the final field
+	gngga_message << "";
 
 /*************************Checksum*************************/
 	std::string ck = compute_checksum(gngga_message.str().c_str() + 1, gngga_message.str().length() - 1);

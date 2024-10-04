@@ -10,11 +10,13 @@
 #endif
 
 #ifndef PATCH_VERSION
-#define PATCH_VERSION 5
+#define PATCH_VERSION 6
 #endif
 
 
 /*
+v1.3.6 : Removed extra comma from GNGGA NMEA message
+
 v1.3.5 : Remove unnecessary debug messages
 
 v1.3.4 : Add ethernet support along with NTRIP bug fixes
