@@ -12,37 +12,38 @@
  ********************************************************************************/
 
 #include "message_publisher.h"
-#include "main_anello_ros_driver.h"
+#include "../main_anello_ros_driver.h"
 #include "health_message.h"
-#include "bit_tools.h"
+#include "../bit_tools.h"
 
 #include <string.h>
 #include <ctime>
 
-#if COMPILE_WITH_ROS
-#include <anello_ros_driver/APIMU.h>
-#include <anello_ros_driver/APIM1.h>
-#include <anello_ros_driver/APGPS.h>
-#include <anello_ros_driver/APINS.h>
-#include <anello_ros_driver/APHDG.h>
-#include <anello_ros_driver/APHEALTH.h>
+#include <rclcpp/rclcpp.hpp>
 
-#include <nmea_msgs/Sentence.h>
-#include <mavros_msgs/RTCM.h>
-#include <std_msgs/Header.h>
+#include <anello_ros_driver/msg/apimu.hpp>
+#include <anello_ros_driver/msg/apim1.hpp>
+#include <anello_ros_driver/msg/apins.hpp>
+#include <anello_ros_driver/msg/apgps.hpp>
+#include <anello_ros_driver/msg/aphdg.hpp>
+#include <anello_ros_driver/msg/apodo.hpp>
+#include <anello_ros_driver/msg/aphealth.hpp>
+
+#include <nmea_msgs/msg/sentence.hpp>
+#include <mavros_msgs/msg/rtcm.hpp>
+#include <std_msgs/msg/header.hpp>
 
 #define SAMPLE_GGA_MESSAGE "$GNGGA,180921.50,3723.94984,N,12158.74997,W,5,13,2.64,13.00,M,,M,,*4A\r\n"
 
-uint32_t gga_frame_id = 0;
-void publish_gga(double *gps, ros::Publisher pub)
+void publish_gga(double *gps, gga_pub_t pub, rclcpp::Time time)
 {
-	std_msgs::Header msg_header;
-	nmea_msgs::Sentence gga_message;
+	std_msgs::msg::Header msg_header;
+	nmea_msgs::msg::Sentence gga_message;
 
-	msg_header.seq = gga_frame_id;
-	msg_header.stamp = ros::Time::now();
 	msg_header.frame_id = "anello gps data";
-	gga_frame_id++;
+	msg_header.stamp = time;
+
+
 
 	std::ostringstream gngga_message;
 
@@ -125,7 +126,7 @@ void publish_gga(double *gps, ros::Publisher pub)
 	gngga_message << ",";
 
 /*************************Diff. Ref. Station ID*************************/
-	gngga_message << ",";
+	gngga_message << "";
 
 /*************************Checksum*************************/
 	std::string ck = compute_checksum(gngga_message.str().c_str() + 1, gngga_message.str().length() - 1);
@@ -138,10 +139,10 @@ void publish_gga(double *gps, ros::Publisher pub)
 	gga_message.header = msg_header;
 	gga_message.sentence = gngga_message.str();
 
-	pub.publish(gga_message);
+	pub->publish(gga_message);
 }
 
-void publish_gps(double *gps, ros::Publisher pub)
+void publish_gps(double *gps, gps_pub_t pub)
 {
 	/*
 	 * gps[0] = MCU_Time [ms]
@@ -163,7 +164,7 @@ void publish_gps(double *gps, ros::Publisher pub)
 	 *
 	 */
 
-	anello_ros_driver::APGPS msg;
+	anello_ros_driver::msg::APGPS msg;
 
 	msg.mcu_time = gps[0];
 	msg.gps_time = gps[1];
@@ -188,13 +189,13 @@ void publish_gps(double *gps, ros::Publisher pub)
 
 	msg.rtk_fix_status = (uint8_t)gps[15];
 
-	pub.publish(msg);
+	pub->publish(msg);
 #if DEBUG_PUBLISHERS
 	ROS_INFO("APGPS,%10.3f,%14.9f,%14.9f,%14.9f,%10.4f,%10.3f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f\n", gps[0], gps[1], gps[2], gps[3], gps[4], gps[5], gps[6], gps[7], gps[8], gps[9], gps[10], gps[11], gps[12], gps[13], gps[14], gps[15]);
 #endif
 }
 
-void publish_gp2(double *gp2, ros::Publisher pub)
+void publish_gp2(double *gp2, gps_pub_t pub)
 {
 	/*
 	 * gp2[0] = MCU_Time [ms]
@@ -216,7 +217,7 @@ void publish_gp2(double *gp2, ros::Publisher pub)
 	 *
 	 */
 
-	anello_ros_driver::APGPS msg;
+	anello_ros_driver::msg::APGPS msg;
 
 	msg.mcu_time = gp2[0];
 	msg.gps_time = gp2[1];
@@ -241,13 +242,13 @@ void publish_gp2(double *gp2, ros::Publisher pub)
 
 	msg.rtk_fix_status = (uint8_t)gp2[15];
 
-	pub.publish(msg);
+	pub->publish(msg);
 #if DEBUG_PUBLISHERS
 	ROS_INFO("APGP2,%10.3f,%14.9f,%14.9f,%14.9f,%10.4f,%10.3f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f\n", gps[0], gps[1], gps[2], gps[3], gps[4], gps[5], gps[6], gps[7], gps[8], gps[9], gps[10], gps[11], gps[12], gps[13], gps[14], gps[15]);
 #endif
 }
 
-void publish_hdr(double *hdr, ros::Publisher pub)
+void publish_hdr(double *hdr, hdg_pub_t pub)
 {
 	/*
 	 * hdr[0] = MCU_Time [ms]
@@ -279,7 +280,7 @@ void publish_hdr(double *hdr, ros::Publisher pub)
 	 */
 	uint16_t status = (uint16_t)hdr[9];
 
-	anello_ros_driver::APHDG msg;
+	anello_ros_driver::msg::APHDG msg;
 
 	msg.mcu_time = hdr[0];
 	msg.gps_time = hdr[1];
@@ -306,7 +307,7 @@ void publish_hdr(double *hdr, ros::Publisher pub)
 	msg.rel_pos_heading_valid = (status & (1 << 8)) > 0;
 	msg.rel_pos_normalized = (status & (1 << 9)) > 0;
 
-	pub.publish(msg);
+	pub->publish(msg);
 
 #if DEBUG_PUBLISHERS
 	ROS_INFO(
@@ -336,7 +337,7 @@ void publish_hdr(double *hdr, ros::Publisher pub)
 }
 
 double last_imu_mcu_time = -1.0;
-void publish_imu(double *imu, ros::Publisher pub)
+void publish_imu(double *imu, imu_pub_t pub)
 {
 	/*
 	 * imu[0] = MCU_Time [ms]
@@ -353,7 +354,7 @@ void publish_imu(double *imu, ros::Publisher pub)
 	 * imu[11] = T_Sync [ms]
 	 */
 
-	anello_ros_driver::APIMU msg;
+	anello_ros_driver::msg::APIMU msg;
 	msg.mcu_time = imu[0];
 	msg.ax = imu[1];
 	msg.ay = imu[2];
@@ -372,14 +373,14 @@ void publish_imu(double *imu, ros::Publisher pub)
 #endif
 	msg.temp = imu[10];
 
-	pub.publish(msg);
+	pub->publish(msg);
 
 #if DEBUG_PUBLISHERS
 	ROS_INFO("APIMU,%10.3f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f\n", imu[0], imu[1], imu[2], imu[3], imu[4], imu[5], imu[6], imu[7], imu[8], imu[9], imu[10], imu[11]);
 #endif
 }
 
-void publish_im1(double *im1, ros::Publisher pub)
+void publish_im1(double *im1, im1_pub_t pub)
 {
 	/*
 	 * im1[0] = MCU_Time [ms]
@@ -394,7 +395,7 @@ void publish_im1(double *im1, ros::Publisher pub)
 	 * im1[9] = T_Sync [ms]
 	 */
 
-	anello_ros_driver::APIM1 msg;
+	anello_ros_driver::msg::APIM1 msg;
 	msg.mcu_time = im1[0];
 	msg.ax = im1[1];
 	msg.ay = im1[2];
@@ -404,16 +405,16 @@ void publish_im1(double *im1, ros::Publisher pub)
 	msg.wz = im1[6];
 	msg.wz_fog = im1[7];
 	msg.temp = im1[8];
-	msg.T_Sync = im1[9];
+	msg.t_sync = im1[9];
 
-	pub.publish(msg);
+	pub->publish(msg);
 
 #if DEBUG_PUBLISHERS
 	ROS_INFO("APIM1,%10.3f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f\n", im1[0], im1[1], im1[2], im1[3], im1[4], im1[5], im1[6], im1[7], im1[8], im1[9]);
 #endif
 }
 
-void publish_ins(double *ins, ros::Publisher pub)
+void publish_ins(double *ins, ins_pub_t pub)
 {
 	/*
 	 * ins[0] = MCU_Time [ms]
@@ -436,7 +437,7 @@ void publish_ins(double *ins, ros::Publisher pub)
 	 * ins[12] = zupt (1=stationary, 0=moving)
 	 */
 
-	anello_ros_driver::APINS msg;
+	anello_ros_driver::msg::APINS msg;
 
 	msg.mcu_time = ins[0];
 	msg.gps_time = ins[1];
@@ -445,7 +446,7 @@ void publish_ins(double *ins, ros::Publisher pub)
 
 	msg.lat = ins[3];
 	msg.lon = ins[4];
-	msg.Alt_ellipsoid = ins[5];
+	msg.alt_ellipsoid = ins[5];
 
 	msg.vn = ins[6];
 	msg.ve = ins[7];
@@ -457,23 +458,21 @@ void publish_ins(double *ins, ros::Publisher pub)
 
 	msg.zupt = (uint8_t)ins[12];
 
-	pub.publish(msg);
+	pub->publish(msg);
 
 #if DEBUG_PUBLISHERS
 	ROS_INFO("APINS,%10.3f,%14.7f,%10.4f,%14.9f,%14.9f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f\n", ins[0], ins[1], ins[2], ins[3], ins[4], ins[5], ins[6], ins[7], ins[8], ins[9], ins[10], ins[11], ins[12]);
 #endif
 }
 
-void publish_health(const health_message *health_msg, ros::Publisher pub)
+void publish_health(const health_message *health_msg, health_pub_t pub)
 {
 	// Publish the health message
-	anello_ros_driver::APHEALTH msg;
+	anello_ros_driver::msg::APHEALTH msg;
 	msg.position_acc_flag = health_msg->get_position_status();
 	msg.heading_health_flag = health_msg->get_heading_status();
 	msg.gyro_health_flag = health_msg->get_gyro_status();
 
-	pub.publish(msg);
+	pub->publish(msg);
 }
 
-
-#endif

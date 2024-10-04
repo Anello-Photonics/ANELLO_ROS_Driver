@@ -16,9 +16,6 @@
 #include "ntrip_buffer.h"
 #include <cstring>
 
-port_buffer global_ntrip_buffer;
-port_buffer global_config_buffer;
-
 port_buffer::port_buffer()
 {
     this->buffer = new uint8_t[NTRIP_BUFFER_SIZE];

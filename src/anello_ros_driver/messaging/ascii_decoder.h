@@ -13,7 +13,7 @@
 #ifndef ASCII_DECODER_H
 #define ASCII_DECODER_H
 
-#include "main_anello_ros_driver.h"
+#include "../main_anello_ros_driver.h"
 
 /*
  * Parameters:

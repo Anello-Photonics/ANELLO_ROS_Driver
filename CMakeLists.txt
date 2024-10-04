@@ -36,6 +36,12 @@ add_executable(anello_ros_driver_node
   src/anello_ros_driver/comm/ethernet_interface.cpp
   src/anello_ros_driver/comm/anello_config_port.cpp
   src/anello_ros_driver/comm/anello_data_port.cpp
+
+  src/anello_ros_driver/messaging/ascii_decoder.cpp
+  src/anello_ros_driver/messaging/health_message.cpp
+  src/anello_ros_driver/messaging/message_publisher.cpp
+  src/anello_ros_driver/messaging/ntrip_buffer.cpp
+  src/anello_ros_driver/messaging/rtcm_decoder.cpp
 )
 ament_target_dependencies(anello_ros_driver_node 
   rclcpp 

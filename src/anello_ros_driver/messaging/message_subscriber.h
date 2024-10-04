@@ -12,7 +12,7 @@
 #ifndef MESSAGE_SUBSCRIBER_H
 #define MESSAGE_SUBSCRIBER_H
 
-#include "main_anello_ros_driver.h"
+#include "../main_anello_ros_driver.h"
 
 
 #if COMPILE_WITH_ROS

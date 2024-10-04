@@ -34,7 +34,4 @@ public:
     bool is_read_ready();
 };
 
-extern port_buffer global_ntrip_buffer;
-extern port_buffer global_config_buffer;
-
 #endif

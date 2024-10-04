@@ -12,12 +12,12 @@
 
 #ifndef MESSAGE_PUBLISHER_H
 #define MESSAGE_PUBLISHER_H
-#include "main_anello_ros_driver.h"
+#include "../main_anello_ros_driver.h"
 #include "health_message.h"
 
 
-#if COMPILE_WITH_ROS
-#include <ros/ros.h>
+#if COMPILE_WITH_ROS2
+#include "rclcpp/rclcpp.hpp"
 
 /*
  * Parameters:
@@ -27,7 +27,7 @@
  * Notes:
  * The publisher is called here
  */
-void publish_imu(double *imu, ros::Publisher pub);
+void publish_imu(double *imu, imu_pub_t pub);
 
 /*
  * Parameters:
@@ -37,7 +37,7 @@ void publish_imu(double *imu, ros::Publisher pub);
  * Notes:
  * The publisher is called here
  */
-void publish_im1(double *im1, ros::Publisher pub);
+void publish_im1(double *im1, im1_pub_t pub);
 
 /*
  * Parameters:
@@ -47,7 +47,7 @@ void publish_im1(double *im1, ros::Publisher pub);
  * Notes:
  * The publisher is called here
  */
-void publish_ins(double *ins, ros::Publisher pub);
+void publish_ins(double *ins, ins_pub_t pub);
 
 /*
  * Parameters:
@@ -57,7 +57,7 @@ void publish_ins(double *ins, ros::Publisher pub);
  * Notes:
  * The publisher is called here
  */
-void publish_gps(double *gps, ros::Publisher pub);
+void publish_gps(double *gps, gps_pub_t pub);
 
 /*
  * Parameters:
@@ -67,7 +67,7 @@ void publish_gps(double *gps, ros::Publisher pub);
  * Notes:
  * The publisher is called here
  */
-void publish_gp2(double *gp2, ros::Publisher pub);
+void publish_gp2(double *gp2, gps_pub_t pub);
 
 /*
  * Parameters:
@@ -77,18 +77,19 @@ void publish_gp2(double *gp2, ros::Publisher pub);
  * Notes:
  * The publisher is called here
  */
-void publish_hdr(double *hdg, ros::Publisher pub);
+void publish_hdr(double *hdg, hdg_pub_t pub);
 
 
 /*
  * Parameters:
  * double *gps : Double array at least 16 items long that contains the gps msg fields
  * ros::Publisher pub : Publisher used to publish the gga message
+ * rclcpp::Time time : Time to stamp the message with
  *
  * Notes:
  * The publisher is called here
  */
-void publish_gga(double *gps, ros::Publisher pub);
+void publish_gga(double *gps, gga_pub_t pub, rclcpp::Time time);    
 
 
 /*
@@ -99,7 +100,7 @@ void publish_gga(double *gps, ros::Publisher pub);
  * Notes:
  * The publisher is called here
  */
-void publish_health(const health_message *health_msg, ros::Publisher pub);
+void publish_health(const health_message *health_msg, health_pub_t pub);
 #endif
 
 #endif

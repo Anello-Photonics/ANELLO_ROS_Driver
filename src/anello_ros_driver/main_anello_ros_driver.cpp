@@ -47,18 +47,17 @@
 #include "anello_ros_driver/msg/aphealth.hpp"
 
 #include "anello_ros_driver/msg/apodo.hpp"
+#include "nmea_msgs/msg/sentence.hpp"
 #endif
 
 #include "bit_tools.h"
-
-#if 0
+#include "messaging/ntrip_buffer.h"
 #include "messaging/rtcm_decoder.h"
 #include "messaging/ascii_decoder.h"
 #include "messaging/message_publisher.h"
 #include "messaging/message_subscriber.h"
-#include "messaging/ntrip_buffer.h"
 #include "messaging/health_message.h"
-#endif
+
 
 #ifndef NO_GGA
 #define NO_GGA
@@ -151,8 +150,8 @@ typedef struct
 	char buff[MAX_BUF_LEN]; // buffer from file
 } file_read_buf_t;
 
-#if !(COMPILE_WITH_ROS2)
 static int input_a1_data(a1buff_t *a1, uint8_t data, FILE *log_file);
+#if !(COMPILE_WITH_ROS2)
 static void ros_driver_main_loop();
 #endif
 
@@ -162,35 +161,242 @@ public:
 	AnelloRosDriver()
 		: Node(NODE_NAME)
 	{
-		RCLCPP_INFO(this->get_logger(), "ANELLO ROS Driver Started 100\n");
-#if 0
-		ros::Publisher pub_imu = nh.advertise<anello_ros_driver::APIMU>("APIMU", 10);
-		ros::Publisher pub_im1 = nh.advertise<anello_ros_driver::APIM1>("APIM1", 10);
-		ros::Publisher pub_ins = nh.advertise<anello_ros_driver::APINS>("APINS", 10);
-		ros::Publisher pub_gps = nh.advertise<anello_ros_driver::APGPS>("APGPS", 10);
-		ros::Publisher pub_gp2 = nh.advertise<anello_ros_driver::APGPS>("APGP2", 10);
-		ros::Publisher pub_hdg = nh.advertise<anello_ros_driver::APHDG>("APHDG", 10);
-		ros::Publisher pub_health = nh.advertise<anello_ros_driver::APHEALTH>("APHEALTH", 1);
-		ros::Publisher pub_gga = nh.advertise<nmea_msgs::Sentence>("ntrip_client/nmea", 1);
+		RCLCPP_INFO(this->get_logger(), "ANELLO ROS Driver Started");
 
-		ros::Subscriber sub_rtcm = nh.subscribe("ntrip_client/rtcm", 1, ntrip_rtcm_callback);
-		ros::Subscriber sub_odo = nh.subscribe("APODO", 1, apodo_callback);
-#endif
-		// _imu_publisher = this->create_publisher<anello_ros_driver::msg::APIMU>("APIMU", 10);
-		// timer_ = this->create_wall_timer(500ms, std::bind(&AnelloRosDriver::timer_callback, this));
+		// get parameters
+		this->declare_parameter(COM_TYPE_PARAMETER_NAME, "UART");
+		this->declare_parameter(DATA_PORT_PARAMETER_NAME, "/dev/ttyUSB0");
+		this->declare_parameter(CONFIG_PORT_PARAMETER_NAME, "/dev/ttyUSB3");
+		this->declare_parameter(REMOTE_IP_PARAMETER_NAME, "192.168.1.111");
+		this->declare_parameter(LOCAL_DATA_PORT_PARAMETER_NAME, 1111);
+		this->declare_parameter(LOCAL_CONFIG_PORT_PARAMETER_NAME, 2222);
+		this->declare_parameter(LOCAL_ODOMETER_PORT_PARAMETER_NAME, 3333);
+
+		std::string com_type;
+		this->get_parameter(COM_TYPE_PARAMETER_NAME, com_type);
+		this->get_parameter(DATA_PORT_PARAMETER_NAME, config.data_port_name);
+		this->get_parameter(CONFIG_PORT_PARAMETER_NAME, config.config_port_name);
+		this->get_parameter(REMOTE_IP_PARAMETER_NAME, config.remote_ip);
+		this->get_parameter(LOCAL_DATA_PORT_PARAMETER_NAME, config.local_data_port);
+		this->get_parameter(LOCAL_CONFIG_PORT_PARAMETER_NAME, config.local_config_port);
+		this->get_parameter(LOCAL_ODOMETER_PORT_PARAMETER_NAME, config.local_odometer_port);
+
+		if (com_type == "UART")
+		{
+			config.type = UART;
+		}
+		else if (com_type == "ETH")
+		{
+			config.type = ETH;
+		}
+		else
+		{
+			config.type = UART;
+		}
+
+		// Create ports
+		config_port = new anello_config_port(&config);
+		config_port->init();
+
+		data_port = new anello_data_port(&config);
+		data_port->init();
+
+
+		// create publishers
+		_imu_publisher = this->create_publisher<anello_ros_driver::msg::APIMU>("APIMU", 10);
+		_im1_publisher = this->create_publisher<anello_ros_driver::msg::APIM1>("APIM1", 10);
+		_ins_publisher = this->create_publisher<anello_ros_driver::msg::APINS>("APINS", 10);
+		_gps_publisher = this->create_publisher<anello_ros_driver::msg::APGPS>("APGPS", 10);
+		_gp2_publisher = this->create_publisher<anello_ros_driver::msg::APGPS>("APGP2", 10);
+		_hdg_publisher = this->create_publisher<anello_ros_driver::msg::APHDG>("APHDG", 10);
+		_health_publisher = this->create_publisher<anello_ros_driver::msg::APHEALTH>("APHEALTH", 1);
+		_gga_publisher = this->create_publisher<nmea_msgs::msg::Sentence>("ntrip_client/nmea", 1);
+
+		// create a ntrip rtcm subscriber
+		_rtcm_subscriber = this->create_subscription<nmea_msgs::msg::Sentence>(
+			"ntrip_client/rtcm", 
+			1, 
+			std::bind(&AnelloRosDriver::ntrip_rtcm_callback, this, std::placeholders::_1)
+		);
+
+		// create an odo subscriber
+		_odo_subscriber = this->create_subscription<anello_ros_driver::msg::APODO>(
+			"APODO", 
+			1, 
+			std::bind(&AnelloRosDriver::odo_callback, this, std::placeholders::_1)
+		);
+
+		timer_ = this->create_wall_timer(1ns, std::bind(&AnelloRosDriver::mainloop_callback, this));
+	}
+
+	~AnelloRosDriver()
+	{
+		delete data_port;
+		delete config_port;
 	}
 
 private:
-	// void timer_callback()
-	// {
-	// 	auto message = anello_ros_driver::msg::APIMU();
-	// 	message.mcu_time = (float)count;
-	// 	_imu_publisher->publish(message);
-	// 	count++;
-	// }
+	void mainloop_callback()
+	{
+		bool checksum_passed = 0;
+		char *val[MAXFIELD];
+		double decoded_val[MAXFIELD];
+
+
+		if (serial_read_buffer.n_used >= serial_read_buffer.nbytes)
+		{
+			serial_read_buffer.nbytes = data_port->get_data(serial_read_buffer.buff, MAX_BUF_LEN);
+			serial_read_buffer.n_used = 0;
+		}
+
+		while (serial_read_buffer.n_used < serial_read_buffer.nbytes)
+		{
+			int ret = input_a1_data(&a1buff, serial_read_buffer.buff[serial_read_buffer.n_used], nullptr);
+			serial_read_buffer.n_used++;
+
+			if (ret)
+			{
+				int isOK = 0;
+				int num = 0;
+
+				if (ret == 1)
+				{
+
+					// check that the checksum is correct
+					checksum_passed = checksum(a1buff.buf, a1buff.nbyte);
+					if (checksum_passed)
+					{
+						num = parse_fields((char *)a1buff.buf, val);
+					}
+					else
+					{
+						RCLCPP_WARN(this->get_logger(), "Checksum Fail: %s", a1buff.buf);
+						num = 0;
+					}
+
+					if (!isOK && num >= 17 && strstr(val[0], "APGPS") != NULL)
+					{
+						// ascii gps
+						decode_ascii_gps(val, decoded_val);
+						publish_gps(decoded_val, _gps_publisher);
+						publish_gga(decoded_val, _gga_publisher, this->now());
+#if DEBUG_MAIN
+						printf("APGPSa\n");
+#endif
+						isOK = 1;
+					}
+					else if (!isOK && num >= 17 && strstr(val[0], "APGP2") != NULL)
+					{
+						// ascii gp2 (goes to the same place for now)
+						decode_ascii_gps(val, decoded_val);
+						publish_gp2(decoded_val, _gp2_publisher);
+#if DEBUG_MAIN
+						printf("APGP2a\n");
+#endif
+						isOK = 1;
+					}
+					else if (!isOK && num >= 12 && strstr(val[0], "APHDG") != NULL)
+					{
+						// ascii hdg
+						decode_ascii_hdr(val, decoded_val);
+						publish_hdr(decoded_val, _hdg_publisher);
+#if DEBUG_MAIN
+						printf("APHDGa\n");
+#endif
+						isOK = 1;
+					}
+					else if (!isOK && num >= 12 && strstr(val[0], "APIMU") != NULL)
+					{
+						// ascii imu
+						decode_ascii_imu(val, num, decoded_val);
+						publish_imu(decoded_val, _imu_publisher);
+#if DEBUG_MAIN
+						printf("APIMUa\n");
+#endif
+						isOK = 1;
+					}
+					else if (!isOK && num >= 10 && strstr(val[0], "APIM1") != NULL)
+					{
+						// ascii im1
+						decode_ascii_im1(val, num, decoded_val);
+						publish_im1(decoded_val, _im1_publisher);
+#if DEBUG_MAIN
+						printf("APIM1a\n");
+#endif
+						isOK = 1;
+					}
+					else if (!isOK && num >= 14 && strstr(val[0], "APINS") != NULL)
+					{
+						// ascii ins
+						decode_ascii_ins(val, decoded_val);
+						publish_ins(decoded_val, _ins_publisher);
+#if DEBUG_MAIN
+						printf("APINSa\n");
+#endif
+						isOK = 1;
+					}
+
+				}
+				else if (ret == 5)
+				{
+					// RTCM message
+					isOK = 1;
+				}
+
+				if (!isOK)
+				{
+					data_port->port_parse_fail();
+				}
+				else
+				{
+					memset(decoded_val, 0, MAXFIELD * sizeof(double));
+					data_port->port_confirm();
+				}
+				a1buff.nbyte = 0;
+			}
+		}
+	}
+
+	void odo_callback(const anello_ros_driver::msg::APODO::SharedPtr msg)
+	{
+		(void)msg;
+		RCLCPP_INFO(this->get_logger(), "Received odo message");
+	}
+
+	void ntrip_rtcm_callback(const nmea_msgs::msg::Sentence::SharedPtr msg)
+	{
+		(void)msg;
+		RCLCPP_INFO(this->get_logger(), "Received rtcm message");
+	}
 	
-	// rclcpp::Publisher<anello_ros_driver::msg::APIMU>::SharedPtr _imu_publisher;
-	// rclcpp::TimerBase::SharedPtr timer_;
+	imu_pub_t _imu_publisher;
+	im1_pub_t _im1_publisher;
+	ins_pub_t _ins_publisher;
+	gps_pub_t _gps_publisher;
+	gps_pub_t _gp2_publisher;
+	hdg_pub_t _hdg_publisher;
+	health_pub_t _health_publisher;
+	gga_pub_t _gga_publisher;
+
+	rclcpp::Subscription<nmea_msgs::msg::Sentence>::SharedPtr _rtcm_subscriber;
+	rclcpp::Subscription<anello_ros_driver::msg::APODO>::SharedPtr _odo_subscriber;
+
+	anello_data_port *data_port;
+	anello_config_port *config_port;
+
+	rclcpp::TimerBase::SharedPtr timer_;
+
+	// buffers for callbacks
+	port_buffer data_port_write_buffer;
+	port_buffer config_port_write_buffer;
+
+	interface_config_t config;
+	
+	file_read_buf_t serial_read_buffer;
+	
+	a1buff_t a1buff;
+
+
 	size_t count;
 };
 
@@ -503,19 +709,12 @@ static void ros_driver_main_loop()
 	get_interface_config(&interface_config);
 #endif
 
-	// DEBUG_PRINT("Interface Type: %d", interface_config.type);
-
 	anello_config_port anello_device_config(&interface_config);
-	// DEBUG_PRINT("Config post declared");
 	anello_device_config.init();
-	// DEBUG_PRINT("Config post initialized");
 	gp_global_config_port = &anello_device_config;
 
-	// DEBUG_PRINT("Config post set");
 	anello_data_port anello_device_data(&interface_config);
-	// DEBUG_PRINT("Data post declared");
 	anello_device_data.init();
-	// DEBUG_PRINT("Data post initialized");
 
 	health_msg.set_baseline(anello_device_config.get_baseline());
 #if DEBUG_MAIN

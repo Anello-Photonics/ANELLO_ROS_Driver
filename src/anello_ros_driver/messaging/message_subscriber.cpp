@@ -11,9 +11,9 @@
  ********************************************************************************/
 
 #include <string>
-#include "main_anello_ros_driver.h"
+#include "../main_anello_ros_driver.h"
 #include "ntrip_buffer.h"
-#include "bit_tools.h"
+#include "../bit_tools.h"
 
 #if COMPILE_WITH_ROS
 #include <ros/ros.h>
