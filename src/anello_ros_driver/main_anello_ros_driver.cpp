@@ -340,7 +340,54 @@ private:
 				else if (ret == 5)
 				{
 					// RTCM message
-					isOK = 1;
+					if (a1buff.type == 4058 && !a1buff.crc)
+					{
+						if (a1buff.subtype == 1)	/* IMU */
+						{
+							decode_rtcm_imu_msg(decoded_val, a1buff);
+							publish_imu(decoded_val, _imu_publisher);
+
+							isOK = 1;
+						}
+						else if (a1buff.subtype == 2) /* GPS PVT*/
+						{
+							int ant_id = decode_rtcm_gps_msg(decoded_val, a1buff);
+							if (GPS1 == ant_id)
+							{
+								// health_msg.add_gps_message(decoded_val);
+								publish_gps(decoded_val, _gps_publisher);
+								publish_gga(decoded_val, _gga_publisher, this->now());
+							}
+							else
+							{
+								publish_gp2(decoded_val, _gp2_publisher);
+							}
+
+							isOK = 1;
+						}
+						else if (a1buff.subtype == 4) /* INS */
+						{
+							decode_rtcm_ins_msg(decoded_val, a1buff);
+							// health_msg.add_ins_message(decoded_val);
+							// INS_message_count++;
+							publish_ins(decoded_val, _ins_publisher);
+
+							// if (INS_message_count > 100)
+							// {
+							// 		publish_health(&health_msg, _health_publisher);
+							// 		INS_message_count = 0;
+							// }
+
+							isOK = 1;
+						}
+						else if (a1buff.subtype == 6) /* IM1 */
+						{
+							decode_rtcm_im1_msg(decoded_val, a1buff);
+							publish_im1(decoded_val, _im1_publisher);
+
+							isOK = 1;
+						}
+					}
 				}
 
 				if (!isOK)
