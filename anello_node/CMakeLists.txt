@@ -54,8 +54,6 @@ target_include_directories(anello_ros_driver_node PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/rosidl_generator_cpp>
 )
 
-#deprecated
-# rosidl_target_interfaces(anello_ros_driver_node ${PROJECT_NAME} "rosidl_typesupport_cpp")
 rosidl_get_typesupport_target(cpp_typesupport_target ${PROJECT_NAME} "rosidl_typesupport_cpp")
 target_link_libraries(anello_ros_driver_node ${cpp_typesupport_target})
 

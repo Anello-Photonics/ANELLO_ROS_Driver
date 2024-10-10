@@ -48,6 +48,7 @@
 
 #include "anello_ros_driver/msg/apodo.hpp"
 #include "nmea_msgs/msg/sentence.hpp"
+#include "mavros_msgs/msg/rtcm.hpp"
 #endif
 
 #include "bit_tools.h"
@@ -213,7 +214,7 @@ public:
 		_gga_publisher = this->create_publisher<nmea_msgs::msg::Sentence>("ntrip_client/nmea", 1);
 
 		// create a ntrip rtcm subscriber
-		_rtcm_subscriber = this->create_subscription<nmea_msgs::msg::Sentence>(
+		_rtcm_subscriber = this->create_subscription<mavros_msgs::msg::RTCM>(
 			"ntrip_client/rtcm", 
 			1, 
 			std::bind(&AnelloRosDriver::ntrip_rtcm_callback, this, std::placeholders::_1)
@@ -226,7 +227,9 @@ public:
 			std::bind(&AnelloRosDriver::odo_callback, this, std::placeholders::_1)
 		);
 
-		timer_ = this->create_wall_timer(1ns, std::bind(&AnelloRosDriver::mainloop_callback, this));
+		timer_ = this->create_wall_timer(1us, std::bind(&AnelloRosDriver::mainloop_callback, this));
+		health_message_timer_ = this->create_wall_timer(1s, std::bind(&AnelloRosDriver::health_callback, this));
+
 	}
 
 	~AnelloRosDriver()
@@ -280,6 +283,7 @@ private:
 						decode_ascii_gps(val, decoded_val);
 						publish_gps(decoded_val, _gps_publisher);
 						publish_gga(decoded_val, _gga_publisher, this->now());
+						_health_msg.add_gps_message(decoded_val);
 #if DEBUG_MAIN
 						printf("APGPSa\n");
 #endif
@@ -300,6 +304,7 @@ private:
 						// ascii hdg
 						decode_ascii_hdr(val, decoded_val);
 						publish_hdr(decoded_val, _hdg_publisher);
+						_health_msg.add_hdg_message(decoded_val);
 #if DEBUG_MAIN
 						printf("APHDGa\n");
 #endif
@@ -310,6 +315,7 @@ private:
 						// ascii imu
 						decode_ascii_imu(val, num, decoded_val);
 						publish_imu(decoded_val, _imu_publisher);
+						_health_msg.add_imu_message(decoded_val);
 #if DEBUG_MAIN
 						printf("APIMUa\n");
 #endif
@@ -330,6 +336,7 @@ private:
 						// ascii ins
 						decode_ascii_ins(val, decoded_val);
 						publish_ins(decoded_val, _ins_publisher);
+						_health_msg.add_ins_message(decoded_val);
 #if DEBUG_MAIN
 						printf("APINSa\n");
 #endif
@@ -346,6 +353,7 @@ private:
 						{
 							decode_rtcm_imu_msg(decoded_val, a1buff);
 							publish_imu(decoded_val, _imu_publisher);
+							_health_msg.add_imu_message(decoded_val);
 
 							isOK = 1;
 						}
@@ -354,9 +362,9 @@ private:
 							int ant_id = decode_rtcm_gps_msg(decoded_val, a1buff);
 							if (GPS1 == ant_id)
 							{
-								// health_msg.add_gps_message(decoded_val);
 								publish_gps(decoded_val, _gps_publisher);
 								publish_gga(decoded_val, _gga_publisher, this->now());
+								_health_msg.add_gps_message(decoded_val);
 							}
 							else
 							{
@@ -365,18 +373,21 @@ private:
 
 							isOK = 1;
 						}
+						else if (a1buff.subtype == 3) /* DUAL ANTENNA */
+						{
+							decode_rtcm_hdg_msg(decoded_val, a1buff);
+							publish_hdr(decoded_val, _hdg_publisher);
+							_health_msg.add_hdg_message(decoded_val);
+
+							isOK = 1;
+
+						}
 						else if (a1buff.subtype == 4) /* INS */
 						{
 							decode_rtcm_ins_msg(decoded_val, a1buff);
-							// health_msg.add_ins_message(decoded_val);
-							// INS_message_count++;
 							publish_ins(decoded_val, _ins_publisher);
+							_health_msg.add_ins_message(decoded_val);
 
-							// if (INS_message_count > 100)
-							// {
-							// 		publish_health(&health_msg, _health_publisher);
-							// 		INS_message_count = 0;
-							// }
 
 							isOK = 1;
 						}
@@ -406,14 +417,47 @@ private:
 
 	void odo_callback(const anello_ros_driver::msg::APODO::SharedPtr msg)
 	{
-		(void)msg;
-		RCLCPP_INFO(this->get_logger(), "Received odo message");
+		msg->odo_speed;
+#if DEBUG_SUBSCRIBERS
+		RCLCPP_INFO(this->get_logger(), "APODO Received %.2f", msg->odo_speed);
+#endif
+
+		std::stringstream speed_body;
+		speed_body << std::fixed << std::setprecision(2) << msg->odo_speed;
+
+		std::stringstream message_body;
+		message_body << "APODO";
+		message_body << ',';
+		message_body << speed_body.str();
+		std::string message_body_str = message_body.str();
+
+		std::string ck_string = compute_checksum(message_body_str.c_str(), message_body_str.length());
+
+		std::stringstream full_message;
+		full_message << '#';
+		full_message << message_body_str;
+		full_message << '*';
+		full_message << ck_string;
+		full_message << "\r\n";
+		std::string full_message_str = full_message.str();
+
+		config_port->write_data((char *)full_message_str.c_str(), full_message_str.length());
 	}
 
-	void ntrip_rtcm_callback(const nmea_msgs::msg::Sentence::SharedPtr msg)
+	void ntrip_rtcm_callback(const mavros_msgs::msg::RTCM::SharedPtr msg)
 	{
-		(void)msg;
-		RCLCPP_INFO(this->get_logger(), "Received rtcm message");
+		RCLCPP_INFO(this->get_logger(), "RTCM callback: %ld bytes\n", msg->data.size());
+#if DEBUG_SUBSCRIBERS
+#endif
+
+		data_port->write_data((char *)msg->data.data(), msg->data.size());
+		
+
+	}
+
+	void health_callback()
+	{
+		publish_health(&_health_msg, _health_publisher);
 	}
 	
 	imu_pub_t _imu_publisher;
@@ -425,13 +469,14 @@ private:
 	health_pub_t _health_publisher;
 	gga_pub_t _gga_publisher;
 
-	rclcpp::Subscription<nmea_msgs::msg::Sentence>::SharedPtr _rtcm_subscriber;
+	rclcpp::Subscription<mavros_msgs::msg::RTCM>::SharedPtr _rtcm_subscriber;
 	rclcpp::Subscription<anello_ros_driver::msg::APODO>::SharedPtr _odo_subscriber;
 
 	anello_data_port *data_port;
 	anello_config_port *config_port;
 
 	rclcpp::TimerBase::SharedPtr timer_;
+	rclcpp::TimerBase::SharedPtr health_message_timer_;
 
 	// buffers for callbacks
 	port_buffer data_port_write_buffer;
@@ -443,6 +488,7 @@ private:
 	
 	a1buff_t a1buff;
 
+	health_message _health_msg;
 
 	size_t count;
 };
