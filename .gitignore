@@ -6,6 +6,6 @@ __pycache__
 .*.sw*
 .vscode/
 build/
-launch/internal_*
+*/launch/internal_*
 
 TODO.txt

@@ -14,56 +14,56 @@
 
     <!--Launch ANELLO ros driver-->
     <!--Update data and config port values to the ports in your system-->
-    <node name="anello_ros_driver" pkg="anello_ros_driver" type="anello_ros_driver">
-        <param name="anello_com_type" value="$(arg anello_com_type)"/>
-        <param name="anello_uart_data_port" value="$(arg anello_uart_data_port)"/>
-        <param name="anello_uart_config_port" value="$(arg anello_uart_config_port)"/>
-        <param name="anello_remote_ip" value="$(arg anello_remote_ip)"/>
-        <param name="anello_local_data_port" value="$(arg anello_local_data_port)"/>
-        <param name="anello_local_config_port" value="$(arg anello_local_config_port)"/>
-        <param name="anello_local_odometer_port" value="$(arg anello_local_odometer_port)"/>
+    <node name="anello_ros_driver" pkg="anello_ros_driver" exec="anello_ros_driver_node">
+        <param name="anello_com_type" value="$(var anello_com_type)"/>
+        <param name="anello_uart_data_port" value="$(var anello_uart_data_port)"/>
+        <param name="anello_uart_config_port" value="$(var anello_uart_config_port)"/>
+        <param name="anello_remote_ip" value="$(var anello_remote_ip)"/>
+        <param name="anello_local_data_port" value="$(var anello_local_data_port)"/>
+        <param name="anello_local_config_port" value="$(var anello_local_config_port)"/>
+        <param name="anello_local_odometer_port" value="$(var anello_local_odometer_port)"/>
     </node>
 
     <!-- NTRIP CLIENT PARAMTERS -->
-    <arg name="host" value="127.0.0.1"/>
-    <arg name="port" value="1111"/>
-    <arg name="mountpoint" value="AUTO"/>
-    <arg name="authenticate" value="true"/>
-    <arg name="username" value=""/>
-    <arg name="password" value=""/>
-    <arg name="ntrip_version" value=""/>
-    <arg name="ssl" value="false"/>
-    <arg name="cert" value=""/>
-    <arg name="key" value=""/>
-    <arg name="ca_cert" value=""/>
-    <arg name="debug" value="false"/>
-    <arg name="rtcm_message_package" value="mavros_msgs"/>
+    <arg name="host" default="127.0.0.1"/>
+    <arg name="port" default="1111"/>
+    <arg name="mountpoint" default="AUTO"/>
+    <arg name="authenticate" default="true"/>
+    <arg name="username" default="username"/>
+    <arg name="password" default="password"/>
+    <arg name="ntrip_version" default=""/>
+    <arg name="ssl" default="false"/>
+    <arg name="cert" default="None"/>
+    <arg name="key" default="None"/>
+    <arg name="ca_cert" default="None"/>
+    <arg name="debug" default="false"/>
+    <arg name="rtcm_message_package" default="mavros_msgs"/>
 
-    <node name="ntrip_client_node" pkg="anello_ros_driver" type="ntrip_ros.py" output="screen" ns="ntrip_client">
+    <node name="ntrip_client_node" pkg="ntrip_client" exec="ntrip_ros.py" output="screen" namespace="ntrip_client">
         <!-- Required parameters used to connect to the NTRIP server -->
-        <param name="host"       value="$(arg host)" />
-        <param name="port"       value="$(arg port)" />
-        <param name="mountpoint" value="$(arg mountpoint)" />
+        <param name="host"       value="$(var host)" />
+        <param name="port"       value="$(var port)" />
+        <param name="mountpoint" value="$(var mountpoint)" />
 
         <!-- Optional parameter that will set the NTRIP version in the initial HTTP request to the NTRIP caster. -->
-        <param name="ntrip_version" value="$(arg ntrip_version)" />
+        <param name="ntrip_version" value="$(var ntrip_version)" />
 
         <!-- If this is set to true, we will read the username and password and attempt to authenticate. If not, we will attempt to connect unauthenticated -->
-        <param name="authenticate" value="$(arg authenticate)" />
+        <param name="authenticate" value="$(var authenticate)" />
 
         <!-- If authenticate is set to true, we will use these to authenticate with the server -->
-        <param name="username" value="$(arg username)" />
-        <param name="password" value="$(arg password)" />
+        <param name="username" value="$(var username)" />
+        <param name="password" value="$(var password)" />
 
         <!-- Whether to connect with SSL. cert, key, and ca_cert options will only take effect if this is true -->
-        <param name="ssl" value="$(arg ssl)" />
+        <param name="ssl" value="$(var ssl)" />
 
         <!-- If the NTRIP caster uses cert based authentication, you can specify the cert and keys to use with these options -->
-        <param name="cert" value="$(arg cert)" />
-        <param name="key"  value="$(arg key)" />
+        <param name="cert" value="$(var cert)" />
+        <param name="key"  value="$(var key)" />
 
         <!-- If the NTRIP caster uses self signed certs, or you need to use a different CA chain, specify the path to the file here -->
-        <param name="ca_cert" value="$(arg ca_cert)" />
+        <param name="ca_cert" value="$(var ca_cert)" />
 
         <!-- Not sure if this will be looked at, but this frame ID will be added to the RTCM messages published by this node -->
         <param name="rtcm_frame_id" value="odom" />

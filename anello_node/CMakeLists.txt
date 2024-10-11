@@ -62,4 +62,10 @@ install(TARGETS
   anello_ros_driver_node
   DESTINATION lib/${PROJECT_NAME})
 
+install(
+    DIRECTORY launch
+    DESTINATION share/${PROJECT_NAME}/
+)
+
+
 ament_package()
