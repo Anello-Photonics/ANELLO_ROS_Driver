@@ -2,62 +2,29 @@
 
 ## ANELLO Products Supported
 
-The ANELLO ROS driver supports the ANELLO EVK, GNSS INS, and IMU+ running firmware versions >= v1.1.1. 
+The ANELLO ROS driver supports the ANELLO EVK, GNSS INS, and IMU+ running firmware versions >= v1.1.1.
 
 ## ANELLO ROS Driver Installation
 
 ### Install ROS
 
-Follow the instructions on the [ROS Wiki](http://wiki.ros.org/ROS/Installation) to install ROS on your system.
+Follow the instructions on the [ROS2 Wiki](https://docs.ros.org/en/humble/Installation.html) to install ROS2 on your system.
 
 ### Install ANELLO ROS Driver
 
-Clone this repository into your catkin workspace:
+Clone this repository into your ROS2 workspace:
 
 ```bash
-cd ~/catkin_ws/src
+cd ~/ros2_ws/src
 git clone https://github.com/Anello-Photonics/ANELLO_ROS_Driver.git
-```
-
-### Install ANELLO ROS Driver Dependencies
-
-Install rosdeps for the package:
-
-```bash
-rosdep install --from-paths ~/catkin_ws/src --ignore-src -r -y
-```
-
-### Upgrading from Older ANELLO ROS Driver Versions
-
-If you are upgrading from an older version of the ANELLO ROS driver (<= v1.2.2), please use the following steps to ensure that the new changes are applied. 
-
-1. Ensure that the instance of the ntrip_client previously at ```~/catkin_ws/src/ntrip_client``` is deleted from the workspace. This node has been moved within the anello_ros_driver package src and script directory.
-
-```bash
-rm -rf ~/catkin_ws/src/ntrip_client
-```
-
-2. Update to the latest version:
-
-```bash
-cd ~/catkin_ws/src/ANELLO_ROS_Driver
-git pull
-```
-
-3. Reset compilation:
-
-```bash
-cd ~/catkin_ws
-rm -rf build/ devel/
-catkin_make
 ```
 
 ## ANELLO ROS Driver Configuration
 
 ### Serial Communications
 
-The ANELLO ROS driver defaults serial communications baud rate to 230400. 
-If you are using the ANELLO EVK or have changed the baud rate in the GNSS INS or IMU+, you will need to update the ```BAUDRATE``` in "anello_ros_driver/include/serial_interface.h".
+The ANELLO ROS driver defaults serial communications baud rate to 230400.
+If you are using the ANELLO EVK or have changed the baud rate in the GNSS INS or IMU+, you will need to update the ```BAUDRATE``` in "anello_ros_driver/anello_node/src/anello_ros_driver/comm/serial_interface.h".
 
 ```c++
 #ifndef BAUDRATE
@@ -130,8 +97,8 @@ Update the NTRIP client parameters in the launch file to point to your NTRIP cas
 ### Build Code
 
 ```bash
-cd ~/catkin_ws
-catkin_make
+cd ~/ros2_ws
+colcon build
 ```
 
 ## ANELLO ROS Driver Usage
@@ -139,7 +106,7 @@ catkin_make
 ### Launch ANELLO ROS Driver
 
 ```bash
-roslaunch anello_ros_driver anello_ros_driver.launch
+ros2 launch anello_ros_driver anello_ros_driver.launch
 ```
 
 ANELLO messages will be published to topics (see below). For information on how to view these messages, see the [ROS Wiki](http://wiki.ros.org/ROS/Tutorials/UnderstandingTopics).
@@ -148,7 +115,7 @@ ANELLO messages will be published to topics (see below). For information on how 
 
 #### Published Topics
 
-Topic definitions are defined in the [ANELLO Developer Manual](https://docs-a1.readthedocs.io/en/latest/) by the ASCII message format. Custom message definitions are used for ANELLO messages and can be found in the `/anello_ros_driver/msg` directory.
+Topic definitions are defined in the [ANELLO Developer Manual](https://docs-a1.readthedocs.io/en/latest/) by the ASCII message format. Custom message definitions are used for ANELLO messages and can be found in the `/anello_ros_driver/anello_node/msg` directory.
 
 * `/APIMU`
 * `/APIM1`
