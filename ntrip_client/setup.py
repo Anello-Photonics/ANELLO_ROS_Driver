@@ -20,7 +20,9 @@ setup(
     keywords=['ROS'],
     description='The ntrip client for the anello_ros_driver package',
     license='MIT License',
-    scripts=[
-      'scripts/ntrip_ros.py'
-    ]
+    entry_points={
+        'console_scripts': [
+            'ntrip_ros = ntrip_client.ntrip_ros:main',
+        ],
+    },
 )
