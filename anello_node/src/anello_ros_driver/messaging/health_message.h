@@ -107,20 +107,4 @@ public:
     const char *get_csv_header();
 };
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 #endif // HEALTH_MESSAGE_H

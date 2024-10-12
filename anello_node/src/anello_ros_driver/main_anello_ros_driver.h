@@ -23,9 +23,6 @@
 #endif
 
 #include <stdint.h>
-#if COMPILE_WITH_ROS
-#include <ros/ros.h>
-#endif
 
 #if COMPILE_WITH_ROS2
 #include "rclcpp/rclcpp.hpp"
@@ -57,7 +54,7 @@
 #endif
 
 #ifndef DEBUG_ETHERNET
-#define DEBUG_ETHERNET 1
+#define DEBUG_ETHERNET 0
 #endif
 
 #ifndef DEBUG_PUBLISHERS
@@ -73,8 +70,8 @@
 #endif
 
 #ifndef DEBUG_PRING
-#if COMPILE_WITH_ROS
-#define DEBUG_PRINT(...) ROS_INFO(__VA_ARGS__)
+#if COMPILE_WITH_ROS2
+#define DEBUG_PRINT(...) RCLCPP_INFO(rclcpp::get_logger("anello_ros_driver"),__VA_ARGS__)
 #else
 #define DEBUG_PRINT(...) printf(__VA_ARGS__)
 #endif
@@ -83,8 +80,6 @@
 #ifndef APINI_UPD
 #define APINI_UPD 0
 #endif
-
-extern anello_config_port *gp_global_config_port;
 
 typedef rclcpp::Publisher<anello_ros_driver::msg::APIMU>::SharedPtr imu_pub_t;
 typedef rclcpp::Publisher<anello_ros_driver::msg::APIM1>::SharedPtr im1_pub_t;

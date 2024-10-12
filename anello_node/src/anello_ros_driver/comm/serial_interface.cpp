@@ -14,10 +14,6 @@
 #include "../main_anello_ros_driver.h"
 #include "../bit_tools.h"
 
-#if COMPILE_WITH_ROS
-#include <ros/ros.h>
-#endif
-
 #include <fcntl.h>
 #include <termios.h>
 #include <cstring>
@@ -50,11 +46,7 @@ void serial_interface::init(std::string portname)
     if (strcmp(this->portname.c_str(), "OFF") == 0)
     {
 #if DEBUG_SERIAL
-#if COMPILE_WITH_ROS
-        ROS_INFO("Serial port disabled");
-#else
-        printf("Serial port disabled\n");
-#endif
+        DEBUG_PRINT("Serial port disabled");
 #endif
         this->port_enabled = false;
         return;
@@ -63,11 +55,7 @@ void serial_interface::init(std::string portname)
     this->usb_fd = open(this->portname.c_str(), O_RDWR);
     if (this->usb_fd < 0)
     {
-#if COMPILE_WITH_ROS
-        ROS_INFO("file open error with port %s", this->portname.c_str());
-#else
-        printf("File open error with port %s\n", this->portname.c_str());
-#endif
+        DEBUG_PRINT("file open error with port %s", this->portname.c_str());
         exit(1);
     }
 
@@ -75,11 +63,7 @@ void serial_interface::init(std::string portname)
     memset(&options, 0, sizeof(options));
     if (tcgetattr(this->usb_fd, &options) != 0)
     {
-#if COMPILE_WITH_ROS
-        ROS_INFO("Error %i from tcgetattr: %s\n", errno, strerror(errno));
-#else
-        printf("Error %i from tcgetattr: %s\n", errno, strerror(errno));
-#endif
+        DEBUG_PRINT("Error %i from tcgetattr: %s\n", errno, strerror(errno));
         exit(1);
     }
 
@@ -100,7 +84,7 @@ void serial_interface::init(std::string portname)
     // set the options
     if (tcsetattr(this->usb_fd, TCSANOW, &options) != 0)
     {
-        printf("Error %i from tcsetattr: %s\n", errno, strerror(errno));
+        DEBUG_PRINT("Error %i from tcsetattr: %s\n", errno, strerror(errno));
         exit(1);
     }
 
@@ -111,11 +95,7 @@ void serial_interface::init(std::string portname)
         ioctl(this->usb_fd, TCFLSH, 2);
     }
 #if DEBUG_SERIAL
-#if COMPILE_WITH_ROS
-    ROS_INFO("Serial port %s initialized", this->portname.c_str());
-#else
-    printf("Serial port %s initialized\n", this->portname.c_str());
-#endif
+    DEBUG_PRINT("Serial port %s initialized", this->portname.c_str());
 #endif
     this->port_enabled = true;
 }
@@ -128,11 +108,7 @@ size_t serial_interface::get_data(char *buf, size_t buf_len)
     }
     if (this->usb_fd < 0)
     {
-#if COMPILE_WITH_ROS
-        ROS_ERROR("ANELLO ROS driver serial port file descriptor not defined");
-#else
-        printf("ANELLO ROS driver serial port file descriptor not defined");
-#endif
+        DEBUG_PRINT("ANELLO ROS driver serial port file descriptor not defined");
         exit(1);
     }
 
@@ -149,11 +125,7 @@ size_t serial_interface::get_data(char *buf, size_t buf_len, int timeout)
     }
     if (this->usb_fd < 0)
     {
-#if COMPILE_WITH_ROS
-        ROS_ERROR("ANELLO ROS driver serial port file descriptor not defined");
-#else
-        printf("ANELLO ROS driver serial port file descriptor not defined");
-#endif
+        DEBUG_PRINT("ANELLO ROS driver serial port file descriptor not defined");
         exit(1);
     }
 
@@ -168,11 +140,7 @@ size_t serial_interface::get_data(char *buf, size_t buf_len, int timeout)
     int ready = select(this->usb_fd + 1, &readSet, NULL, NULL, &tv);
     if (ready < 0)
     {
-#if COMPILE_WITH_ROS
-        ROS_ERROR("Error from select: %s\n", strerror(errno));
-#else
-        printf("Error from select: %s\n", strerror(errno));
-#endif
+        DEBUG_PRINT("Error from select: %s\n", strerror(errno));
         exit(1);
     }
     else if (ready == 0)

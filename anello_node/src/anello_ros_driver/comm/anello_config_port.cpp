@@ -13,10 +13,6 @@
 #include "../main_anello_ros_driver.h"
 #include "../bit_tools.h"
 
-#if COMPILE_WITH_ROS
-#include <ros/ros.h>
-#endif
-
 #include <fcntl.h>
 #include <termios.h>
 #include <cstring>
@@ -61,19 +57,15 @@ void anello_config_port::init_uart()
     if (strcmp(this->config.config_port_name.c_str(), "AUTO") == 0)
     {
 #if DEBUG_SERIAL
-#if COMPILE_WITH_ROS
-        ROS_INFO("Auto detect config port enabled");
-#else
-        printf("Auto detect config port enabled");
-#endif 
+        DEBUG_PRINT("Auto detect config port enabled");
 #endif
 
         // get all /dev/ttyUSB* ports
         DIR *dir = opendir(PORT_DIR);
         if (nullptr == dir)
         {
-#if COMPILE_WITH_ROS
-            ROS_ERROR("Failed to open port directory");
+#if COMPILE_WITH_ROS2
+            RCLCPP_ERROR(rclcpp::get_logger("anello_ros_driver"), "Failed to open port directory");
 #else
             printf("Failed to open port directory");
 #endif
@@ -101,11 +93,7 @@ void anello_config_port::init_uart()
             for (std::string port_name : port_names)
             {
 #if DEBUG_SERIAL
-#if COMPILE_WITH_ROS
-                ROS_INFO("config_port: Trying port %s", port_name.c_str());
-#else
-                printf("config_port: Trying port %s", port_name.c_str());
-#endif
+                DEBUG_PRINT("config_port: Trying port %s", port_name.c_str());
 #endif
                 this->config.config_port_name = port_name;
                 this->uart_port.init(this->config.config_port_name);
@@ -117,11 +105,7 @@ void anello_config_port::init_uart()
                 this->uart_port.get_data(buf, 100, 10);
 
 #if DEBUG_SERIAL
-#if COMPILE_WITH_ROS
-                ROS_INFO("config_port: Received: %s", buf);
-#else
-                printf("config_port: Received: %s", buf);
-#endif
+                DEBUG_PRINT("config_port: Received: %s", buf);
 #endif
                 if (strstr(buf, "#APPNG") != nullptr)
                 {
@@ -135,9 +119,7 @@ void anello_config_port::init_uart()
             }
             if (!port_found)
             {
-#if COMPILE_WITH_ROS
-                ROS_DEBUG("No port found");
-#endif
+                DEBUG_PRINT("No port found");
             }
         }
 

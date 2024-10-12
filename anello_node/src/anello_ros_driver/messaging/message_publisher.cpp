@@ -133,7 +133,7 @@ void publish_gga(double *gps, gga_pub_t pub, rclcpp::Time time)
 	gngga_message << "*" << ck << "\r\n";
 
 #if DEBUG_PUBLISHERS
-	ROS_INFO("GGA Message: %s",gngga_message.str().c_str());
+	DEBUG_PRINT("GGA: %s", gngga_message.str().c_str());
 #endif
 
 	gga_message.header = msg_header;
@@ -191,7 +191,7 @@ void publish_gps(double *gps, gps_pub_t pub)
 
 	pub->publish(msg);
 #if DEBUG_PUBLISHERS
-	ROS_INFO("APGPS,%10.3f,%14.9f,%14.9f,%14.9f,%10.4f,%10.3f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f\n", gps[0], gps[1], gps[2], gps[3], gps[4], gps[5], gps[6], gps[7], gps[8], gps[9], gps[10], gps[11], gps[12], gps[13], gps[14], gps[15]);
+	DEBUG_PRINT("APGPS,%10.3f,%14.9f,%14.9f,%14.9f,%10.4f,%10.3f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f\n", gps[0], gps[1], gps[2], gps[3], gps[4], gps[5], gps[6], gps[7], gps[8], gps[9], gps[10], gps[11], gps[12], gps[13], gps[14], gps[15]);
 #endif
 }
 
@@ -244,7 +244,7 @@ void publish_gp2(double *gp2, gps_pub_t pub)
 
 	pub->publish(msg);
 #if DEBUG_PUBLISHERS
-	ROS_INFO("APGP2,%10.3f,%14.9f,%14.9f,%14.9f,%10.4f,%10.3f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f\n", gps[0], gps[1], gps[2], gps[3], gps[4], gps[5], gps[6], gps[7], gps[8], gps[9], gps[10], gps[11], gps[12], gps[13], gps[14], gps[15]);
+	DEBUG_PRINT("APGP2,%10.3f,%14.9f,%14.9f,%14.9f,%10.4f,%10.3f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f\n", gp2[0], gp2[1], gp2[2], gp2[3], gp2[4], gp2[5], gp2[6], gp2[7], gp2[8], gp2[9], gp2[10], gp2[11], gp2[12], gp2[13], gp2[14], gp2[15]);
 #endif
 }
 
@@ -310,7 +310,7 @@ void publish_hdr(double *hdr, hdg_pub_t pub)
 	pub->publish(msg);
 
 #if DEBUG_PUBLISHERS
-	ROS_INFO(
+	DEBUG_PRINT(
 		/* h[x] = hdr[x] */
 		/* h0     h1     h2    h3      h4     h5     h6     h7     h8   h9 s0 s1 s2 34 s5 s6 s7 s8 s9*/
 		"APHDG,%10.4f,%10.5f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i\n",
@@ -376,7 +376,7 @@ void publish_imu(double *imu, imu_pub_t pub)
 	pub->publish(msg);
 
 #if DEBUG_PUBLISHERS
-	ROS_INFO("APIMU,%10.3f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f\n", imu[0], imu[1], imu[2], imu[3], imu[4], imu[5], imu[6], imu[7], imu[8], imu[9], imu[10], imu[11]);
+	DEBUG_PRINT("APIMU,%10.3f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f\n", imu[0], imu[1], imu[2], imu[3], imu[4], imu[5], imu[6], imu[7], imu[8], imu[9], imu[10], imu[11]);
 #endif
 }
 
@@ -410,7 +410,7 @@ void publish_im1(double *im1, im1_pub_t pub)
 	pub->publish(msg);
 
 #if DEBUG_PUBLISHERS
-	ROS_INFO("APIM1,%10.3f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f\n", im1[0], im1[1], im1[2], im1[3], im1[4], im1[5], im1[6], im1[7], im1[8], im1[9]);
+	DEBUG_PRINT("APIM1,%10.3f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f\n", im1[0], im1[1], im1[2], im1[3], im1[4], im1[5], im1[6], im1[7], im1[8], im1[9]);
 #endif
 }
 
@@ -461,7 +461,7 @@ void publish_ins(double *ins, ins_pub_t pub)
 	pub->publish(msg);
 
 #if DEBUG_PUBLISHERS
-	ROS_INFO("APINS,%10.3f,%14.7f,%10.4f,%14.9f,%14.9f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f\n", ins[0], ins[1], ins[2], ins[3], ins[4], ins[5], ins[6], ins[7], ins[8], ins[9], ins[10], ins[11], ins[12]);
+	DEBUG_PRINT("APINS,%10.3f,%14.7f,%10.4f,%14.9f,%14.9f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f\n", ins[0], ins[1], ins[2], ins[3], ins[4], ins[5], ins[6], ins[7], ins[8], ins[9], ins[10], ins[11], ins[12]);
 #endif
 }
 

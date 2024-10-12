@@ -13,10 +13,6 @@
 #include "../main_anello_ros_driver.h"
 #include "../bit_tools.h"
 
-#if COMPILE_WITH_ROS
-#include <ros/ros.h>
-#endif
-
 #include <fcntl.h>
 #include <termios.h>
 #include <cstring>
@@ -46,8 +42,8 @@ anello_data_port::anello_data_port(const interface_config_t *config) : uart_port
     DIR *dir = opendir(PORT_DIR);
     if (nullptr == dir)
     {
-#if COMPILE_WITH_ROS
-        ROS_ERROR("Failed to open port directory");
+#if COMPILE_WITH_ROS2
+        RCLCPP_INFO(rclcpp::get_logger("anello_ros_driver"), "Failed to open port directory");
 #else
         printf("Failed to open port directory");
 #endif
@@ -71,11 +67,7 @@ anello_data_port::anello_data_port(const interface_config_t *config) : uart_port
     if (strcmp(this->config.data_port_name.c_str(), "AUTO") == 0)
     {
 #if DEBUG_SERIAL
-#if COMPILE_WITH_ROS
-        ROS_INFO("Auto detect data port enabled");
-#else
-        printf("Auto detect data port enabled");
-#endif
+        DEBUG_PRINT("Auto detect data port enabled");
 #endif
         this->auto_detect = true;
     }
@@ -112,11 +104,7 @@ void anello_data_port::init_uart()
     }
 
 #if DEBUG_SERIAL
-#if COMPILE_WITH_ROS
-    ROS_INFO("Data: Trying port %s", this->uart_port.get_portname().c_str());
-#else
-    printf("Data: Trying port %s", this->uart_port.get_portname().c_str());
-#endif
+    DEBUG_PRINT("Data: Trying port %s", this->uart_port.get_portname().c_str());
 #endif
 
     this->uart_port.init(this->config.data_port_name);
@@ -148,11 +136,7 @@ void anello_data_port::port_parse_fail_uart()
     }
 
 #if DEBUG_SERIAL
-#if COMPILE_WITH_ROS
-    ROS_INFO("Data: Failed to parse data on port %s", this->uart_port.get_portname().c_str());
-#else
-    printf("Data: Failed to parse data on port %s", this->uart_port.get_portname().c_str());
-#endif
+    DEBUG_PRINT("Data: Failed to parse data on port %s", this->uart_port.get_portname().c_str());
 #endif
 
     this->fail_count++;
@@ -210,11 +194,7 @@ void anello_data_port::port_confirm_uart()
     this->decode_success = true;
 
 #if DEBUG_SERIAL
-#if COMPILE_WITH_ROS
-    ROS_INFO("Data: Confirmed port %s", this->uart_port.get_portname().c_str());
-#else
-    printf("Data: Confirmed port %s", this->uart_port.get_portname().c_str());
-#endif
+    DEBUG_PRINT("Data: Confirmed port %s", this->uart_port.get_portname().c_str());
 #endif
 }
 

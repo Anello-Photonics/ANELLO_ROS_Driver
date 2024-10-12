@@ -11,9 +11,6 @@
  ********************************************************************************/
 
 #include "../main_anello_ros_driver.h"
-#if COMPILE_WITH_ROS
-#include <ros/ros.h>
-#endif
 
 #include <cstdlib>
 

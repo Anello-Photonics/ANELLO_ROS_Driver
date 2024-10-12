@@ -14,10 +14,6 @@
 #include "../main_anello_ros_driver.h"
 #include "ethernet_interface.h"
 
-#if COMPILE_WITH_ROS
-#include <ros/ros.h>
-#endif
-
 #include <bits/stdc++.h> 
 #include <stdlib.h> 
 #include <unistd.h> 
