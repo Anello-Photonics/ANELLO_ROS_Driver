@@ -56,59 +56,59 @@
 #endif
 
 #ifndef COM_TYPE_NAME 
-#define COM_TYPE_NAME "/anello_com_type"
+#define COM_TYPE_NAME "anello_com_type"
 #endif
 
 #ifndef DATA_PORT_NAME
-#define DATA_PORT_NAME "/anello_uart_data_port"
+#define DATA_PORT_NAME "anello_uart_data_port"
 #endif
 
 #ifndef CONFIG_PORT_NAME
-#define CONFIG_PORT_NAME "/anello_uart_config_port"
+#define CONFIG_PORT_NAME "anello_uart_config_port"
 #endif
 
 #ifndef REMOTE_IP_NAME
-#define REMOTE_IP_NAME "/anello_remote_ip"
+#define REMOTE_IP_NAME "anello_remote_ip"
 #endif
 
 #ifndef LOCAL_DATA_PORT_NAME
-#define LOCAL_DATA_PORT_NAME "/anello_local_data_port"
+#define LOCAL_DATA_PORT_NAME "anello_local_data_port"
 #endif
 
 #ifndef LOCAL_CONFIG_PORT_NAME
-#define LOCAL_CONFIG_PORT_NAME "/anello_local_config_port"
+#define LOCAL_CONFIG_PORT_NAME "anello_local_config_port"
 #endif
 
 #ifndef LOCAL_ODOMETER_PORT_NAME
-#define LOCAL_ODOMETER_PORT_NAME "/anello_local_odometer_port"
+#define LOCAL_ODOMETER_PORT_NAME "anello_local_odometer_port"
 #endif
 
 #ifndef COM_TYPE_PARAMETER_NAME
-#define COM_TYPE_PARAMETER_NAME NODE_NAME COM_TYPE_NAME
+#define COM_TYPE_PARAMETER_NAME COM_TYPE_NAME
 #endif
 
 #ifndef DATA_PORT_PARAMETER_NAME
-#define DATA_PORT_PARAMETER_NAME NODE_NAME DATA_PORT_NAME
+#define DATA_PORT_PARAMETER_NAME DATA_PORT_NAME
 #endif
 
 #ifndef CONFIG_PORT_PARAMETER_NAME
-#define CONFIG_PORT_PARAMETER_NAME NODE_NAME CONFIG_PORT_NAME
+#define CONFIG_PORT_PARAMETER_NAME CONFIG_PORT_NAME
 #endif
 
 #ifndef REMOTE_IP_PARAMETER_NAME
-#define REMOTE_IP_PARAMETER_NAME NODE_NAME REMOTE_IP_NAME
+#define REMOTE_IP_PARAMETER_NAME REMOTE_IP_NAME
 #endif
 
 #ifndef LOCAL_DATA_PORT_PARAMETER_NAME
-#define LOCAL_DATA_PORT_PARAMETER_NAME NODE_NAME LOCAL_DATA_PORT_NAME
+#define LOCAL_DATA_PORT_PARAMETER_NAME LOCAL_DATA_PORT_NAME
 #endif
 
 #ifndef LOCAL_CONFIG_PORT_PARAMETER_NAME
-#define LOCAL_CONFIG_PORT_PARAMETER_NAME NODE_NAME LOCAL_CONFIG_PORT_NAME
+#define LOCAL_CONFIG_PORT_PARAMETER_NAME LOCAL_CONFIG_PORT_NAME
 #endif
 
 #ifndef LOCAL_ODOMETER_PORT_PARAMETER_NAME
-#define LOCAL_ODOMETER_PORT_PARAMETER_NAME NODE_NAME LOCAL_ODOMETER_PORT_NAME
+#define LOCAL_ODOMETER_PORT_PARAMETER_NAME LOCAL_ODOMETER_PORT_NAME
 #endif
 
 #ifndef LOG_LATEST_SET
@@ -143,14 +143,16 @@ class AnelloRosDriver : public rclcpp::Node
 {
 public:
 	AnelloRosDriver()
-		: Node(NODE_NAME)
+		: Node(NODE_NAME,
+			   rclcpp::NodeOptions().allow_undeclared_parameters(true))
 	{
 		RCLCPP_INFO(this->get_logger(), "ANELLO ROS Driver Started");
 
+
 		// get parameters
 		this->declare_parameter(COM_TYPE_PARAMETER_NAME, "UART");
-		this->declare_parameter(DATA_PORT_PARAMETER_NAME, "/dev/ttyUSB0");
-		this->declare_parameter(CONFIG_PORT_PARAMETER_NAME, "/dev/ttyUSB3");
+		this->declare_parameter(DATA_PORT_PARAMETER_NAME, "AUTO");
+		this->declare_parameter(CONFIG_PORT_PARAMETER_NAME, "AUTO");
 		this->declare_parameter(REMOTE_IP_PARAMETER_NAME, "192.168.1.111");
 		this->declare_parameter(LOCAL_DATA_PORT_PARAMETER_NAME, 1111);
 		this->declare_parameter(LOCAL_CONFIG_PORT_PARAMETER_NAME, 2222);
@@ -177,6 +179,22 @@ public:
 		{
 			config.type = UART;
 		}
+
+#if DEBUG_MAIN
+        auto parameters = list_parameters({}, 10); // Empty prefixes vector and a depth of 10
+		RCLCPP_INFO(this->get_logger(), "Available parameters:");
+        for (const auto & name : parameters.names) {
+            RCLCPP_INFO(this->get_logger(), " - %s", name.c_str());
+        }
+
+		DEBUG_PRINT("Com Type: %s", com_type.c_str());
+		DEBUG_PRINT("Data Port: %s", config.data_port_name.c_str());
+		DEBUG_PRINT("Config Port: %s", config.config_port_name.c_str());
+		DEBUG_PRINT("Remote IP: %s", config.remote_ip.c_str());
+		DEBUG_PRINT("Local Data Port: %d", config.local_data_port);
+		DEBUG_PRINT("Local Config Port: %d", config.local_config_port);
+		DEBUG_PRINT("Local Odometer Port: %d", config.local_odometer_port);
+#endif
 
 		// Create ports
 		config_port = new anello_config_port(&config);

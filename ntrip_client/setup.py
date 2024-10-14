@@ -22,7 +22,7 @@ setup(
     license='MIT License',
     entry_points={
         'console_scripts': [
-            'ntrip_ros = ntrip_client.ntrip_ros:main',
+            'ntrip_ros.py = ntrip_client.ntrip_ros:main',
         ],
     },
 )
