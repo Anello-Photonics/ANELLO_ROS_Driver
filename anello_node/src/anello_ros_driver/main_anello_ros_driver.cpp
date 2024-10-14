@@ -222,6 +222,11 @@ public:
 	}
 
 private:
+	/* Main Decoder loop 
+	* Reads the serial port calls the decoder and publishes the messages
+	* Called via this->timer_
+	*
+	*/
 	void mainloop_callback()
 	{
 		bool checksum_passed = 0;
@@ -398,6 +403,10 @@ private:
 		}
 	}
 
+	/* APODO topic callback
+	* Makes APODO message into a string and sends it to the config port
+	*
+	*/
 	void odo_callback(const anello_ros_driver::msg::APODO::SharedPtr msg)
 	{
 		msg->odo_speed;
@@ -438,6 +447,7 @@ private:
 
 	}
 
+	/* Health message callback */
 	void health_callback()
 	{
 		publish_health(&_health_msg, _health_publisher);
@@ -486,7 +496,8 @@ int main(int argc, char *argv[])
 #endif
 }
 
-/*
+/* State machine decoder for ASCII and RTCM messages
+*
  * Parameters:
  * a1buff_t *a1 : pointer to an a1buff object. This holds the current message candidate.
  * uint8_t data : This holds the next byte to be added to the buffer. If the byte is correct it is added. If it isnt the buffer is reset.

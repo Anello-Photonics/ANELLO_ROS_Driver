@@ -19,10 +19,12 @@
 #if COMPILE_WITH_ROS2
 #include "rclcpp/rclcpp.hpp"
 
+// All *_pub_t types are defined in main_anello_ros_driver.h as rclcpp::Publisher<anello_ros_driver::msg::[MESSAGE_TYPE]>::SharedPtr
+
 /*
  * Parameters:
  * double *imu : Double array at least 12 items long that contains the imu msg fields
- * ros::Publisher pub : Publisher used to publish the imu message
+ * imu_pub_t pub : Publisher used to publish the imu message
  *
  * Notes:
  * The publisher is called here
@@ -32,7 +34,7 @@ void publish_imu(double *imu, imu_pub_t pub);
 /*
  * Parameters:
  * double *im1 : Double array at least 10 items long that contains the im1 msg fields
- * ros::Publisher pub : Publisher used to publish the im1 message
+ * im1_pub_t pub : Publisher used to publish the im1 message
  *
  * Notes:
  * The publisher is called here
@@ -42,7 +44,7 @@ void publish_im1(double *im1, im1_pub_t pub);
 /*
  * Parameters:
  * double *ins : Double array at least 13 items long that contains the ins msg fields
- * ros::Publisher pub : Publisher used to publish the ins message
+ * ins_pub_t pub : Publisher used to publish the ins message
  *
  * Notes:
  * The publisher is called here
@@ -52,7 +54,7 @@ void publish_ins(double *ins, ins_pub_t pub);
 /*
  * Parameters:
  * double *gps : Double array at least 16 items long that contains the gps msg fields
- * ros::Publisher pub : Publisher used to publish the gps message
+ * gps_pub_t pub : Publisher used to publish the gps message
  *
  * Notes:
  * The publisher is called here
@@ -62,7 +64,7 @@ void publish_gps(double *gps, gps_pub_t pub);
 /*
  * Parameters:
  * double *gp2 : Double array at least 16 items long that contains the gps msg fields
- * ros::Publisher pub : Publisher used to publish the gps message
+ * gps_pub_t pub : Publisher used to publish the gps message
  *
  * Notes:
  * The publisher is called here
@@ -72,7 +74,7 @@ void publish_gp2(double *gp2, gps_pub_t pub);
 /*
  * Parameters:
  * double *hdg : Double array at least 10 items long that contains the hdg msg fields
- * ros::Publisher pub : Publisher used to publish the hdg message
+ * hdg_pub_t pub : Publisher used to publish the hdg message
  *
  * Notes:
  * The publisher is called here
@@ -83,7 +85,7 @@ void publish_hdr(double *hdg, hdg_pub_t pub);
 /*
  * Parameters:
  * double *gps : Double array at least 16 items long that contains the gps msg fields
- * ros::Publisher pub : Publisher used to publish the gga message
+ * gga_pub_t pub : Publisher used to publish the gga message
  * rclcpp::Time time : Time to stamp the message with
  *
  * Notes:
@@ -95,7 +97,7 @@ void publish_gga(double *gps, gga_pub_t pub, rclcpp::Time time);
 /*
  * Parameters:
  * health_message *health_msg : Pointer to the health message object used to create statistics
- * ros::Publisher pub : Publisher used to publish the health message
+ * health_pub_t pub : Publisher used to publish the health message
  *
  * Notes:
  * The publisher is called here

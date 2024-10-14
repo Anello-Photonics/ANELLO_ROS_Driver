@@ -126,6 +126,7 @@ void publish_gga(double *gps, gga_pub_t pub, rclcpp::Time time)
 	gngga_message << ",";
 
 /*************************Diff. Ref. Station ID*************************/
+	// no comma for final field
 	gngga_message << "";
 
 /*************************Checksum*************************/

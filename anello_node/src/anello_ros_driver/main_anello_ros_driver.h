@@ -81,6 +81,7 @@
 #define APINI_UPD 0
 #endif
 
+// Type definitions for the publishers
 typedef rclcpp::Publisher<anello_ros_driver::msg::APIMU>::SharedPtr imu_pub_t;
 typedef rclcpp::Publisher<anello_ros_driver::msg::APIM1>::SharedPtr im1_pub_t;
 typedef rclcpp::Publisher<anello_ros_driver::msg::APINS>::SharedPtr ins_pub_t;
