@@ -120,7 +120,6 @@ void anello_config_port::init_uart()
             if (!port_found)
             {
                 DEBUG_PRINT("No port found");
-                usleep(1000 * 1000); // 1 s
             }
         }
 
