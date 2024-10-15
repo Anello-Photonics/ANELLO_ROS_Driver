@@ -23,6 +23,7 @@
 #include <fstream>
 #include <unistd.h>
 #include <csignal>
+#include <iomanip>
 #include "main_anello_ros_driver.h"
 
 #if COMPILE_WITH_ROS2

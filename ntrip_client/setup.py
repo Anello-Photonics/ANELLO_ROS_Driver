@@ -1,13 +1,13 @@
 import os
 import glob
-from setuptools import setup
+from setuptools import setup, find_packages
 
 package_name = 'ntrip_client'
 
 setup(
     name=package_name,
     version='1.2.0',
-    packages=[package_name],
+    packages=find_packages(where='src'),
     package_dir={'': 'src'},
     data_files=[
         ('share/ament_index/resource_index/packages', ['resource/' + package_name]),
@@ -22,7 +22,7 @@ setup(
     license='MIT License',
     entry_points={
         'console_scripts': [
-            'ntrip_ros.py = ntrip_client.ntrip_ros:main',
+            'ntrip_ros = ntrip_client.ntrip_ros:main',
         ],
     },
 )

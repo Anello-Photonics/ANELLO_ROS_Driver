@@ -14,7 +14,7 @@
 
     <!--Launch ANELLO ros driver-->
     <!--Update data and config port values to the ports in your system-->
-    <node name="anello_ros_driver" pkg="anello_ros_driver" exec="anello_ros_driver_node">
+    <node name="anello_ros_driver" pkg="anello_ros_driver" exec="anello_ros_driver_node" output="screen">
         <param name="anello_com_type" value="$(var anello_com_type)"/>
         <param name="anello_uart_data_port" value="$(var anello_uart_data_port)"/>
         <param name="anello_uart_config_port" value="$(var anello_uart_config_port)"/>
@@ -39,7 +39,7 @@
     <arg name="debug" default="false"/>
     <arg name="rtcm_message_package" default="mavros_msgs"/>
 
-    <node name="ntrip_client_node" pkg="ntrip_client" exec="ntrip_ros.py" output="screen" namespace="ntrip_client">
+    <node name="ntrip_client_node" pkg="ntrip_client" exec="ntrip_ros" output="screen" namespace="ntrip_client">
         <!-- Required parameters used to connect to the NTRIP server -->
         <param name="host"       value="$(var host)" />
         <param name="port"       value="$(var port)" />

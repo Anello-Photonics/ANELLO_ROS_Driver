@@ -147,7 +147,8 @@ class NTRIPRos(Node):
       ))
 
 
-if __name__ == '__main__':
+def main():
+  print('Starting NTRIP Client')
   # Start the node
   rclpy.init()
   node = NTRIPRos()
@@ -165,3 +166,6 @@ if __name__ == '__main__':
     
     # Shutdown the node and stop rclpy
     rclpy.shutdown()
+
+if __name__ == '__main__':
+  main()

@@ -30,6 +30,8 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   DEPENDENCIES std_msgs
 )
 
+ament_export_dependencies(rosidl_default_runtime)
+
 add_executable(anello_ros_driver_node 
   src/anello_ros_driver/main_anello_ros_driver.cpp 
   src/anello_ros_driver/bit_tools.cpp
@@ -57,14 +59,17 @@ target_include_directories(anello_ros_driver_node PUBLIC
   $<INSTALL_INTERFACE:include>
 )
 
-rosidl_get_typesupport_target(cpp_typesupport_target ${PROJECT_NAME} "rosidl_typesupport_cpp")
-target_link_libraries(anello_ros_driver_node ${cpp_typesupport_target})
+# Link the executable to the required libraries.
+rosidl_target_interfaces(anello_ros_driver_node
+  ${PROJECT_NAME} "rosidl_typesupport_cpp")
 
 
+# Install nodes
 install(TARGETS
   anello_ros_driver_node
   DESTINATION lib/${PROJECT_NAME})
 
+# Install launch files.
 install(
     DIRECTORY launch
     DESTINATION share/${PROJECT_NAME}/
