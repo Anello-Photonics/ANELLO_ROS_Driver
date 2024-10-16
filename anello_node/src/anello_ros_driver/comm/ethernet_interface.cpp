@@ -56,6 +56,7 @@ void ethernet_interface::init()
     if ((this->sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
     {
         perror("socket creation failed");
+        ERROR_PRINT("socket creation failed");
         exit(EXIT_FAILURE);
     }
 
@@ -72,6 +73,7 @@ void ethernet_interface::init()
     if (bind(this->sockfd, (const struct sockaddr *)&(this->servaddr), sizeof(this->servaddr)) < 0)
     {
         perror("bind failed");
+        ERROR_PRINT("Ethernet bind failed");
         exit(EXIT_FAILURE);
     }
 

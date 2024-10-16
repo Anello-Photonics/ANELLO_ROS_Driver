@@ -42,11 +42,7 @@ anello_data_port::anello_data_port(const interface_config_t *config) : uart_port
     DIR *dir = opendir(PORT_DIR);
     if (nullptr == dir)
     {
-#if COMPILE_WITH_ROS2
-        RCLCPP_INFO(rclcpp::get_logger("anello_ros_driver"), "Failed to open port directory");
-#else
-        printf("Failed to open port directory");
-#endif
+        ERROR_PRINT("Failed to open port directory");
         exit(1);
     }
 

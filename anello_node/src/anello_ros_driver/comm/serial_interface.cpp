@@ -22,7 +22,6 @@
 #include <sys/ioctl.h>
 #include <dirent.h>
 #include <vector>
-// #include <libusb1.0/libusb.h>
 
 #include "serial_interface.h"
 
@@ -55,7 +54,7 @@ void serial_interface::init(std::string portname)
     this->usb_fd = open(this->portname.c_str(), O_RDWR);
     if (this->usb_fd < 0)
     {
-        DEBUG_PRINT("file open error with port %s", this->portname.c_str());
+        ERROR_PRINT("file open error with port %s", this->portname.c_str());
         exit(1);
     }
 
@@ -63,7 +62,7 @@ void serial_interface::init(std::string portname)
     memset(&options, 0, sizeof(options));
     if (tcgetattr(this->usb_fd, &options) != 0)
     {
-        DEBUG_PRINT("Error %i from tcgetattr: %s\n", errno, strerror(errno));
+        ERROR_PRINT("Error %i from tcgetattr: %s\n", errno, strerror(errno));
         exit(1);
     }
 
@@ -84,7 +83,7 @@ void serial_interface::init(std::string portname)
     // set the options
     if (tcsetattr(this->usb_fd, TCSANOW, &options) != 0)
     {
-        DEBUG_PRINT("Error %i from tcsetattr: %s\n", errno, strerror(errno));
+        ERROR_PRINT("Error %i from tcsetattr: %s\n", errno, strerror(errno));
         exit(1);
     }
 
@@ -108,7 +107,7 @@ size_t serial_interface::get_data(char *buf, size_t buf_len)
     }
     if (this->usb_fd < 0)
     {
-        DEBUG_PRINT("ANELLO ROS driver serial port file descriptor not defined");
+        ERROR_PRINT("ANELLO ROS driver serial port file descriptor not defined");
         exit(1);
     }
 
@@ -125,7 +124,7 @@ size_t serial_interface::get_data(char *buf, size_t buf_len, int timeout)
     }
     if (this->usb_fd < 0)
     {
-        DEBUG_PRINT("ANELLO ROS driver serial port file descriptor not defined");
+        ERROR_PRINT("ANELLO ROS driver serial port file descriptor not defined");
         exit(1);
     }
 
@@ -140,7 +139,7 @@ size_t serial_interface::get_data(char *buf, size_t buf_len, int timeout)
     int ready = select(this->usb_fd + 1, &readSet, NULL, NULL, &tv);
     if (ready < 0)
     {
-        DEBUG_PRINT("Error from select: %s\n", strerror(errno));
+        ERROR_PRINT("Error from select: %s\n", strerror(errno));
         exit(1);
     }
     else if (ready == 0)

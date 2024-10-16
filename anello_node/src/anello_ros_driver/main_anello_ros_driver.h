@@ -69,11 +69,27 @@
 #define OLD_MESSAGING 1
 #endif
 
-#ifndef DEBUG_PRING
+#ifndef DEBUG_PRINT
 #if COMPILE_WITH_ROS2
 #define DEBUG_PRINT(...) RCLCPP_INFO(rclcpp::get_logger("anello_ros_driver"),__VA_ARGS__)
 #else
 #define DEBUG_PRINT(...) printf(__VA_ARGS__)
+#endif
+#endif
+
+#ifndef ERROR_PRINT
+#if COMPILE_WITH_ROS2
+#define ERROR_PRINT(...) RCLCPP_ERROR(rclcpp::get_logger("anello_ros_driver"),__VA_ARGS__)
+#else
+#define ERROR_PRINT(...) printf(__VA_ARGS__)
+#endif
+#endif
+
+#ifndef WARNING_PRINT
+#if COMPILE_WITH_ROS2
+#define WARNING_PRINT(...) RCLCPP_WARN(rclcpp::get_logger("anello_ros_driver"),__VA_ARGS__)
+#else
+#define WARNING_PRINT(...) printf(__VA_ARGS__)
 #endif
 #endif
 

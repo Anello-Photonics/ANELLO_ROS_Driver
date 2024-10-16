@@ -64,11 +64,7 @@ void anello_config_port::init_uart()
         DIR *dir = opendir(PORT_DIR);
         if (nullptr == dir)
         {
-#if COMPILE_WITH_ROS2
-            RCLCPP_ERROR(rclcpp::get_logger("anello_ros_driver"), "Failed to open port directory");
-#else
-            printf("Failed to open port directory");
-#endif
+            ERROR_PRINT("Failed to open port directory");
             exit(1);
         }
 
@@ -119,7 +115,7 @@ void anello_config_port::init_uart()
             }
             if (!port_found)
             {
-                DEBUG_PRINT("No port found");
+                WARNING_PRINT("No port found");
             }
         }
 

@@ -8,7 +8,7 @@ The ANELLO ROS driver supports the ANELLO EVK, GNSS INS, and IMU+ running firmwa
 
 ### Install ROS
 
-Follow the instructions on the [ROS2 Wiki](https://docs.ros.org/en/humble/Installation.html) to install ROS2 on your system.
+Follow the instructions on the [ROS2 Wiki](https://docs.ros.org/) to install ROS2 on your system.
 
 ### Install ANELLO ROS Driver
 
@@ -96,6 +96,8 @@ Update the NTRIP client parameters in the launch file to point to your NTRIP cas
 
 ### Build Code
 
+Make sure the ROS environment is sourced and build the code via colcon:
+
 ```bash
 cd ~/ros2_ws
 colcon build
@@ -106,7 +108,7 @@ colcon build
 ### Launch ANELLO ROS Driver
 
 ```bash
-ros2 launch anello_ros_driver anello_ros_driver.launch
+ros2 launch anello_ros_driver anello_ros_driver_launch.xml
 ```
 
 ANELLO messages will be published to topics (see below). For information on how to view these messages, see the [ROS Wiki](http://wiki.ros.org/ROS/Tutorials/UnderstandingTopics).
@@ -115,7 +117,7 @@ ANELLO messages will be published to topics (see below). For information on how 
 
 #### Published Topics
 
-Topic definitions are defined in the [ANELLO Developer Manual](https://docs-a1.readthedocs.io/en/latest/) by the ASCII message format. Custom message definitions are used for ANELLO messages and can be found in the `/anello_ros_driver/anello_node/msg` directory.
+Topic definitions are defined in the [ANELLO Developer Manual](https://docs-a1.readthedocs.io/en/latest/) by the ASCII message format. Custom message definitions are used for ANELLO messages and can be found in the `/anello_ros_driver/anello_interfaces/msg` directory. Messages are defined within the anello_interfaces package.
 
 * `/APIMU`
 * `/APIM1`
