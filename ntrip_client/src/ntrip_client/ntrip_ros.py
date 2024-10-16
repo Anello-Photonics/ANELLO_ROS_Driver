@@ -153,7 +153,8 @@ def main():
   rclpy.init()
   node = NTRIPRos()
   if not node.run():
-    sys.exit(1)
+    rclpy.shutdown()
+    return
   try:
     # Spin until we are shut down
     rclpy.spin(node)
