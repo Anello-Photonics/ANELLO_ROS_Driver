@@ -457,8 +457,8 @@ private:
 
 	void ntrip_rtcm_callback(const mavros_msgs::msg::RTCM::SharedPtr msg)
 	{
-		RCLCPP_INFO(this->get_logger(), "RTCM callback: %ld bytes\n", msg->data.size());
 #if DEBUG_SUBSCRIBERS
+		RCLCPP_INFO(this->get_logger(), "RTCM callback: %ld bytes\n", msg->data.size());
 #endif
 
 		data_port->write_data((char *)msg->data.data(), msg->data.size());
