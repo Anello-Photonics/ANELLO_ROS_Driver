@@ -22,13 +22,12 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include <anello_ros_driver/msg/apimu.hpp>
-#include <anello_ros_driver/msg/apim1.hpp>
-#include <anello_ros_driver/msg/apins.hpp>
-#include <anello_ros_driver/msg/apgps.hpp>
-#include <anello_ros_driver/msg/aphdg.hpp>
-#include <anello_ros_driver/msg/apodo.hpp>
-#include <anello_ros_driver/msg/aphealth.hpp>
+#include "anello_interfaces/msg/apimu.hpp"
+#include "anello_interfaces/msg/apim1.hpp"
+#include "anello_interfaces/msg/apins.hpp"
+#include "anello_interfaces/msg/apgps.hpp"
+#include "anello_interfaces/msg/aphdg.hpp"
+#include "anello_interfaces/msg/aphealth.hpp"
 
 #include <nmea_msgs/msg/sentence.hpp>
 #include <mavros_msgs/msg/rtcm.hpp>
@@ -166,7 +165,7 @@ void publish_gps(double *gps, gps_pub_t pub)
 	 *
 	 */
 
-	anello_ros_driver::msg::APGPS msg;
+	anello_interfaces::msg::APGPS msg;
 
 	msg.mcu_time = gps[0];
 	msg.gps_time = gps[1];
@@ -219,7 +218,7 @@ void publish_gp2(double *gp2, gps_pub_t pub)
 	 *
 	 */
 
-	anello_ros_driver::msg::APGPS msg;
+	anello_interfaces::msg::APGPS msg;
 
 	msg.mcu_time = gp2[0];
 	msg.gps_time = gp2[1];
@@ -282,7 +281,7 @@ void publish_hdr(double *hdr, hdg_pub_t pub)
 	 */
 	uint16_t status = (uint16_t)hdr[9];
 
-	anello_ros_driver::msg::APHDG msg;
+	anello_interfaces::msg::APHDG msg;
 
 	msg.mcu_time = hdr[0];
 	msg.gps_time = hdr[1];
@@ -356,7 +355,7 @@ void publish_imu(double *imu, imu_pub_t pub)
 	 * imu[11] = T_Sync [ms]
 	 */
 
-	anello_ros_driver::msg::APIMU msg;
+	anello_interfaces::msg::APIMU msg;
 	msg.mcu_time = imu[0];
 	msg.ax = imu[1];
 	msg.ay = imu[2];
@@ -397,7 +396,7 @@ void publish_im1(double *im1, im1_pub_t pub)
 	 * im1[9] = T_Sync [ms]
 	 */
 
-	anello_ros_driver::msg::APIM1 msg;
+	anello_interfaces::msg::APIM1 msg;
 	msg.mcu_time = im1[0];
 	msg.ax = im1[1];
 	msg.ay = im1[2];
@@ -439,7 +438,7 @@ void publish_ins(double *ins, ins_pub_t pub)
 	 * ins[12] = zupt (1=stationary, 0=moving)
 	 */
 
-	anello_ros_driver::msg::APINS msg;
+	anello_interfaces::msg::APINS msg;
 
 	msg.mcu_time = ins[0];
 	msg.gps_time = ins[1];
@@ -470,7 +469,7 @@ void publish_ins(double *ins, ins_pub_t pub)
 void publish_health(const health_message *health_msg, health_pub_t pub)
 {
 	// Publish the health message
-	anello_ros_driver::msg::APHEALTH msg;
+	anello_interfaces::msg::APHEALTH msg;
 	msg.position_acc_flag = health_msg->get_position_status();
 	msg.heading_health_flag = health_msg->get_heading_status();
 	msg.gyro_health_flag = health_msg->get_gyro_status();

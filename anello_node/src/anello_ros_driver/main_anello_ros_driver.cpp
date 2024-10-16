@@ -28,14 +28,14 @@
 
 #if COMPILE_WITH_ROS2
 //anello output topics
-#include "anello_ros_driver/msg/apimu.hpp"
-#include "anello_ros_driver/msg/apim1.hpp"
-#include "anello_ros_driver/msg/apins.hpp"
-#include "anello_ros_driver/msg/apgps.hpp"
-#include "anello_ros_driver/msg/aphdg.hpp"
-#include "anello_ros_driver/msg/aphealth.hpp"
+#include "anello_interfaces/msg/apimu.hpp"
+#include "anello_interfaces/msg/apim1.hpp"
+#include "anello_interfaces/msg/apins.hpp"
+#include "anello_interfaces/msg/apgps.hpp"
+#include "anello_interfaces/msg/aphdg.hpp"
+#include "anello_interfaces/msg/aphealth.hpp"
 
-#include "anello_ros_driver/msg/apodo.hpp"
+#include "anello_interfaces/msg/apodo.hpp"
 #include "nmea_msgs/msg/sentence.hpp"
 #include "mavros_msgs/msg/rtcm.hpp"
 #endif
@@ -206,13 +206,13 @@ public:
 
 
 		// create publishers
-		_imu_publisher = this->create_publisher<anello_ros_driver::msg::APIMU>("APIMU", 10);
-		_im1_publisher = this->create_publisher<anello_ros_driver::msg::APIM1>("APIM1", 10);
-		_ins_publisher = this->create_publisher<anello_ros_driver::msg::APINS>("APINS", 10);
-		_gps_publisher = this->create_publisher<anello_ros_driver::msg::APGPS>("APGPS", 10);
-		_gp2_publisher = this->create_publisher<anello_ros_driver::msg::APGPS>("APGP2", 10);
-		_hdg_publisher = this->create_publisher<anello_ros_driver::msg::APHDG>("APHDG", 10);
-		_health_publisher = this->create_publisher<anello_ros_driver::msg::APHEALTH>("APHEALTH", 1);
+		_imu_publisher = this->create_publisher<anello_interfaces::msg::APIMU>("APIMU", 10);
+		_im1_publisher = this->create_publisher<anello_interfaces::msg::APIM1>("APIM1", 10);
+		_ins_publisher = this->create_publisher<anello_interfaces::msg::APINS>("APINS", 10);
+		_gps_publisher = this->create_publisher<anello_interfaces::msg::APGPS>("APGPS", 10);
+		_gp2_publisher = this->create_publisher<anello_interfaces::msg::APGPS>("APGP2", 10);
+		_hdg_publisher = this->create_publisher<anello_interfaces::msg::APHDG>("APHDG", 10);
+		_health_publisher = this->create_publisher<anello_interfaces::msg::APHEALTH>("APHEALTH", 1);
 		_gga_publisher = this->create_publisher<nmea_msgs::msg::Sentence>("ntrip_client/nmea", 1);
 
 		// create a ntrip rtcm subscriber
@@ -223,7 +223,7 @@ public:
 		);
 
 		// create an odo subscriber
-		_odo_subscriber = this->create_subscription<anello_ros_driver::msg::APODO>(
+		_odo_subscriber = this->create_subscription<anello_interfaces::msg::APODO>(
 			"APODO", 
 			1, 
 			std::bind(&AnelloRosDriver::odo_callback, this, std::placeholders::_1)
@@ -426,7 +426,7 @@ private:
 	* Makes APODO message into a string and sends it to the config port
 	*
 	*/
-	void odo_callback(const anello_ros_driver::msg::APODO::SharedPtr msg)
+	void odo_callback(const anello_interfaces::msg::APODO::SharedPtr msg)
 	{
 		msg->odo_speed;
 #if DEBUG_SUBSCRIBERS
@@ -482,7 +482,7 @@ private:
 	gga_pub_t _gga_publisher;
 
 	rclcpp::Subscription<mavros_msgs::msg::RTCM>::SharedPtr _rtcm_subscriber;
-	rclcpp::Subscription<anello_ros_driver::msg::APODO>::SharedPtr _odo_subscriber;
+	rclcpp::Subscription<anello_interfaces::msg::APODO>::SharedPtr _odo_subscriber;
 
 	anello_data_port *data_port;
 	anello_config_port *config_port;

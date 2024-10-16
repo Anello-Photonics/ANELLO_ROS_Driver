@@ -26,12 +26,12 @@
 
 #if COMPILE_WITH_ROS2
 #include "rclcpp/rclcpp.hpp"
-#include "anello_ros_driver/msg/apimu.hpp"
-#include "anello_ros_driver/msg/apim1.hpp"
-#include "anello_ros_driver/msg/apins.hpp"
-#include "anello_ros_driver/msg/apgps.hpp"
-#include "anello_ros_driver/msg/aphdg.hpp"
-#include "anello_ros_driver/msg/aphealth.hpp"
+#include "anello_interfaces/msg/apimu.hpp"
+#include "anello_interfaces/msg/apim1.hpp"
+#include "anello_interfaces/msg/apins.hpp"
+#include "anello_interfaces/msg/apgps.hpp"
+#include "anello_interfaces/msg/aphdg.hpp"
+#include "anello_interfaces/msg/aphealth.hpp"
 #include "nmea_msgs/msg/sentence.hpp"
 #endif
 
@@ -82,12 +82,12 @@
 #endif
 
 // Type definitions for the publishers
-typedef rclcpp::Publisher<anello_ros_driver::msg::APIMU>::SharedPtr imu_pub_t;
-typedef rclcpp::Publisher<anello_ros_driver::msg::APIM1>::SharedPtr im1_pub_t;
-typedef rclcpp::Publisher<anello_ros_driver::msg::APINS>::SharedPtr ins_pub_t;
-typedef rclcpp::Publisher<anello_ros_driver::msg::APGPS>::SharedPtr gps_pub_t;
-typedef rclcpp::Publisher<anello_ros_driver::msg::APHDG>::SharedPtr hdg_pub_t;
-typedef rclcpp::Publisher<anello_ros_driver::msg::APHEALTH>::SharedPtr health_pub_t;
+typedef rclcpp::Publisher<anello_interfaces::msg::APIMU>::SharedPtr imu_pub_t;
+typedef rclcpp::Publisher<anello_interfaces::msg::APIM1>::SharedPtr im1_pub_t;
+typedef rclcpp::Publisher<anello_interfaces::msg::APINS>::SharedPtr ins_pub_t;
+typedef rclcpp::Publisher<anello_interfaces::msg::APGPS>::SharedPtr gps_pub_t;
+typedef rclcpp::Publisher<anello_interfaces::msg::APHDG>::SharedPtr hdg_pub_t;
+typedef rclcpp::Publisher<anello_interfaces::msg::APHEALTH>::SharedPtr health_pub_t;
 typedef rclcpp::Publisher<nmea_msgs::msg::Sentence>::SharedPtr gga_pub_t;
 
 typedef struct

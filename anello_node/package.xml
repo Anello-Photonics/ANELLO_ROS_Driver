@@ -9,16 +9,10 @@
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
-  <!-- Message generation tags -->
-  <buildtool_depend>rosidl_default_generators</buildtool_depend>
-  <exec_depend>rosidl_default_runtime</exec_depend>
-  <member_of_group>rosidl_interface_packages</member_of_group>
-
   <depend>rclcpp</depend>
-  <depend>rclpy</depend>
-  <depend>std_msgs</depend>
   <depend>nmea_msgs</depend>
   <depend>mavros_msgs</depend>
+  <depend>anello_interfaces</depend>
   <!-- Needs this to for the package to show up -->
   <export>                               
     <build_type>ament_cmake</build_type> 

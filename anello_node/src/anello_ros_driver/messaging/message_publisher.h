@@ -19,7 +19,7 @@
 #if COMPILE_WITH_ROS2
 #include "rclcpp/rclcpp.hpp"
 
-// All *_pub_t types are defined in main_anello_ros_driver.h as rclcpp::Publisher<anello_ros_driver::msg::[MESSAGE_TYPE]>::SharedPtr
+// All *_pub_t types are defined in main_anello_ros_driver.h as rclcpp::Publisher<anello_interfaces::msg::[MESSAGE_TYPE]>::SharedPtr
 
 /*
  * Parameters:
