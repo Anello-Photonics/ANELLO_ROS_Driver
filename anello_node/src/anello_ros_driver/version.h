@@ -2,19 +2,21 @@
 #define VERSION_H
 
 #ifndef MAJOR_VERSION
-#define MAJOR_VERSION 1
+#define MAJOR_VERSION 2
 #endif
 
 #ifndef MINOR_VERSION
-#define MINOR_VERSION 3
+#define MINOR_VERSION 0
 #endif
 
 #ifndef PATCH_VERSION
-#define PATCH_VERSION 4
+#define PATCH_VERSION 0
 #endif
 
 
 /*
+v2.0.0 : ROS2 port of the anello_ros_driver
+
 v1.3.4 : Add ethernet support along with NTRIP bug fixes
 
 v1.3.3 : Add GP2 topic
