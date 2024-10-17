@@ -1,5 +1,7 @@
 # ANELLO ROS Driver
 
+For ROS2 support, see the ```ros2_main``` branch.
+
 ## ANELLO Products Supported
 
 The ANELLO ROS driver supports the ANELLO EVK, GNSS INS, and IMU+ running firmware versions >= v1.1.1. 
