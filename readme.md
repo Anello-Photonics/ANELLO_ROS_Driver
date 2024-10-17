@@ -113,6 +113,18 @@ ros2 launch anello_ros_driver anello_ros_driver_launch.xml
 
 ANELLO messages will be published to topics (see below). For information on how to view these messages, see the [ROS Wiki](http://wiki.ros.org/ROS/Tutorials/UnderstandingTopics).
 
+### Importing ANELLO Messages
+
+All ANELLO ROS2 messages are defined under the ```anello_interfaces``` package, so this is the package that needs to be included.
+
+```c++
+#include "anello_interfaces/msg/apimu.hpp"
+```
+
+```python
+from anello_interfaces.msg import APIMU
+```
+
 ### Topics
 
 #### Published Topics
