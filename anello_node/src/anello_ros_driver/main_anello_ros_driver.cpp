@@ -218,7 +218,7 @@ public:
 		// create a ntrip rtcm subscriber
 		_rtcm_subscriber = this->create_subscription<mavros_msgs::msg::RTCM>(
 			"ntrip_client/rtcm", 
-			1, 
+			10, 
 			std::bind(&AnelloRosDriver::ntrip_rtcm_callback, this, std::placeholders::_1)
 		);
 
