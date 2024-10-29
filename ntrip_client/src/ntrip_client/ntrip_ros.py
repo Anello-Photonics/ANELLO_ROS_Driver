@@ -137,14 +137,20 @@ class NTRIPRos(Node):
     self._client.send_nmea(nmea.sentence)
 
   def publish_rtcm(self):
-    for raw_rtcm in self._client.recv_rtcm():
-      self._rtcm_pub.publish(RTCM(
+    rtcm_data = self._client.recv_rtcm()
+    if len(rtcm_data) == 0:
+      return
+
+    rtcm_chunks = [rtcm_data[i:i + 1024] for i in range(0, len(rtcm_data), 1024)]
+    for chunk in rtcm_chunks:
+      rtcm_msg = RTCM(
         header=Header(
           stamp=self.get_clock().now().to_msg(),
           frame_id=self._rtcm_frame_id
         ),
-        data=raw_rtcm
-      ))
+        data=chunk
+      )
+      self._rtcm_pub.publish(rtcm_msg)
 
 
 def main():

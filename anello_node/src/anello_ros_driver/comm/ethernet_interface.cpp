@@ -96,6 +96,9 @@ void ethernet_interface::init()
 
 void ethernet_interface::write_data(const char *buf, size_t buf_len)
 {
+#if DEBUG_ETHERNET
+    DEBUG_PRINT("Sending data of size %d to ethernet\n", buf_len);
+#endif
     sendto(this->sockfd, buf, buf_len, 0, (const struct sockaddr *)&(this->cliaddr), sizeof(this->cliaddr));
 }
 
