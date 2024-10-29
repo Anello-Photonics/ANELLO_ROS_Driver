@@ -10,11 +10,13 @@
 #endif
 
 #ifndef PATCH_VERSION
-#define PATCH_VERSION 0
+#define PATCH_VERSION 1
 #endif
 
 
 /*
+v2.0.1 : Bring in v1.3.4 changes to ros2
+
 v2.0.0 : ROS2 port of the anello_ros_driver
 
 v1.3.4 : Add ethernet support along with NTRIP bug fixes
