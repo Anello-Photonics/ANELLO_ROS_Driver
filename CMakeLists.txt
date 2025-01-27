@@ -52,6 +52,7 @@ add_message_files(
   APHDG.msg
   APODO.msg
   APHEALTH.msg
+  APAHRS.msg
 #   Message2.msg
 )
 

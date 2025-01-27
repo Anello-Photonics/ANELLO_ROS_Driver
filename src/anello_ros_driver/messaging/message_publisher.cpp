@@ -26,6 +26,7 @@
 #include <anello_ros_driver/APINS.h>
 #include <anello_ros_driver/APHDG.h>
 #include <anello_ros_driver/APHEALTH.h>
+#include <anello_ros_driver/APAHRS.h>
 
 #include <nmea_msgs/Sentence.h>
 #include <mavros_msgs/RTCM.h>
@@ -424,6 +425,17 @@ void publish_ahrs(double *ahrs, ros::Publisher pub)
 	 * ahrs[4] = Yaw [deg]
 	 * ahrs[5] = zupt (1=stationary, 0=moving)
 	 */
+
+	anello_ros_driver::APAHRS msg;
+
+	msg.mcu_time = ahrs[0];
+	msg.sync_time = ahrs[1];
+	msg.roll = ahrs[2];
+	msg.pitch = ahrs[3];
+	msg.heading = ahrs[4];
+	msg.zupt = (uint8_t)ahrs[5];
+
+	pub.publish(msg);
 
 
 #if DEBUG_PUBLISHERS

@@ -36,6 +36,7 @@
 #include "anello_ros_driver/APHDG.h"
 #include "anello_ros_driver/APODO.h"
 #include "anello_ros_driver/APHEALTH.h"
+#include "anello_ros_driver/APAHRS.h"
 #include "nmea_msgs/Sentence.h"
 #endif
 
@@ -376,6 +377,7 @@ static void ros_driver_main_loop()
 
 	ros::Publisher pub_imu = nh.advertise<anello_ros_driver::APIMU>("APIMU", 10);
 	ros::Publisher pub_im1 = nh.advertise<anello_ros_driver::APIM1>("APIM1", 10);
+	ros::Publisher pub_ahrs = nh.advertise<anello_ros_driver::APAHRS>("APAHRS", 10);
 	ros::Publisher pub_ins = nh.advertise<anello_ros_driver::APINS>("APINS", 10);
 	ros::Publisher pub_gps = nh.advertise<anello_ros_driver::APGPS>("APGPS", 10);
 	ros::Publisher pub_gp2 = nh.advertise<anello_ros_driver::APGPS>("APGP2", 10);
@@ -595,7 +597,7 @@ static void ros_driver_main_loop()
 						decode_ascii_ahrs(val, decoded_val);
 
 #if COMPILE_WITH_ROS
-						
+						publish_ahrs(decoded_val, pub_ahrs);
 #else
 						printf("APAHRSa\n");
 #endif
@@ -733,7 +735,7 @@ static void ros_driver_main_loop()
 							decode_rtcm_ahrs_msg(decoded_val, a1buff);
 
 #if COMPILE_WITH_ROS
-							
+							publish_ahrs(decoded_val, pub_ahrs);
 #else
 							printf("APAHRSr\n");
 #endif
