@@ -414,6 +414,31 @@ void publish_im1(double *im1, ros::Publisher pub)
 #endif
 }
 
+void publish_ahrs(double *ahrs, ros::Publisher pub)
+{
+	/*
+	 * ahrs[0] = MCU_Time [ms]
+	 * ahrs[1] = Sync Time [ms]
+	 * ahrs[2] = Roll [deg]
+	 * ahrs[3] = Pitch [deg]
+	 * ahrs[4] = Yaw [deg]
+	 * ahrs[5] = zupt (1=stationary, 0=moving)
+	 */
+
+
+#if DEBUG_PUBLISHERS
+	fprintf(fAHRS, "%10.6f,%.6f,%10.4f,%10.4f,%10.4f,%10.4f\n",
+		ahrs[0],	// time
+		ahrs[1],	// sync_time
+		ahrs[2],	// roll
+		ahrs[3],	// pitch
+		ahrs[4],	// yaw
+		ahrs[5]		// zupt	
+	);
+#endif
+}
+
+
 void publish_ins(double *ins, ros::Publisher pub)
 {
 	/*

@@ -590,6 +590,18 @@ static void ros_driver_main_loop()
 
 						isOK = 1;
 					}
+					else if (!isOK && num >= 6 && strstr(val[0], "APAHRS") != NULL)
+					{
+						decode_ascii_ahrs(val, decoded_val);
+
+#if COMPILE_WITH_ROS
+						
+#else
+						printf("APAHRSa\n");
+#endif
+
+						isOK = 1;
+					}
 					else if (!isOK && num >= 10 && strstr(val[0], "APIM1") != NULL)
 					{
 						// ascii imu
@@ -715,6 +727,17 @@ static void ros_driver_main_loop()
 #endif
 
 							isOK = 1;
+						}
+						else if (a1buff.subtype == 8) /* AHRS */
+						{
+							decode_rtcm_ahrs_msg(decoded_val, a1buff);
+
+#if COMPILE_WITH_ROS
+							
+#else
+							printf("APAHRSr\n");
+#endif
+
 						}
 					}
 				}
