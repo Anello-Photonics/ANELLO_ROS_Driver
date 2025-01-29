@@ -1,0 +1,5 @@
+float32 heading                 # heading in degrees
+float32 heading_uncertainty     # uncertainty in heading in degrees
+---
+bool is_success
+string message

@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   # sensor_msgs
   std_msgs
+  std_srvs
   message_generation
   nmea_msgs
   mavros_msgs
@@ -52,14 +53,15 @@ add_message_files(
   APHDG.msg
   APODO.msg
   APHEALTH.msg
+  APAHRS.msg
 #   Message2.msg
 )
 
 ## Generate services in the 'srv' folder
 add_service_files(
   FILES
-  initHeading.srv
-  updHeading.srv
+  set_heading_no_unc.srv
+  set_heading_with_unc.srv
 #   Service1.srv
 #   Service2.srv
 )
@@ -68,6 +70,7 @@ add_service_files(
 generate_messages(
   DEPENDENCIES
   std_msgs
+  std_srvs
 )
 
 ###################################
@@ -80,7 +83,7 @@ generate_messages(
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-  CATKIN_DEPENDS roscpp rospy std_msgs message_runtime nmea_msgs mavros_msgs
+  CATKIN_DEPENDS roscpp rospy std_msgs std_srvs message_runtime nmea_msgs mavros_msgs
 )
 
 ###########

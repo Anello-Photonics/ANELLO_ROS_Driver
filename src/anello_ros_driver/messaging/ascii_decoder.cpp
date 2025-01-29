@@ -120,6 +120,19 @@ int decode_ascii_im1(char *val[], int field_num, double *output_val)
     return 1;
 }
 
+int decode_ascii_ahrs(char *val[], double *output_val)
+{
+    /* imu_time, sync_time, roll, pitch, yaw, zupt */
+    output_val[0] = atof(val[1]);           // time MCU
+    output_val[1] = atof(val[2]);           // Sync time
+    output_val[2] = atof(val[3]);			//Roll (deg)
+    output_val[3] = atof(val[4]);			//Pitch (deg)
+    output_val[4] = atof(val[5]);			//Yaw (deg)
+    output_val[5] = atof(val[6]);			//Zupt Status
+    
+    return 1;
+}
+
 int decode_ascii_ins(char *val[], double *output_val)
 {
     /* time[s], lat[radian], lon[radian], ht[m], vn[m / s], ve[m / s], vd[m / s], roll[deg], pitch[deg], yaw[deg] */

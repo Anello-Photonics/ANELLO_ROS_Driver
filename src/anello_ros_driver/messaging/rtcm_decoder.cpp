@@ -73,6 +73,21 @@ void decode_rtcm_im1_msg(double im1[], a1buff_t a1buff)
     im1[9] = rtcm_apim1.Sync_Time * 1.0e-6;       /* T_Sync ms*/
 }
 
+void decode_rtcm_ahrs_msg(double ahrs[], a1buff_t a1buff)
+{
+    rtcm_apahrs_t rtcm_apahrs = {0};
+    memcpy((uint8_t*)&rtcm_apahrs, a1buff.buf + 5, sizeof(rtcm_apahrs_t));
+						
+    ahrs[0] = rtcm_apahrs.Time * 1.0e-6;        // System time in ms
+    ahrs[1] = rtcm_apahrs.Sync_Time * 1.0e-6;	// Sync time in ms
+    ahrs[2] = rtcm_apahrs.Roll * 1.0e-5;	    // roll in deg
+    ahrs[3] = rtcm_apahrs.Pitch * 1.0e-5; 	    // pitch in deg
+    ahrs[4] = rtcm_apahrs.Yaw * 1.0e-5;	        // yaw in deg
+    ahrs[5] = rtcm_apahrs.Zupt_Status;          // Zupt
+}
+
+
+
 void decode_rtcm_ins_msg(double ins[], a1buff_t a1buff)
 {
     rtcm_apins_t rtcm_apins = {0};

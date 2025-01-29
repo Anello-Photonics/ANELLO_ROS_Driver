@@ -99,6 +99,16 @@ typedef struct
 
 typedef struct
 {
+	uint64_t	Time;			//UInt64	ns
+	uint64_t	Sync_Time;		//Uint64	ns
+	int32_t		Roll;			//Int32		1e-5 deg
+	int32_t		Pitch;			//Int32		1e-5 deg
+	int32_t		Yaw;			//Int32		1e-5 deg
+	uint8_t		Zupt_Status;	//Uint8		1=stationary, 0-not_stationary
+} rtcm_apahrs_t;
+
+typedef struct
+{
 	uint64_t MCU_Time;	//	UInt64	ns	    Time since power on
 	uint64_t Sync_Time; // UInt64   ns   Timestamp of external sync pulse
 	uint64_t ODO_time;	//	Int64	ns	    Timestamp of ODometer reading

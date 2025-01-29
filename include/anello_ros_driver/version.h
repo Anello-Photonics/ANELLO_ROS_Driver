@@ -10,11 +10,13 @@
 #endif
 
 #ifndef PATCH_VERSION
-#define PATCH_VERSION 6
+#define PATCH_VERSION 7
 #endif
 
 
 /*
+v1.3.7 : Added support for AHRS including ZUPT and heading setting
+
 v1.3.6 : Removed extra comma from GNGGA NMEA message
 
 v1.3.5 : Remove unnecessary debug messages

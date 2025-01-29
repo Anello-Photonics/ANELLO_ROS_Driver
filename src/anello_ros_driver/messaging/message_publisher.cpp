@@ -26,6 +26,7 @@
 #include <anello_ros_driver/APINS.h>
 #include <anello_ros_driver/APHDG.h>
 #include <anello_ros_driver/APHEALTH.h>
+#include <anello_ros_driver/APAHRS.h>
 
 #include <nmea_msgs/Sentence.h>
 #include <mavros_msgs/RTCM.h>
@@ -413,6 +414,42 @@ void publish_im1(double *im1, ros::Publisher pub)
 	ROS_INFO("APIM1,%10.3f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f\n", im1[0], im1[1], im1[2], im1[3], im1[4], im1[5], im1[6], im1[7], im1[8], im1[9]);
 #endif
 }
+
+void publish_ahrs(double *ahrs, ros::Publisher pub)
+{
+	/*
+	 * ahrs[0] = MCU_Time [ms]
+	 * ahrs[1] = Sync Time [ms]
+	 * ahrs[2] = Roll [deg]
+	 * ahrs[3] = Pitch [deg]
+	 * ahrs[4] = Yaw [deg]
+	 * ahrs[5] = zupt (1=stationary, 0=moving)
+	 */
+
+	anello_ros_driver::APAHRS msg;
+
+	msg.mcu_time = ahrs[0];
+	msg.sync_time = ahrs[1];
+	msg.roll = ahrs[2];
+	msg.pitch = ahrs[3];
+	msg.heading = ahrs[4];
+	msg.zupt = (uint8_t)ahrs[5];
+
+	pub.publish(msg);
+
+
+#if DEBUG_PUBLISHERS
+	fprintf(fAHRS, "%10.6f,%.6f,%10.4f,%10.4f,%10.4f,%10.4f\n",
+		ahrs[0],	// time
+		ahrs[1],	// sync_time
+		ahrs[2],	// roll
+		ahrs[3],	// pitch
+		ahrs[4],	// yaw
+		ahrs[5]		// zupt	
+	);
+#endif
+}
+
 
 void publish_ins(double *ins, ros::Publisher pub)
 {

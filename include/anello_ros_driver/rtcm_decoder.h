@@ -39,6 +39,14 @@ void decode_rtcm_im1_msg(double im1[], a1buff_t a1buff);
 
 /*
  * Parameters:
+ * double ahrs[] : pointer to an array of size 'MAXFIELDS' which will be filled with the values of the message
+ * a1buff_t a1buff : buffer variable where the rtcm message is buffered and information about it is stored
+ *
+ */
+void decode_rtcm_ahrs_msg(double ahrs[], a1buff_t a1buff);
+
+/*
+ * Parameters:
  * double ins[] : pointer to an array of size 'MAXFIELDS' which will be filled with the values of the message
  * a1buff_t a1buff : buffer variable where the rtcm message is buffered and information about it is stored
  *
