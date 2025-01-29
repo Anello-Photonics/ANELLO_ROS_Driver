@@ -41,6 +41,16 @@ void publish_im1(double *im1, ros::Publisher pub);
 
 /*
  * Parameters:
+ * double *ahrs : Double array at least 6 items long that contains the ahrs msg fields
+ * ros::Publisher pub : Publisher used to publish the im1 message
+ *
+ * Notes:
+ * The publisher is called here
+ */
+void publish_ahrs(double *ahrs, ros::Publisher pub);
+
+/*
+ * Parameters:
  * double *ins : Double array at least 13 items long that contains the ins msg fields
  * ros::Publisher pub : Publisher used to publish the ins message
  *

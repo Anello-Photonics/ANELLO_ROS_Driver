@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="2">
   <name>anello_ros_driver</name>
-  <version>1.3.6</version>
+  <version>1.3.7</version>
   <description>The anello_ros_driver package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
@@ -49,6 +49,7 @@
   <depend>roscpp</depend>
   <depend>rospy</depend>
   <depend>std_msgs</depend>
+  <depend>std_srvs</depend>
   <depend>nmea_msgs</depend>
   <depend>mavros_msgs</depend>
   <build_depend>message_generation</build_depend>
