@@ -393,6 +393,9 @@ static void ros_driver_main_loop()
 	ros::ServiceServer srv_upd_heading = nh.advertiseService("upd_heading", upd_heading_callback);
 #endif
 
+	ros::ServiceServer srv_ahrs_set_heading = nh.advertiseService("ahrs_set_heading", ahrs_set_heading_callback);
+	ros::ServiceServer srv_ahrs_set_zupt = nh.advertiseService("ahrs_set_zupt", ahrs_set_zupt_callback);
+
 	
 	ROS_DEBUG("ANELLO ROS Driver Started\n");
 
