@@ -151,7 +151,7 @@ bool ahrs_set_heading_callback(anello_ros_driver::set_heading_no_unc::Request &r
 {
     const int resp_max_data = 150;
     char port_response[resp_max_data];
-    float heading = req.heading * 1e3f;          // Heading message wants milledegrees
+    int heading = (int)(req.heading * 1e3f);          // Heading message wants milledegrees
 
     // build message body
     std::stringstream message_body;
