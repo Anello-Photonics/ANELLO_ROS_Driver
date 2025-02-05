@@ -38,6 +38,7 @@
 #include "anello_ros_driver/APHEALTH.h"
 #include "anello_ros_driver/APAHRS.h"
 #include "nmea_msgs/Sentence.h"
+#include "sensor_msgs/Imu.h"
 #endif
 
 #include "bit_tools.h"
@@ -377,6 +378,9 @@ static void ros_driver_main_loop()
 
 	ros::Publisher pub_imu = nh.advertise<anello_ros_driver::APIMU>("APIMU", 10);
 	ros::Publisher pub_im1 = nh.advertise<anello_ros_driver::APIM1>("APIM1", 10);
+#if STANDARD_MESSAGING
+	ros::Publisher pub_std_imu = nh.advertise<sensor_msgs::Imu>("/imu/data", 10);
+#endif
 	ros::Publisher pub_ahrs = nh.advertise<anello_ros_driver::APAHRS>("APAHRS", 10);
 	ros::Publisher pub_ins = nh.advertise<anello_ros_driver::APINS>("APINS", 10);
 	ros::Publisher pub_gps = nh.advertise<anello_ros_driver::APGPS>("APGPS", 10);
@@ -406,6 +410,9 @@ static void ros_driver_main_loop()
 	pub_arr.gps = &pub_gps;
 	pub_arr.gp2 = &pub_gp2;
 	pub_arr.hdg = &pub_hdg;
+
+	bool is_attitude_ready = false;
+	double last_roll, last_pitch, last_heading;
 	
 	const char *ntrip_data;
 #endif
@@ -589,6 +596,13 @@ static void ros_driver_main_loop()
 						health_msg.add_imu_message(decoded_val);
 #if COMPILE_WITH_ROS
 						publish_imu(decoded_val, pub_imu);
+
+#if STANDARD_MESSAGING
+						if (is_attitude_ready)
+						{
+							publish_standard_imu(decoded_val, pub_std_imu, last_roll, last_pitch, last_heading);
+						}
+#endif
 #else
 						printf("APIMUa\n");
 #endif
@@ -599,6 +613,10 @@ static void ros_driver_main_loop()
 					{
 						decode_ascii_ahrs(val, decoded_val);
 
+						last_roll = decoded_val[2];
+						last_pitch = decoded_val[3];
+						last_heading = decoded_val[4];
+						is_attitude_ready = true;
 #if COMPILE_WITH_ROS
 						publish_ahrs(decoded_val, pub_ahrs);
 #else
@@ -613,6 +631,13 @@ static void ros_driver_main_loop()
 						decode_ascii_im1(val, num, decoded_val);
 #if COMPILE_WITH_ROS
 						publish_im1(decoded_val, pub_im1);
+#if STANDARD_MESSAGING
+						if (is_attitude_ready)
+						{
+							publish_standard_imu(decoded_val, pub_std_imu, last_roll, last_pitch, last_heading);
+						}
+#endif
+
 #else
 						printf("APIM1a\n");
 #endif
@@ -625,6 +650,12 @@ static void ros_driver_main_loop()
 						decode_ascii_ins(val, decoded_val);
 						health_msg.add_ins_message(decoded_val);
 						INS_message_count++;
+
+						last_roll = decoded_val[9];
+						last_pitch = decoded_val[10];
+						last_heading = decoded_val[11];
+
+						if (decoded_val[2] != 255)	{is_attitude_ready = true;}
 #if COMPILE_WITH_ROS
 						publish_ins(decoded_val, pub_ins);
 #else
@@ -657,6 +688,12 @@ static void ros_driver_main_loop()
 							health_msg.add_imu_message(decoded_val);
 #if COMPILE_WITH_ROS
 							publish_imu(decoded_val, pub_imu);
+#if STANDARD_MESSAGING
+							if (is_attitude_ready)
+							{
+								publish_standard_imu(decoded_val, pub_std_imu, last_roll, last_pitch, last_heading);
+							}
+#endif
 #else
 							printf("APIMUr\n");
 #endif
@@ -706,6 +743,13 @@ static void ros_driver_main_loop()
 							decode_rtcm_ins_msg(decoded_val, a1buff);
 							health_msg.add_ins_message(decoded_val);
 							INS_message_count++;
+						
+							last_roll = decoded_val[9];
+							last_pitch = decoded_val[10];
+							last_heading = decoded_val[11];
+
+							if (decoded_val[2] != 255)	{is_attitude_ready = true;}
+
 #if COMPILE_WITH_ROS
 							publish_ins(decoded_val, pub_ins);
 #else
@@ -727,6 +771,12 @@ static void ros_driver_main_loop()
 							decode_rtcm_im1_msg(decoded_val, a1buff);
 #if COMPILE_WITH_ROS
 							publish_im1(decoded_val, pub_im1);
+#if STANDARD_MESSAGING
+							if (is_attitude_ready)
+							{
+								publish_standard_imu(decoded_val, pub_std_imu, last_roll, last_pitch, last_heading);
+							}
+#endif
 #else
 							printf("APIM1r\n");
 #endif
@@ -737,6 +787,10 @@ static void ros_driver_main_loop()
 						{
 							decode_rtcm_ahrs_msg(decoded_val, a1buff);
 
+							last_roll = decoded_val[2];
+							last_pitch = decoded_val[3];
+							last_heading = decoded_val[4];
+							is_attitude_ready = true;
 #if COMPILE_WITH_ROS
 							publish_ahrs(decoded_val, pub_ahrs);
 #else

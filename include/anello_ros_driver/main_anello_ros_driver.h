@@ -69,6 +69,22 @@
 #define APINI_UPD 0
 #endif
 
+#ifndef GRAVITY
+#define GRAVITY 9.80655
+#endif
+
+#ifndef DEG2RAD
+#define DEG2RAD (M_PI / 180.0)
+#endif
+
+#ifndef RAD2DEG
+#define RAD2DEG (180.0 / M_PI)
+#endif
+
+#ifndef STANDARD_MESSAGING
+#define STANDARD_MESSAGING 1
+#endif
+
 extern anello_config_port *gp_global_config_port;
 
 typedef struct

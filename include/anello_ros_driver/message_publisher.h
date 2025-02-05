@@ -41,6 +41,22 @@ void publish_im1(double *im1, ros::Publisher pub);
 
 /*
  * Parameters:
+ * double *imu : Double array that has the angular rate values followed by wz values stored 1 through 7
+ *                where 6 is the an wz measurement but 7 is the value that is actually used.
+ *                Accel should be in G and Angular rate should be in deg/s (these are converted in this function).
+ *  ros::Publisher : Publisher that will be used to publish the sensor_msgs/Imu message
+ * double last_roll : The most recent recorded roll value in degrees
+ * double last_pitch : The most recent recorded pitch value in degrees
+ * double last_heading : The most recent recorded heading value in degrees
+ * 
+ * Notes:
+ * This is called on every IMU message. The roll, pitch, heading are from the most recent valid ahrs or INS output.
+ * The publisher is called here.
+*/
+void publish_standard_imu(double *imu, ros::Publisher pub, double last_roll, double last_pitch, double last_heading);
+
+/*
+ * Parameters:
  * double *ahrs : Double array at least 6 items long that contains the ahrs msg fields
  * ros::Publisher pub : Publisher used to publish the im1 message
  *

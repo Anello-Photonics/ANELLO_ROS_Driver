@@ -28,6 +28,8 @@
 #include <anello_ros_driver/APHEALTH.h>
 #include <anello_ros_driver/APAHRS.h>
 
+#include <sensor_msgs/Imu.h>
+
 #include <nmea_msgs/Sentence.h>
 #include <mavros_msgs/RTCM.h>
 #include <std_msgs/Header.h>
@@ -413,6 +415,83 @@ void publish_im1(double *im1, ros::Publisher pub)
 #if DEBUG_PUBLISHERS
 	ROS_INFO("APIM1,%10.3f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f\n", im1[0], im1[1], im1[2], im1[3], im1[4], im1[5], im1[6], im1[7], im1[8], im1[9]);
 #endif
+}
+
+void publish_standard_imu(double *imu, ros::Publisher pub, double last_roll, double last_pitch, double last_heading)
+{
+	/*
+	 * imu[0] = MCU_Time [ms]
+	 * imu[1] = ax [g]
+	 * imu[2] = ay [g]
+	 * imu[3] = az [g]
+	 * imu[4] = wx [Deg/s]
+	 * imu[5] = wy [Deg/s]
+	 * imu[6] = wz [Deg/s]
+	 * imu[7] = wz_fog [Deg/s]
+	 */
+
+	static uint32_t imu_seq = 0;
+
+	sensor_msgs::Imu msg;
+
+	// Set the header
+	msg.header.stamp = ros::Time::now();
+	msg.header.seq = imu_seq++;
+	msg.header.frame_id = "anello_imu";
+
+	// Calculate the orientation via 321 Euler angles
+	double half_roll_rad = 0.5 * last_roll * DEG2RAD;
+	double half_pitch_rad = 0.5 * last_pitch * DEG2RAD;
+	double half_heading_rad = 0.5 * last_heading * DEG2RAD;
+
+    double cr = cos(last_roll * DEG2RAD * 0.5);
+    double sr = sin(last_roll * DEG2RAD * 0.5);
+    double cp = cos(last_pitch * DEG2RAD * 0.5);
+    double sp = sin(last_pitch * DEG2RAD * 0.5);
+    double cy = cos(last_heading * DEG2RAD * 0.5);
+    double sy = sin(last_heading * DEG2RAD * 0.5);
+
+    
+    msg.orientation.w = cr * cp * cy + sr * sp * sy;
+    msg.orientation.x = sr * cp * cy - cr * sp * sy;
+    msg.orientation.y = cr * sp * cy + sr * cp * sy;
+    msg.orientation.z = cr * cp * sy - sr * sp * cy;
+
+
+	// Set the angular velocity
+	msg.angular_velocity.x = imu[4] * DEG2RAD;
+	msg.angular_velocity.y = imu[5] * DEG2RAD;
+	// imu[6] not used because that is the mems z gyro and imu[7] contains the z axis on a FOG gyro
+	msg.angular_velocity.z = imu[7] * DEG2RAD;
+
+	// TODO: Need to determine what the covariance values should be
+	msg.angular_velocity_covariance[0] = 0.0;
+	msg.angular_velocity_covariance[1] = 0.0;
+	msg.angular_velocity_covariance[2] = 0.0;
+	msg.angular_velocity_covariance[3] = 0.0;
+	msg.angular_velocity_covariance[4] = 0.0;
+	msg.angular_velocity_covariance[5] = 0.0;
+	msg.angular_velocity_covariance[6] = 0.0;
+	msg.angular_velocity_covariance[7] = 0.0;
+	msg.angular_velocity_covariance[8] = 0.0;
+
+	// Set the linear acceleration
+	msg.linear_acceleration.x = imu[1] * GRAVITY;
+	msg.linear_acceleration.y = imu[2] * GRAVITY;
+	msg.linear_acceleration.z = imu[3] * GRAVITY;
+
+	// TODO: Need to determine what the covariance values should be
+	msg.linear_acceleration_covariance[0] = 0.0;
+	msg.linear_acceleration_covariance[1] = 0.0;
+	msg.linear_acceleration_covariance[2] = 0.0;
+	msg.linear_acceleration_covariance[3] = 0.0;
+	msg.linear_acceleration_covariance[4] = 0.0;
+	msg.linear_acceleration_covariance[5] = 0.0;
+	msg.linear_acceleration_covariance[6] = 0.0;
+	msg.linear_acceleration_covariance[7] = 0.0;
+	msg.linear_acceleration_covariance[8] = 0.0;
+
+	pub.publish(msg);
 }
 
 void publish_ahrs(double *ahrs, ros::Publisher pub)

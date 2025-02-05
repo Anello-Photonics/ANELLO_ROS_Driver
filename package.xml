@@ -50,6 +50,7 @@
   <depend>rospy</depend>
   <depend>std_msgs</depend>
   <depend>std_srvs</depend>
+  <depend>sensor_msgs</depend>
   <depend>nmea_msgs</depend>
   <depend>mavros_msgs</depend>
   <build_depend>message_generation</build_depend>
