@@ -40,6 +40,14 @@ public:
 
     double get_baseline();
 
+    const std::string get_portname() const {
+        if (this->config.type == ETH) {
+            return this->ethernet_port.get_remote_ip(); // Assuming get_remote_ip() exists
+        } else {
+            return this->uart_port.get_portname();
+        }
+    }
+
 private:
     interface_config_t config;
     serial_interface uart_port;

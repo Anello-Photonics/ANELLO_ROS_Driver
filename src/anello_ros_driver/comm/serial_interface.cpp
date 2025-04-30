@@ -192,7 +192,7 @@ void serial_interface::write_data(const char *buf, size_t buf_len)
     write(usb_fd, buf, buf_len);
 }
 
-const std::string serial_interface::get_portname()
+const std::string serial_interface::get_portname() const
 {
     return this->portname;
 }

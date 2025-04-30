@@ -42,7 +42,7 @@
 #endif
 
 #ifndef DEBUG_ETHERNET
-#define DEBUG_ETHERNET 1
+#define DEBUG_ETHERNET 0
 #endif
 
 #ifndef DEBUG_PUBLISHERS

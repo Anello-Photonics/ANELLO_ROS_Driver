@@ -245,7 +245,7 @@ void publish_gp2(double *gp2, ros::Publisher pub)
 
 	pub.publish(msg);
 #if DEBUG_PUBLISHERS
-	ROS_INFO("APGP2,%10.3f,%14.9f,%14.9f,%14.9f,%10.4f,%10.3f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f\n", gps[0], gps[1], gps[2], gps[3], gps[4], gps[5], gps[6], gps[7], gps[8], gps[9], gps[10], gps[11], gps[12], gps[13], gps[14], gps[15]);
+	ROS_INFO("APGP2,%10.3f,%14.9f,%14.9f,%14.9f,%10.4f,%10.3f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f\n", gp2[0], gp2[1], gp2[2], gp2[3], gp2[4], gp2[5], gp2[6], gp2[7], gp2[8], gp2[9], gp2[10], gp2[11], gp2[12], gp2[13], gp2[14], gp2[15]);
 #endif
 }
 
