@@ -20,6 +20,7 @@
 #include "mavros_msgs/RTCM.h"
 #include "anello_ros_driver/APODO.h"
 #include "anello_ros_driver/set_heading_no_unc.h"
+#include "anello_ros_driver/cmd_and_rsp.h"
 #include "std_srvs/SetBool.h"
 
 #if APINI_UPD
@@ -32,6 +33,7 @@ void apodo_callback(const anello_ros_driver::APODOConstPtr& msg);
 
 bool ahrs_set_heading_callback(anello_ros_driver::set_heading_no_unc::Request &req, anello_ros_driver::set_heading_no_unc::Response &res);
 bool ahrs_set_zupt_callback(std_srvs::SetBool::Request &req, std_srvs::SetBool::Response &res);
+bool send_command_callback(anello_ros_driver::cmd_and_rsp::Request &req, anello_ros_driver::cmd_and_rsp::Response &res);
 
 #if APINI_UPD
 bool init_heading_callback(anello_ros_driver::set_heading_no_unc::Request &req, anello_ros_driver::set_heading_no_unc::Response &res);

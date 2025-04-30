@@ -397,8 +397,8 @@ static void ros_driver_main_loop()
 
 	ros::ServiceServer srv_ahrs_set_heading = nh.advertiseService("ahrs_set_heading", ahrs_set_heading_callback);
 	ros::ServiceServer srv_ahrs_set_zupt = nh.advertiseService("ahrs_set_zupt", ahrs_set_zupt_callback);
+	ros::ServiceServer srv_send_cmd = nh.advertiseService("send_cmd", send_command_callback);
 
-	
 	ROS_DEBUG("ANELLO ROS Driver Started\n");
 
 
@@ -456,16 +456,11 @@ static void ros_driver_main_loop()
 	// DEBUG_PRINT("Interface Type: %d", interface_config.type);
 
 	anello_config_port anello_device_config(&interface_config);
-	// DEBUG_PRINT("Config post declared");
 	anello_device_config.init();
-	// DEBUG_PRINT("Config post initialized");
 	gp_global_config_port = &anello_device_config;
 
-	// DEBUG_PRINT("Config post set");
 	anello_data_port anello_device_data(&interface_config);
-	// DEBUG_PRINT("Data post declared");
 	anello_device_data.init();
-	// DEBUG_PRINT("Data post initialized");
 
 	health_msg.set_baseline(anello_device_config.get_baseline());
 #if DEBUG_MAIN

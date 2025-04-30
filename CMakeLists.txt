@@ -63,6 +63,7 @@ add_service_files(
   FILES
   set_heading_no_unc.srv
   set_heading_with_unc.srv
+  cmd_and_rsp.srv
 #   Service1.srv
 #   Service2.srv
 )
