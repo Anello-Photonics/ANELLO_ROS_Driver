@@ -160,3 +160,27 @@ int decode_ascii_ins(char *val[], double *output_val)
 
     return 1;
 }
+
+int decode_ascii_cov(char *val[], double *output_val)
+{
+    output_val[0] = atof(val[1]); /* time MCU */
+    output_val[1] = atof(val[2]); /* covLatLat */
+    output_val[2] = atof(val[3]); /* covLonLon */
+    output_val[3] = atof(val[4]); /* covAltAlt */
+    output_val[4] = atof(val[5]); /* covLatLon */
+    output_val[5] = atof(val[6]); /* covLatAlt */
+    output_val[6] = atof(val[7]); /* covLonAlt */
+    output_val[7] = atof(val[8]); /* covVnVn */
+    output_val[8] = atof(val[9]); /* covVeVe */
+    output_val[9] = atof(val[10]); /* covVdVd */
+    output_val[10] = atof(val[11]); /* covVnVe */
+    output_val[11] = atof(val[12]); /* covVnVd */
+    output_val[12] = atof(val[13]); /* covVeVd */
+    output_val[13] = atof(val[14]); /* covRollRoll */
+    output_val[14] = atof(val[15]); /* covPitchPitch */
+    output_val[15] = atof(val[16]); /* covYawYaw */
+    output_val[16] = atof(val[17]); /* covRollPitch */
+    output_val[17] = atof(val[18]); /* covRollYaw */
+    output_val[18] = atof(val[19]); /* covPitchYaw */
+    return 1;
+}

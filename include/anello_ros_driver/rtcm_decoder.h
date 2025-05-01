@@ -72,4 +72,13 @@ int decode_rtcm_gps_msg(double gps[], a1buff_t a1buff);
  */
 void decode_rtcm_hdg_msg(double hdg[], a1buff_t a1buff);
 
+/*
+ * Parameters:
+ * double cov[] : pointer to an array of size 'MAXFIELDS' which will be filled with the values of the message
+ * a1buff_t a1buff : buffer variable where the rtcm message is buffered and information about it is stored
+ *
+ */
+void decode_rtcm_cov_msg(double cov[], a1buff_t a1buff);
+
+
 #endif
