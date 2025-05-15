@@ -42,7 +42,7 @@
 #endif
 
 #ifndef DEBUG_ETHERNET
-#define DEBUG_ETHERNET 1
+#define DEBUG_ETHERNET 0
 #endif
 
 #ifndef DEBUG_PUBLISHERS
@@ -194,6 +194,29 @@ typedef struct
 	uint8_t ZUPT;		   // UInt8	    1 � stationary, 0 - moving
 	uint8_t Status;		   // UInt8	    See ASCII packet
 } rtcm_apins_t;
+
+typedef struct
+{
+	uint64_t Time;		   // UInt64	ns
+	float covLatLat;
+	float covLonLon;
+	float covAltAlt;
+	float covLatLon;
+	float covLatAlt;
+	float covLonAlt;
+	float covVnVn;
+	float covVeVe;
+	float covVdVd;
+	float covVnVe;
+	float covVnVd;
+	float covVeVd;
+	float covRollRoll;
+	float covPitchPitch;
+	float covYawYaw;
+	float covRollPitch;
+	float covRollYaw;
+	float covPitchYaw;
+} rtcm_apcov_t;
 
 #if COMPILE_WITH_ROS
 typedef struct

@@ -37,6 +37,7 @@
 #include "anello_ros_driver/APODO.h"
 #include "anello_ros_driver/APHEALTH.h"
 #include "anello_ros_driver/APAHRS.h"
+#include "anello_ros_driver/APCOV.h"
 #include "nmea_msgs/Sentence.h"
 #endif
 
@@ -383,6 +384,7 @@ static void ros_driver_main_loop()
 	ros::Publisher pub_gp2 = nh.advertise<anello_ros_driver::APGPS>("APGP2", 10);
 	ros::Publisher pub_hdg = nh.advertise<anello_ros_driver::APHDG>("APHDG", 10);
 	ros::Publisher pub_health = nh.advertise<anello_ros_driver::APHEALTH>("APHEALTH", 1);
+	ros::Publisher pub_cov = nh.advertise<anello_ros_driver::APCOV>("APCOV", 10);
 	ros::Publisher pub_gga = nh.advertise<nmea_msgs::Sentence>("ntrip_client/nmea", 1);
 
 	ros::Subscriber sub_rtcm = nh.subscribe("ntrip_client/rtcm", 1, ntrip_rtcm_callback);
@@ -640,6 +642,17 @@ static void ros_driver_main_loop()
 						}
 						isOK = 1;
 					}
+					else if (!isOK && num >= 17 && strstr(val[0], "APCOV") != NULL)
+					{
+						// ascii cov
+						decode_ascii_cov(val, decoded_val);
+#if COMPILE_WITH_ROS
+						publish_cov(decoded_val, pub_cov);
+#else
+						printf("APCOVa\n");
+#endif
+						isOK = 1;
+					}
 					else if (!isOK && ((strstr(val[0], "APINI") != NULL ) || (strstr(val[0], "APUPD") != NULL)))
 					{
 						isOK = 1;
@@ -743,6 +756,15 @@ static void ros_driver_main_loop()
 							printf("APAHRSr\n");
 #endif
 
+						}
+						else if (a1buff.subtype == 10) /* APCOV */
+						{
+							decode_rtcm_cov_msg(decoded_val, a1buff);
+#if COMPILE_WITH_ROS
+							publish_cov(decoded_val, pub_cov);
+#else
+							printf("APCOVr\n");
+#endif
 						}
 					}
 				}

@@ -110,6 +110,17 @@ void publish_gga(double *gps, ros::Publisher pub);
  * The publisher is called here
  */
 void publish_health(const health_message *health_msg, ros::Publisher pub);
+
+/*
+ * Parameters:
+ * double *gps : Double array at least 18 items long that contains the cov msg fields
+ * ros::Publisher pub : Publisher used to publish the cov message
+ *
+ * Notes:
+ * The publisher is called here
+ */
+void publish_cov(double *cov, ros::Publisher pub);
+
 #endif
 
 #endif
