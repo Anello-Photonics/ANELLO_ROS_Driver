@@ -10,11 +10,13 @@
 #endif
 
 #ifndef PATCH_VERSION
-#define PATCH_VERSION 8
+#define PATCH_VERSION 9
 #endif
 
 
 /*
+v1.3.9 : Added support for covariance output and commanding through services
+
 v1.3.8 : Better AHRS set heading command
 
 v1.3.7 : Added support for AHRS including ZUPT and heading setting

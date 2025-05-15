@@ -112,6 +112,32 @@ void decode_rtcm_ins_msg(double ins[], a1buff_t a1buff)
     ins[12] = rtcm_apins.ZUPT;                 /* zupt */
 }
 
+void decode_rtcm_cov_msg(double cov[], a1buff_t a1buff)
+{
+    rtcm_apcov_t rtcm_apcov = {0};
+
+    memcpy((uint8_t *)&rtcm_apcov, a1buff.buf + 5, sizeof(rtcm_apcov_t));
+    cov[0] = rtcm_apcov.Time * 1e-6; /* time MCU */
+    cov[1] = rtcm_apcov.covLatLat;   /* lat lat */
+    cov[2] = rtcm_apcov.covLonLon;   /* lon lon */
+    cov[3] = rtcm_apcov.covAltAlt;   /* alt alt */
+    cov[4] = rtcm_apcov.covLatLon;   /* lat lon */
+    cov[5] = rtcm_apcov.covLatAlt;   /* lat alt */
+    cov[6] = rtcm_apcov.covLonAlt;   /* lon alt */
+    cov[7] = rtcm_apcov.covVnVn;     /* vn vn */
+    cov[8] = rtcm_apcov.covVeVe;     /* ve ve */
+    cov[9] = rtcm_apcov.covVdVd;     /* vd vd */
+    cov[10] = rtcm_apcov.covVnVe;    /* vn ve */
+    cov[11] = rtcm_apcov.covVnVd;    /* vn vd */
+    cov[12] = rtcm_apcov.covVeVd;    /* ve vd */
+    cov[13] = rtcm_apcov.covRollRoll;/* roll roll */
+    cov[14] = rtcm_apcov.covPitchPitch;/* pitch pitch */
+    cov[15] = rtcm_apcov.covYawYaw;  /* yaw yaw */
+    cov[16] = rtcm_apcov.covRollPitch;/* roll pitch */
+    cov[17] = rtcm_apcov.covRollYaw;  /* roll yaw */
+    cov[18] = rtcm_apcov.covPitchYaw; /* pitch yaw */
+}
+
 int decode_rtcm_gps_msg(double gps[], a1buff_t a1buff)
 {
     rtcm_apgps_t rtcm_apgps = {0};

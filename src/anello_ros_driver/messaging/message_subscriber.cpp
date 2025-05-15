@@ -20,6 +20,7 @@
 #include "mavros_msgs/RTCM.h"
 #include "anello_ros_driver/APODO.h"
 #include "anello_ros_driver/set_heading_no_unc.h"
+#include "anello_ros_driver/cmd_and_rsp.h"
 #include "std_srvs/SetBool.h"
 
 #if APINI_UPD
@@ -85,6 +86,43 @@ void apodo_callback(const anello_ros_driver::APODOConstPtr& msg)
 #endif
     global_config_buffer.add_data_to_buffer((uint8_t *)full_message_str.c_str(), full_message_str.length());
     // global_config_buffer.add_data_to_buffer((uint8_t *)full_message_str.c_str(), full_message_str.length());
+}
+
+bool send_command_callback(anello_ros_driver::cmd_and_rsp::Request &req, anello_ros_driver::cmd_and_rsp::Response &res)
+{
+    const int resp_max_data = 150;
+    char port_response[resp_max_data];
+
+    // build message body
+    std::stringstream message_body;
+    message_body << req.command;
+
+    //get checksum
+    std::string ck_string = compute_checksum(message_body.str().c_str(), message_body.str().length());
+
+    //put message together
+    std::stringstream full_message;
+    full_message << '#';
+    full_message << message_body.str();
+    full_message << '*';
+    full_message << ck_string;
+    std::string full_message_str = full_message.str();
+
+    gp_global_config_port->write_data((char *)full_message_str.c_str(), full_message_str.length());
+
+    sleep(.005);
+
+    int bytes_rec = gp_global_config_port->get_data(port_response, resp_max_data);
+    port_response[bytes_rec] = '\0';
+    res.response = port_response;
+
+#if DEBUG_SUBSCRIBERS
+    ROS_INFO("send_command callback");
+    ROS_INFO("Send: %s", full_message_str.c_str());
+    ROS_INFO("resp: %s %d", port_response, bytes_rec);
+    ROS_INFO("req.command: %s", req.command.c_str());
+#endif
+return true;
 }
 
 bool static is_success_message(const char *resp_message, const char *success_header)

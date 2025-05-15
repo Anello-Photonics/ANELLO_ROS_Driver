@@ -27,6 +27,7 @@
 #include <anello_ros_driver/APHDG.h>
 #include <anello_ros_driver/APHEALTH.h>
 #include <anello_ros_driver/APAHRS.h>
+#include <anello_ros_driver/APCOV.h>
 
 #include <nmea_msgs/Sentence.h>
 #include <mavros_msgs/RTCM.h>
@@ -245,7 +246,7 @@ void publish_gp2(double *gp2, ros::Publisher pub)
 
 	pub.publish(msg);
 #if DEBUG_PUBLISHERS
-	ROS_INFO("APGP2,%10.3f,%14.9f,%14.9f,%14.9f,%10.4f,%10.3f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f\n", gps[0], gps[1], gps[2], gps[3], gps[4], gps[5], gps[6], gps[7], gps[8], gps[9], gps[10], gps[11], gps[12], gps[13], gps[14], gps[15]);
+	ROS_INFO("APGP2,%10.3f,%14.9f,%14.9f,%14.9f,%10.4f,%10.3f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f\n", gp2[0], gp2[1], gp2[2], gp2[3], gp2[4], gp2[5], gp2[6], gp2[7], gp2[8], gp2[9], gp2[10], gp2[11], gp2[12], gp2[13], gp2[14], gp2[15]);
 #endif
 }
 
@@ -500,6 +501,54 @@ void publish_ins(double *ins, ros::Publisher pub)
 #if DEBUG_PUBLISHERS
 	ROS_INFO("APINS,%10.3f,%14.7f,%10.4f,%14.9f,%14.9f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f\n", ins[0], ins[1], ins[2], ins[3], ins[4], ins[5], ins[6], ins[7], ins[8], ins[9], ins[10], ins[11], ins[12]);
 #endif
+}
+
+void publish_cov(double *cov, ros::Publisher pub)
+{
+	/*
+	 * cov[0] = MCU_Time [ms]
+	 * cov[1] = covLatLat [m^2]
+	 * cov[2] = covLonLon [m^2]
+	 * cov[3] = covAltAlt [m^2]
+	 * cov[4] = covLatLon [m^2]
+	 * cov[5] = covLatAlt [m^2]
+	 * cov[6] = covLonAlt [m^2]
+	 * cov[7] = covVnVn [m^2/s^2]
+	 * cov[8] = covVeVe [m^2/s^2]
+	 * cov[9] = covVdVd [m^2/s^2]
+	 * cov[10] = covVnVe [m^2/s^2]
+	 * cov[11] = covVnVd [m^2/s^2]
+	 * cov[12] = covVeVd [m^2/s^2]
+	 * cov[13] = covRollRoll [deg^2]
+	 * cov[14] = covPitchPitch [deg^2]
+	 * cov[15] = covYawYaw [deg^2]
+	 * cov[16] = covRollPitch [deg^2]
+	 * cov[17] = covRollYaw [deg^2]
+	 * cov[18] = covPitchYaw [deg^2]
+	 */
+
+	anello_ros_driver::APCOV msg;
+
+	msg.mcu_time = (uint64_t)cov[0];
+	msg.cov_lat_lat = (float)cov[1];
+	msg.cov_lon_lon = (float)cov[2];
+	msg.cov_alt_alt = (float)cov[3];
+	msg.cov_lat_lon = (float)cov[4];
+	msg.cov_lat_alt = (float)cov[5];
+	msg.cov_lon_alt = (float)cov[6];
+	msg.cov_vn_vn = (float)cov[7];
+	msg.cov_ve_ve = (float)cov[8];
+	msg.cov_vd_vd = (float)cov[9];
+	msg.cov_vn_ve = (float)cov[10];
+	msg.cov_vn_vd = (float)cov[11];
+	msg.cov_ve_vd = (float)cov[12];
+	msg.cov_roll_roll = (float)cov[13];
+	msg.cov_pitch_pitch = (float)cov[14];
+	msg.cov_heading_heading = (float)cov[15];
+	msg.cov_roll_pitch = (float)cov[16];
+	msg.cov_roll_heading = (float)cov[17];
+	msg.cov_pitch_heading = (float)cov[18];
+	pub.publish(msg);
 }
 
 void publish_health(const health_message *health_msg, ros::Publisher pub)

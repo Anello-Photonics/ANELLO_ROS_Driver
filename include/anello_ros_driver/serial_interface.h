@@ -41,8 +41,8 @@
 #endif
 
 #ifndef BAUDRATE
-#define BAUDRATE B230400    //Default baudrate for ANELLO GNSS INS and IMU+
-// #define BAUDRATE B921600    //Default baudrate for ANELLO EVK
+// #define BAUDRATE B230400    //Default baudrate for ANELLO GNSS INS and IMU+
+#define BAUDRATE B921600    //Default baudrate for ANELLO EVK
 #endif
 
 #ifndef MAX_PORT_PARSE_FAIL
@@ -108,7 +108,7 @@ public:
      * Return:
      * string containing the port name
      */
-    const std::string get_portname();
+    const std::string get_portname() const;
 
     /*
      * Parameters:
