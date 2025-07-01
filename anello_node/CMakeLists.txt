@@ -16,6 +16,7 @@ find_package(rclcpp REQUIRED)
 find_package(nmea_msgs REQUIRED)
 find_package(mavros_msgs REQUIRED)
 find_package(anello_interfaces REQUIRED)
+find_package(sensor_msgs REQUIRED)
 
 add_executable(anello_ros_driver_node 
   src/anello_ros_driver/main_anello_ros_driver.cpp 
@@ -34,6 +35,7 @@ add_executable(anello_ros_driver_node
 ament_target_dependencies(anello_ros_driver_node 
   rclcpp 
   anello_interfaces
+  sensor_msgs  
   nmea_msgs 
   mavros_msgs
 )

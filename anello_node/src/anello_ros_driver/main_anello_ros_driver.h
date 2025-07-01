@@ -33,6 +33,8 @@
 #include "anello_interfaces/msg/aphdg.hpp"
 #include "anello_interfaces/msg/aphealth.hpp"
 #include "nmea_msgs/msg/sentence.hpp"
+#include "sensor_msgs/msg/imu.hpp"
+#include "sensor_msgs/msg/nav_sat_fix.hpp"
 #endif
 
 #include "bit_tools.h"
@@ -105,6 +107,9 @@ typedef rclcpp::Publisher<anello_interfaces::msg::APGPS>::SharedPtr gps_pub_t;
 typedef rclcpp::Publisher<anello_interfaces::msg::APHDG>::SharedPtr hdg_pub_t;
 typedef rclcpp::Publisher<anello_interfaces::msg::APHEALTH>::SharedPtr health_pub_t;
 typedef rclcpp::Publisher<nmea_msgs::msg::Sentence>::SharedPtr gga_pub_t;
+
+typedef rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr ros_imu_pub_t;
+typedef rclcpp::Publisher<sensor_msgs::msg::NavSatFix>::SharedPtr navfix_pub_t;
 
 typedef struct
 {
