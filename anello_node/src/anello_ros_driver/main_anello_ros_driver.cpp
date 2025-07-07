@@ -34,6 +34,7 @@
 #include "anello_interfaces/msg/apgps.hpp"
 #include "anello_interfaces/msg/aphdg.hpp"
 #include "anello_interfaces/msg/aphealth.hpp"
+#include "anello_interfaces/msg/apcov.hpp"
 
 #include "sensor_msgs/msg/imu.hpp"
 
@@ -140,6 +141,39 @@ struct Vec3
 	double z{0.0};
 };
 
+struct Vec6
+{
+	double xx{0.0};
+	double xy{0.0};
+	double xz{0.0};
+	double yx{0.0};
+	double yy{0.0};
+	double yz{0.0};
+	double zx{0.0};
+	double zy{0.0};
+	double zz{0.0};
+};
+
+struct posCovVec
+{
+	double latlat{0.0};
+	double latlon{0.0};
+	double latalt{0.0};
+	double lonlat{0.0};
+	double lonlon{0.0};
+	double lonalt{0.0};
+	double altlat{0.0};
+	double altlon{0.0};
+	double altalt{0.0};
+};
+
+const double PI = 3.14159265;
+double d2r = PI/180.0;
+double s = d2r*d2r;
+
+const double GYRO_VARIANCE  = 0.00;   // (rad/s)^2
+const double ACCEL_VARIANCE = 0.00;   // (m/s^2)^2
+
 typedef struct
 {
 	int n_used;				// how many bytes have been put through the decoded
@@ -223,9 +257,10 @@ public:
 		_hdg_publisher = this->create_publisher<anello_interfaces::msg::APHDG>("APHDG", 10);
 		_health_publisher = this->create_publisher<anello_interfaces::msg::APHEALTH>("APHEALTH", 1);
 		_gga_publisher = this->create_publisher<nmea_msgs::msg::Sentence>("ntrip_client/nmea", 1);
-		
-		_ros_imu_pub = this->create_publisher<sensor_msgs::msg::Imu>("ROS_IMU", 10);
-	    _navfix_publisher = this->create_publisher<sensor_msgs::msg::NavSatFix>("ROS_NAVSATFIX", 10);
+		_apcov_publisher = this->create_publisher<anello_interfaces::msg::APCOV>("APCOV", 10);
+
+		_ros_imu_pub = this->create_publisher<sensor_msgs::msg::Imu>("AP_ROS_IMU", 10);
+	    _navfix_publisher = this->create_publisher<sensor_msgs::msg::NavSatFix>("AP_ROS_NAVSATFIX", 10);
 
 		// create a ntrip rtcm subscriber
 		_rtcm_subscriber = this->create_subscription<mavros_msgs::msg::RTCM>(
@@ -297,6 +332,10 @@ private:
 						RCLCPP_WARN(this->get_logger(), "Checksum Fail: %s", a1buff.buf);
 						num = 0;
 					}
+					
+					RCLCPP_DEBUG(this->get_logger(),
+    					"Packet tag=\"%s\", numFields=%d",
+    					val[0], num);
 
 					if (!isOK && num >= 17 && strstr(val[0], "APGPS") != NULL)
 					{
@@ -360,6 +399,40 @@ private:
 #endif
 						isOK = 1;
 					}
+					else if (!isOK && num >= 17 && strstr(val[0], "APCOV") != NULL)
+					{
+						// ascii cov
+						decode_ascii_cov(val, decoded_val);
+						publish_cov(decoded_val, _apcov_publisher);
+
+						//store orientation covariance vals
+						last_orientation_cov_.xx = decoded_val[13];
+						last_orientation_cov_.xy = decoded_val[17];
+						last_orientation_cov_.xz = decoded_val[18];
+						last_orientation_cov_.yx = decoded_val[17];
+						last_orientation_cov_.yy = decoded_val[14];
+						last_orientation_cov_.yz = decoded_val[19];
+						last_orientation_cov_.zx = decoded_val[18];
+						last_orientation_cov_.zy = decoded_val[19];
+						last_orientation_cov_.zz = decoded_val[15];
+
+						//store position covariance vals
+						last_position_cov_.latlat = decoded_val[1];
+						last_position_cov_.latlon = decoded_val[4];
+						last_position_cov_.latalt = decoded_val[5];
+						last_position_cov_.lonlat = decoded_val[4];
+						last_position_cov_.lonlon = decoded_val[2];
+						last_position_cov_.lonalt = decoded_val[6];
+						last_position_cov_.altlat = decoded_val[5];
+						last_position_cov_.altlon = decoded_val[6];
+						last_position_cov_.altalt = decoded_val[3];
+
+
+#if DEBUG_MAIN
+						printf("APCOVa\n");
+#endif
+						isOK = 1;
+					}
 					else if (!isOK && num >= 14 && strstr(val[0], "APINS") != NULL)
 					{
 						// ascii ins and publish standard ROS Imu msg form
@@ -371,12 +444,10 @@ private:
 						auto ros_imu_msg = sensor_msgs::msg::Imu();
 						auto nav_msg = sensor_msgs::msg::NavSatFix();
 
-						//Conversions
-						const double PI = 3.14159265;
-
-						double roll_rad = decoded_val[9] * PI/180.0;
-						double pitch_rad = decoded_val[10] * PI/180.0;
-						double heading_rad = decoded_val[11] * PI/180.0;
+						//Conversion
+						double roll_rad = decoded_val[9] * d2r;
+						double pitch_rad = decoded_val[10] * d2r;
+						double heading_rad = decoded_val[11] * d2r;
 
 						double cy = cos(heading_rad * 0.5);
 						double sy = sin(heading_rad * 0.5);
@@ -403,32 +474,71 @@ private:
 						ros_imu_msg.orientation.w = cr*cp*cy + sr*sp*sy;
 
 						//Angular velocity (Imu msg)
-						ros_imu_msg.angular_velocity.x = last_angular_vel_.x;
-						ros_imu_msg.angular_velocity.y = last_angular_vel_.y;
-						ros_imu_msg.angular_velocity.z = last_angular_vel_.z;
+						ros_imu_msg.angular_velocity.x = last_angular_vel_.x * d2r;
+						ros_imu_msg.angular_velocity.y = last_angular_vel_.y * d2r;
+						ros_imu_msg.angular_velocity.z = last_angular_vel_.z * d2r;
 
 						//Linear acceleration (Imu msg)
 						ros_imu_msg.linear_acceleration.x = last_linear_accel_.x;
 						ros_imu_msg.linear_acceleration.y = last_linear_accel_.y;
 						ros_imu_msg.linear_acceleration.z = last_linear_accel_.z;
 						
-						//Covariance matrices (Imu msg)
-						for (size_t i = 0; i < 9; ++i) {
-							ros_imu_msg.orientation_covariance[i] = 0;
-							ros_imu_msg.angular_velocity_covariance[i] = 0;
-							ros_imu_msg.linear_acceleration_covariance[i] = 0;
-						}
+						//Orientation covariance matrix (Imu msg)
+						ros_imu_msg.orientation_covariance[0] = last_orientation_cov_.xx * s;
+						ros_imu_msg.orientation_covariance[1] = last_orientation_cov_.xy * s;
+						ros_imu_msg.orientation_covariance[2] = last_orientation_cov_.xz * s;
+						ros_imu_msg.orientation_covariance[3] = last_orientation_cov_.yx * s;
+						ros_imu_msg.orientation_covariance[4] = last_orientation_cov_.yy * s;
+						ros_imu_msg.orientation_covariance[5] = last_orientation_cov_.yz * s;
+						ros_imu_msg.orientation_covariance[6] = last_orientation_cov_.zx * s;
+						ros_imu_msg.orientation_covariance[7] = last_orientation_cov_.zy * s;
+						ros_imu_msg.orientation_covariance[8] = last_orientation_cov_.zz * s;
+
+						//Position covariance matrix (NavSatFix)					
+						nav_msg.position_covariance[0] = last_position_cov_.lonlon;   // C_ee
+						nav_msg.position_covariance[1] = last_position_cov_.latlon;    // C_en
+						nav_msg.position_covariance[2] = last_position_cov_.lonalt;   // C_eu
+
+						nav_msg.position_covariance[3] = last_position_cov_.latlon;   // C_ne
+						nav_msg.position_covariance[4] = last_position_cov_.latlat;  // C_nn
+						nav_msg.position_covariance[5] = last_position_cov_.latalt;    // C_nu
+
+						nav_msg.position_covariance[6] = last_position_cov_.lonalt;     // C_ue
+						nav_msg.position_covariance[7] = last_position_cov_.latalt;    // C_un
+						nav_msg.position_covariance[8] = last_position_cov_.altalt;     // C_uu
+
+						nav_msg.position_covariance_type = sensor_msgs::msg::NavSatFix::COVARIANCE_TYPE_KNOWN;
 
 						//Lat, Long, Alt (NavSatFix)
 						nav_msg.latitude = decoded_val[3];
 						nav_msg.longitude = decoded_val[4];
 						nav_msg.altitude = decoded_val[5];
+						
+						//Angular velocity and linear acceleration covariances
+						ros_imu_msg.angular_velocity_covariance[0] = GYRO_VARIANCE;  
+						ros_imu_msg.angular_velocity_covariance[1] = 0.0;
+						ros_imu_msg.angular_velocity_covariance[2] = 0.0;
 
-						//Covariance matrice (NavSatFix)
-						for (size_t i = 0; i < 9; ++i) {
-							nav_msg.position_covariance[i] = 0;
-						}
-						nav_msg.position_covariance_type = sensor_msgs::msg::NavSatFix::COVARIANCE_TYPE_UNKNOWN;
+						ros_imu_msg.angular_velocity_covariance[3] = 0.0;
+						ros_imu_msg.angular_velocity_covariance[4] = GYRO_VARIANCE;  
+						ros_imu_msg.angular_velocity_covariance[5] = 0.0;
+
+						ros_imu_msg.angular_velocity_covariance[6] = 0.0;
+						ros_imu_msg.angular_velocity_covariance[7] = 0.0;
+						ros_imu_msg.angular_velocity_covariance[8] = GYRO_VARIANCE;  
+
+
+						ros_imu_msg.linear_acceleration_covariance[0] = ACCEL_VARIANCE;  
+						ros_imu_msg.linear_acceleration_covariance[1] = 0.0;
+						ros_imu_msg.linear_acceleration_covariance[2] = 0.0;
+
+						ros_imu_msg.linear_acceleration_covariance[3] = 0.0;
+						ros_imu_msg.linear_acceleration_covariance[4] = ACCEL_VARIANCE;  
+						ros_imu_msg.linear_acceleration_covariance[5] = 0.0;
+
+						ros_imu_msg.linear_acceleration_covariance[6] = 0.0;
+						ros_imu_msg.linear_acceleration_covariance[7] = 0.0;
+						ros_imu_msg.linear_acceleration_covariance[8] = ACCEL_VARIANCE;  
 
 						//Publish both messages
 						_ros_imu_pub->publish(ros_imu_msg);
@@ -570,6 +680,7 @@ private:
 	hdg_pub_t _hdg_publisher;
 	health_pub_t _health_publisher;
 	gga_pub_t _gga_publisher;
+	apcov_pub_t _apcov_publisher;
 
 	ros_imu_pub_t _ros_imu_pub;
 	navfix_pub_t _navfix_publisher;
@@ -598,6 +709,10 @@ private:
 	Vec3 last_linear_accel_;
 
 	Vec3 last_angular_vel_;
+
+	Vec6 last_orientation_cov_;
+
+	posCovVec last_position_cov_;
 	
 
 	size_t count;

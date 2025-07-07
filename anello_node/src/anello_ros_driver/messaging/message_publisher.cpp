@@ -28,6 +28,7 @@
 #include "anello_interfaces/msg/apgps.hpp"
 #include "anello_interfaces/msg/aphdg.hpp"
 #include "anello_interfaces/msg/aphealth.hpp"
+#include "anello_interfaces/msg/apcov.hpp"
 
 #include <nmea_msgs/msg/sentence.hpp>
 #include <mavros_msgs/msg/rtcm.hpp>
@@ -464,6 +465,55 @@ void publish_ins(double *ins, ins_pub_t pub)
 #if DEBUG_PUBLISHERS
 	DEBUG_PRINT("APINS,%10.3f,%14.7f,%10.4f,%14.9f,%14.9f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f,%10.4f\n", ins[0], ins[1], ins[2], ins[3], ins[4], ins[5], ins[6], ins[7], ins[8], ins[9], ins[10], ins[11], ins[12]);
 #endif
+}
+
+void publish_cov(double *cov, apcov_pub_t pub)
+{
+	/*
+	 * cov[0] = MCU_Time [ms]
+	 * cov[1] = covLatLat [m^2]
+	 * cov[2] = covLonLon [m^2]
+	 * cov[3] = covAltAlt [m^2]
+	 * cov[4] = covLatLon [m^2]
+	 * cov[5] = covLatAlt [m^2]
+	 * cov[6] = covLonAlt [m^2]
+	 * cov[7] = covVnVn [m^2/s^2]
+	 * cov[8] = covVeVe [m^2/s^2]
+	 * cov[9] = covVdVd [m^2/s^2]
+	 * cov[10] = covVnVe [m^2/s^2]
+	 * cov[11] = covVnVd [m^2/s^2]
+	 * cov[12] = covVeVd [m^2/s^2]
+	 * cov[13] = covRollRoll [deg^2]
+	 * cov[14] = covPitchPitch [deg^2]
+	 * cov[15] = covYawYaw [deg^2]
+	 * cov[16] = covRollPitch [deg^2]
+	 * cov[17] = covRollYaw [deg^2]
+	 * cov[18] = covPitchYaw [deg^2]
+	 */
+
+	anello_interfaces::msg::APCOV msg;
+
+	msg.mcu_time = (uint64_t)cov[0];
+	msg.cov_lat_lat = (float)cov[1];
+	msg.cov_lon_lon = (float)cov[2];
+	msg.cov_alt_alt = (float)cov[3];
+	msg.cov_lat_lon = (float)cov[4];
+	msg.cov_lat_alt = (float)cov[5];
+	msg.cov_lon_alt = (float)cov[6];
+	msg.cov_vn_vn = (float)cov[7];
+	msg.cov_ve_ve = (float)cov[8];
+	msg.cov_vd_vd = (float)cov[9];
+	msg.cov_vn_ve = (float)cov[10];
+	msg.cov_vn_vd = (float)cov[11];
+	msg.cov_ve_vd = (float)cov[12];
+	msg.cov_roll_roll = (float)cov[13];
+	msg.cov_pitch_pitch = (float)cov[14];
+	msg.cov_heading_heading = (float)cov[15];
+	msg.cov_roll_pitch = (float)cov[16];
+	msg.cov_roll_heading = (float)cov[17];
+	msg.cov_pitch_heading = (float)cov[18];
+
+	pub->publish(msg);
 }
 
 void publish_health(const health_message *health_msg, health_pub_t pub)
