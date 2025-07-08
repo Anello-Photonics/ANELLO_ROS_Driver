@@ -40,11 +40,6 @@
 #define PORT_PREFIX "ttyUSB"
 #endif
 
-#ifndef BAUDRATE
-#define BAUDRATE B230400    //Default baudrate for ANELLO GNSS INS and IMU+
-// #define BAUDRATE B921600    //Default baudrate for ANELLO EVK
-#endif
-
 #ifndef MAX_PORT_PARSE_FAIL
 #define MAX_PORT_PARSE_FAIL 5
 #endif
@@ -55,6 +50,7 @@ protected:
     bool port_enabled;
     int usb_fd;
     std::string portname;
+    uint32_t baud_rate_;
 
 public:
 
@@ -71,7 +67,7 @@ public:
      * Notes:
      * This function initializes the serial port interface including configuring the port.
      */
-    void init(std::string portname);
+    void init(std::string portname, uint32_t baud_rate);
 
     /*
      * Parameters:

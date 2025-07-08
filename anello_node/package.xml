@@ -13,6 +13,7 @@
   <depend>nmea_msgs</depend>
   <depend>mavros_msgs</depend>
   <depend>anello_interfaces</depend>
+  <depend>sensor_msgs</depend>
   <!-- Needs this to for the package to show up -->
   <export>                               
     <build_type>ament_cmake</build_type> 

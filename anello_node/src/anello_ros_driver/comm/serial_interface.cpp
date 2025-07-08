@@ -34,10 +34,12 @@ serial_interface::serial_interface()
     this->portname = "";
     this->usb_fd = -1;
     this->port_enabled = false;
+    this->baud_rate_ = 230400;
 }
 
-void serial_interface::init(std::string portname)
+void serial_interface::init(std::string portname, uint32_t baud_rate)
 {
+    this->baud_rate_ = baud_rate;
     this->portname = portname;
 
 
@@ -77,8 +79,18 @@ void serial_interface::init(std::string portname)
     options.c_cc[VMIN] = 0;      // read doesn't block
     options.c_cc[VTIME] = 5;     // 0.5 seconds read timeout
 
-    cfsetispeed(&options, BAUDRATE);
-    cfsetospeed(&options, BAUDRATE);
+    speed_t speed;
+    switch(this->baud_rate_) {
+      case 230400:   speed = B230400;   break;
+      case 921600:   speed = B921600;   break; 
+      default:
+        RCLCPP_WARN(rclcpp::get_logger("serial_interface"),
+                    "Unsupported baud %d, falling back to 230400", this->baud_rate_);
+        speed = B230400;
+    }
+    cfsetispeed(&options, speed);
+    cfsetospeed(&options, speed);
+
     
     // set the options
     if (tcsetattr(this->usb_fd, TCSANOW, &options) != 0)

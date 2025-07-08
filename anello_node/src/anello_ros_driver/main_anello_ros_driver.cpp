@@ -34,6 +34,9 @@
 #include "anello_interfaces/msg/apgps.hpp"
 #include "anello_interfaces/msg/aphdg.hpp"
 #include "anello_interfaces/msg/aphealth.hpp"
+#include "anello_interfaces/msg/apcov.hpp"
+
+#include "sensor_msgs/msg/imu.hpp"
 
 #include "anello_interfaces/msg/apodo.hpp"
 #include "nmea_msgs/msg/sentence.hpp"
@@ -68,6 +71,10 @@
 #define CONFIG_PORT_NAME "anello_uart_config_port"
 #endif
 
+#ifndef BAUDRATE_NAME
+#define BAUDRATE_NAME "baud_rate"
+#endif
+
 #ifndef REMOTE_IP_NAME
 #define REMOTE_IP_NAME "anello_remote_ip"
 #endif
@@ -96,6 +103,10 @@
 #define CONFIG_PORT_PARAMETER_NAME CONFIG_PORT_NAME
 #endif
 
+#ifndef BAUDRATE_PARAMETER_NAME
+#define BAUDRATE_PARAMETER_NAME BAUDRATE_NAME
+#endif
+
 #ifndef REMOTE_IP_PARAMETER_NAME
 #define REMOTE_IP_PARAMETER_NAME REMOTE_IP_NAME
 #endif
@@ -120,6 +131,14 @@
 #define LOG_FILE_NAME "latest_anello_log.txt"
 #endif
 
+#ifndef GYRO_VARIANCE
+#define GYRO_VARIANCE 0.0   // (rad/s)^2
+#endif
+
+#ifndef ACCEL_VARIANCE
+#define ACCEL_VARIANCE 0.0   // (m/s^2)^2
+#endif
+
 #if !(COMPILE_WITH_ROS2)
 volatile sig_atomic_t sigint_received = 0;
 
@@ -130,6 +149,43 @@ void sigint_handler(int sig)
 #endif
 
 using namespace std;
+
+struct Vec3
+{
+	double x{0.0};
+	double y{0.0};
+	double z{0.0};
+};
+
+struct Vec6
+{
+	double xx{0.0};
+	double xy{0.0};
+	double xz{0.0};
+	double yx{0.0};
+	double yy{0.0};
+	double yz{0.0};
+	double zx{0.0};
+	double zy{0.0};
+	double zz{0.0};
+};
+
+struct posCovVec
+{
+	double latlat{0.0};
+	double latlon{0.0};
+	double latalt{0.0};
+	double lonlat{0.0};
+	double lonlon{0.0};
+	double lonalt{0.0};
+	double altlat{0.0};
+	double altlon{0.0};
+	double altalt{0.0};
+};
+
+const double PI = 3.14159265;
+double d2r = PI/180.0;
+double s = d2r*d2r;
 
 typedef struct
 {
@@ -157,7 +213,8 @@ public:
 		this->declare_parameter(REMOTE_IP_PARAMETER_NAME, "192.168.1.111");
 		this->declare_parameter(LOCAL_DATA_PORT_PARAMETER_NAME, 1111);
 		this->declare_parameter(LOCAL_CONFIG_PORT_PARAMETER_NAME, 2222);
-		this->declare_parameter(LOCAL_ODOMETER_PORT_PARAMETER_NAME, 3333);
+		this->declare_parameter(LOCAL_ODOMETER_PORT_PARAMETER_NAME, 3333);		
+		this->declare_parameter(BAUDRATE_PARAMETER_NAME, 230400);
 
 		std::string com_type;
 		this->get_parameter(COM_TYPE_PARAMETER_NAME, com_type);
@@ -166,7 +223,11 @@ public:
 		this->get_parameter(REMOTE_IP_PARAMETER_NAME, config.remote_ip);
 		this->get_parameter(LOCAL_DATA_PORT_PARAMETER_NAME, config.local_data_port);
 		this->get_parameter(LOCAL_CONFIG_PORT_PARAMETER_NAME, config.local_config_port);
-		this->get_parameter(LOCAL_ODOMETER_PORT_PARAMETER_NAME, config.local_odometer_port);
+		this->get_parameter(LOCAL_ODOMETER_PORT_PARAMETER_NAME, config.local_odometer_port);		
+		this->get_parameter(BAUDRATE_PARAMETER_NAME, config.baud_rate);
+
+		RCLCPP_INFO(this->get_logger(), "Using baud_rate=%u", config.baud_rate);
+		
 
 		if (com_type == "UART")
 		{
@@ -214,6 +275,10 @@ public:
 		_hdg_publisher = this->create_publisher<anello_interfaces::msg::APHDG>("APHDG", 10);
 		_health_publisher = this->create_publisher<anello_interfaces::msg::APHEALTH>("APHEALTH", 1);
 		_gga_publisher = this->create_publisher<nmea_msgs::msg::Sentence>("ntrip_client/nmea", 1);
+		_apcov_publisher = this->create_publisher<anello_interfaces::msg::APCOV>("APCOV", 10);
+
+		_ros_imu_pub = this->create_publisher<sensor_msgs::msg::Imu>("AP_ROS_IMU", 10);
+	    _navfix_publisher = this->create_publisher<sensor_msgs::msg::NavSatFix>("AP_ROS_NAVSATFIX", 10);
 
 		// create a ntrip rtcm subscriber
 		_rtcm_subscriber = this->create_subscription<mavros_msgs::msg::RTCM>(
@@ -251,6 +316,8 @@ private:
 		bool checksum_passed = 0;
 		char *val[MAXFIELD];
 		double decoded_val[MAXFIELD];
+		double imu_vals[MAXFIELD];
+		double ins_vals[MAXFIELD];
 
 
 		if (serial_read_buffer.n_used >= serial_read_buffer.nbytes)
@@ -283,6 +350,10 @@ private:
 						RCLCPP_WARN(this->get_logger(), "Checksum Fail: %s", a1buff.buf);
 						num = 0;
 					}
+					
+					RCLCPP_DEBUG(this->get_logger(),
+    					"Packet tag=\"%s\", numFields=%d",
+    					val[0], num);
 
 					if (!isOK && num >= 17 && strstr(val[0], "APGPS") != NULL)
 					{
@@ -323,6 +394,14 @@ private:
 						decode_ascii_imu(val, num, decoded_val);
 						publish_imu(decoded_val, _imu_publisher);
 						_health_msg.add_imu_message(decoded_val);
+						
+						//store vals for standard ROS Imu msg 
+						last_linear_accel_.x = decoded_val[1];
+						last_linear_accel_.y = decoded_val[2];
+						last_linear_accel_.z = decoded_val[3];
+						last_angular_vel_.x = decoded_val[4];
+						last_angular_vel_.y = decoded_val[5];
+						last_angular_vel_.z = decoded_val[6];
 #if DEBUG_MAIN
 						printf("APIMUa\n");
 #endif
@@ -338,12 +417,151 @@ private:
 #endif
 						isOK = 1;
 					}
+					else if (!isOK && num >= 17 && strstr(val[0], "APCOV") != NULL)
+					{
+						// ascii cov
+						decode_ascii_cov(val, decoded_val);
+						publish_cov(decoded_val, _apcov_publisher);
+
+						//store orientation covariance vals
+						last_orientation_cov_.xx = decoded_val[13];
+						last_orientation_cov_.xy = decoded_val[17];
+						last_orientation_cov_.xz = decoded_val[18];
+						last_orientation_cov_.yx = decoded_val[17];
+						last_orientation_cov_.yy = decoded_val[14];
+						last_orientation_cov_.yz = decoded_val[19];
+						last_orientation_cov_.zx = decoded_val[18];
+						last_orientation_cov_.zy = decoded_val[19];
+						last_orientation_cov_.zz = decoded_val[15];
+
+						//store position covariance vals
+						last_position_cov_.latlat = decoded_val[1];
+						last_position_cov_.latlon = decoded_val[4];
+						last_position_cov_.latalt = decoded_val[5];
+						last_position_cov_.lonlat = decoded_val[4];
+						last_position_cov_.lonlon = decoded_val[2];
+						last_position_cov_.lonalt = decoded_val[6];
+						last_position_cov_.altlat = decoded_val[5];
+						last_position_cov_.altlon = decoded_val[6];
+						last_position_cov_.altalt = decoded_val[3];
+
+
+#if DEBUG_MAIN
+						printf("APCOVa\n");
+#endif
+						isOK = 1;
+					}
 					else if (!isOK && num >= 14 && strstr(val[0], "APINS") != NULL)
 					{
-						// ascii ins
+						// ascii ins and publish standard ROS Imu msg form
 						decode_ascii_ins(val, decoded_val);
 						publish_ins(decoded_val, _ins_publisher);
 						_health_msg.add_ins_message(decoded_val);
+						
+						//define ROS standard Imu msg and NavSatFix msg
+						auto ros_imu_msg = sensor_msgs::msg::Imu();
+						auto nav_msg = sensor_msgs::msg::NavSatFix();
+
+						//Conversion
+						double roll_rad = decoded_val[9] * d2r;
+						double pitch_rad = decoded_val[10] * d2r;
+						double heading_rad = decoded_val[11] * d2r;
+
+						double cy = cos(heading_rad * 0.5);
+						double sy = sin(heading_rad * 0.5);
+						double cp = cos(pitch_rad * 0.5);
+						double sp = sin(pitch_rad * 0.5);
+						double cr = cos(roll_rad * 0.5);
+						double sr = sin(roll_rad * 0.5);
+
+						//Stamp and frame
+						ros_imu_msg.header.stamp = this->now();
+						ros_imu_msg.header.frame_id = "anello_link";
+
+						nav_msg.header.stamp = this->now();
+						nav_msg.header.frame_id = "ins_link";
+
+						//Satellite Fix Status (NavSatFix)
+						nav_msg.status.status = sensor_msgs::msg::NavSatStatus::STATUS_FIX;
+						nav_msg.status.service = sensor_msgs::msg::NavSatStatus::SERVICE_GPS;
+
+						//Quaternion orientation (Imu msg)
+						ros_imu_msg.orientation.x = sr*cp*cy - cr*sp*sy;
+						ros_imu_msg.orientation.y = cr*sp*cy + sr*cp*sy;
+						ros_imu_msg.orientation.z = cr*cp*sy - sr*sp*cy;
+						ros_imu_msg.orientation.w = cr*cp*cy + sr*sp*sy;
+
+						//Angular velocity (Imu msg)
+						ros_imu_msg.angular_velocity.x = last_angular_vel_.x * d2r;
+						ros_imu_msg.angular_velocity.y = last_angular_vel_.y * d2r;
+						ros_imu_msg.angular_velocity.z = last_angular_vel_.z * d2r;
+
+						//Linear acceleration (Imu msg)
+						ros_imu_msg.linear_acceleration.x = last_linear_accel_.x;
+						ros_imu_msg.linear_acceleration.y = last_linear_accel_.y;
+						ros_imu_msg.linear_acceleration.z = last_linear_accel_.z;
+						
+						//Orientation covariance matrix (Imu msg)
+						ros_imu_msg.orientation_covariance[0] = last_orientation_cov_.xx * s;
+						ros_imu_msg.orientation_covariance[1] = last_orientation_cov_.xy * s;
+						ros_imu_msg.orientation_covariance[2] = last_orientation_cov_.xz * s;
+						ros_imu_msg.orientation_covariance[3] = last_orientation_cov_.yx * s;
+						ros_imu_msg.orientation_covariance[4] = last_orientation_cov_.yy * s;
+						ros_imu_msg.orientation_covariance[5] = last_orientation_cov_.yz * s;
+						ros_imu_msg.orientation_covariance[6] = last_orientation_cov_.zx * s;
+						ros_imu_msg.orientation_covariance[7] = last_orientation_cov_.zy * s;
+						ros_imu_msg.orientation_covariance[8] = last_orientation_cov_.zz * s;
+
+						//Position covariance matrix (NavSatFix)					
+						nav_msg.position_covariance[0] = last_position_cov_.lonlon;   // C_ee
+						nav_msg.position_covariance[1] = last_position_cov_.latlon;    // C_en
+						nav_msg.position_covariance[2] = last_position_cov_.lonalt;   // C_eu
+
+						nav_msg.position_covariance[3] = last_position_cov_.latlon;   // C_ne
+						nav_msg.position_covariance[4] = last_position_cov_.latlat;  // C_nn
+						nav_msg.position_covariance[5] = last_position_cov_.latalt;    // C_nu
+
+						nav_msg.position_covariance[6] = last_position_cov_.lonalt;     // C_ue
+						nav_msg.position_covariance[7] = last_position_cov_.latalt;    // C_un
+						nav_msg.position_covariance[8] = last_position_cov_.altalt;     // C_uu
+
+						nav_msg.position_covariance_type = sensor_msgs::msg::NavSatFix::COVARIANCE_TYPE_KNOWN;
+
+						//Lat, Long, Alt (NavSatFix)
+						nav_msg.latitude = decoded_val[3];
+						nav_msg.longitude = decoded_val[4];
+						nav_msg.altitude = decoded_val[5];
+						
+						//Angular velocity and linear acceleration covariances
+						ros_imu_msg.angular_velocity_covariance[0] = GYRO_VARIANCE;  
+						ros_imu_msg.angular_velocity_covariance[1] = 0.0;
+						ros_imu_msg.angular_velocity_covariance[2] = 0.0;
+
+						ros_imu_msg.angular_velocity_covariance[3] = 0.0;
+						ros_imu_msg.angular_velocity_covariance[4] = GYRO_VARIANCE;  
+						ros_imu_msg.angular_velocity_covariance[5] = 0.0;
+
+						ros_imu_msg.angular_velocity_covariance[6] = 0.0;
+						ros_imu_msg.angular_velocity_covariance[7] = 0.0;
+						ros_imu_msg.angular_velocity_covariance[8] = GYRO_VARIANCE;  
+
+
+						ros_imu_msg.linear_acceleration_covariance[0] = ACCEL_VARIANCE;  
+						ros_imu_msg.linear_acceleration_covariance[1] = 0.0;
+						ros_imu_msg.linear_acceleration_covariance[2] = 0.0;
+
+						ros_imu_msg.linear_acceleration_covariance[3] = 0.0;
+						ros_imu_msg.linear_acceleration_covariance[4] = ACCEL_VARIANCE;  
+						ros_imu_msg.linear_acceleration_covariance[5] = 0.0;
+
+						ros_imu_msg.linear_acceleration_covariance[6] = 0.0;
+						ros_imu_msg.linear_acceleration_covariance[7] = 0.0;
+						ros_imu_msg.linear_acceleration_covariance[8] = ACCEL_VARIANCE;  
+
+						//Publish both messages
+						_ros_imu_pub->publish(ros_imu_msg);
+						_navfix_publisher->publish(nav_msg);
+
 #if DEBUG_MAIN
 						printf("APINSa\n");
 #endif
@@ -480,6 +698,10 @@ private:
 	hdg_pub_t _hdg_publisher;
 	health_pub_t _health_publisher;
 	gga_pub_t _gga_publisher;
+	apcov_pub_t _apcov_publisher;
+
+	ros_imu_pub_t _ros_imu_pub;
+	navfix_pub_t _navfix_publisher;
 
 	rclcpp::Subscription<mavros_msgs::msg::RTCM>::SharedPtr _rtcm_subscriber;
 	rclcpp::Subscription<anello_interfaces::msg::APODO>::SharedPtr _odo_subscriber;
@@ -495,12 +717,21 @@ private:
 	port_buffer config_port_write_buffer;
 
 	interface_config_t config;
-	
+
 	file_read_buf_t serial_read_buffer;
 	
 	a1buff_t a1buff;
 
 	health_message _health_msg;
+
+	Vec3 last_linear_accel_;
+
+	Vec3 last_angular_vel_;
+
+	Vec6 last_orientation_cov_;
+
+	posCovVec last_position_cov_;
+	
 
 	size_t count;
 };

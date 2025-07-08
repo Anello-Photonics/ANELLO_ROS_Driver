@@ -33,6 +33,7 @@ anello_data_port::anello_data_port(const interface_config_t *config) : uart_port
     this->config.local_data_port = config->local_data_port;
     this->config.local_config_port = config->local_config_port;
     this->config.local_odometer_port = config->local_odometer_port;
+    this->config.baud_rate = config->baud_rate;
 
     this->decode_success = false;
     this->port_index = 0;
@@ -85,9 +86,11 @@ void anello_data_port::init()
     {
         this->init_ethernet();
     }
-    else
-    {
+    else if (this->auto_detect) {
         this->init_uart();
+    }
+    {
+        this->uart_port.init(this->config.data_port_name, this->config.baud_rate);
     }
 }
 
@@ -103,7 +106,7 @@ void anello_data_port::init_uart()
     DEBUG_PRINT("Data: Trying port %s", this->uart_port.get_portname().c_str());
 #endif
 
-    this->uart_port.init(this->config.data_port_name);
+    this->uart_port.init(this->config.data_port_name, this->config.baud_rate);
 }
 
 void anello_data_port::init_ethernet()
@@ -156,7 +159,7 @@ void anello_data_port::port_parse_fail_uart()
 
         //reset port
         this->uart_port.close_port();
-        this->uart_port.init(this->config.data_port_name);
+        this->uart_port.init(this->config.data_port_name, this->config.baud_rate);
     }
 }
 
