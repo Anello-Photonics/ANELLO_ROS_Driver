@@ -12,6 +12,9 @@
     <arg name="anello_local_config_port" default="2222"/>
     <arg name="anello_local_odometer_port" default="3333"/>
 
+    <!-- Baud rate -->
+    <arg name="baud_rate" default="230400"/>
+
     <!--Launch ANELLO ros driver-->
     <!--Update data and config port values to the ports in your system-->
     <node name="anello_ros_driver" pkg="anello_ros_driver" exec="anello_ros_driver_node" output="screen">
@@ -22,6 +25,7 @@
         <param name="anello_local_data_port" value="$(var anello_local_data_port)"/>
         <param name="anello_local_config_port" value="$(var anello_local_config_port)"/>
         <param name="anello_local_odometer_port" value="$(var anello_local_odometer_port)"/>
+        <param name="baud_rate" value="$(var baud_rate)"/>
     </node>
 
     <!-- NTRIP CLIENT PARAMTERS -->

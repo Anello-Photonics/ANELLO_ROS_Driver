@@ -33,6 +33,7 @@ anello_config_port::anello_config_port(const interface_config_t *config) : uart_
     this->config.local_data_port = config->local_data_port;
     this->config.local_config_port = config->local_config_port;
     this->config.local_odometer_port = config->local_odometer_port;
+    this->config.baud_rate = config->baud_rate;
 }
 
 anello_config_port::~anello_config_port() {
@@ -92,7 +93,7 @@ void anello_config_port::init_uart()
                 DEBUG_PRINT("config_port: Trying port %s", port_name.c_str());
 #endif
                 this->config.config_port_name = port_name;
-                this->uart_port.init(this->config.config_port_name);
+                this->uart_port.init(this->config.config_port_name, this->config.baud_rate);
                 char buf[100];
 
                 this->uart_port.get_data(buf, 100, 10);
@@ -122,7 +123,7 @@ void anello_config_port::init_uart()
     }
     else
     {
-        this->uart_port.init(this->config.config_port_name);
+        this->uart_port.init(this->config.config_port_name, this->config.baud_rate);
     }
 }
 

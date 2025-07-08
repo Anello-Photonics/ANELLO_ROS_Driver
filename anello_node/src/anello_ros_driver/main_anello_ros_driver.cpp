@@ -71,6 +71,10 @@
 #define CONFIG_PORT_NAME "anello_uart_config_port"
 #endif
 
+#ifndef BAUDRATE_NAME
+#define BAUDRATE_NAME "baud_rate"
+#endif
+
 #ifndef REMOTE_IP_NAME
 #define REMOTE_IP_NAME "anello_remote_ip"
 #endif
@@ -99,6 +103,10 @@
 #define CONFIG_PORT_PARAMETER_NAME CONFIG_PORT_NAME
 #endif
 
+#ifndef BAUDRATE_PARAMETER_NAME
+#define BAUDRATE_PARAMETER_NAME BAUDRATE_NAME
+#endif
+
 #ifndef REMOTE_IP_PARAMETER_NAME
 #define REMOTE_IP_PARAMETER_NAME REMOTE_IP_NAME
 #endif
@@ -121,6 +129,14 @@
 
 #ifndef LOG_FILE_NAME
 #define LOG_FILE_NAME "latest_anello_log.txt"
+#endif
+
+#ifndef GYRO_VARIANCE
+#define GYRO_VARIANCE 0.0   // (rad/s)^2
+#endif
+
+#ifndef ACCEL_VARIANCE
+#define ACCEL_VARIANCE 0.0   // (m/s^2)^2
 #endif
 
 #if !(COMPILE_WITH_ROS2)
@@ -171,9 +187,6 @@ const double PI = 3.14159265;
 double d2r = PI/180.0;
 double s = d2r*d2r;
 
-const double GYRO_VARIANCE  = 0.00;   // (rad/s)^2
-const double ACCEL_VARIANCE = 0.00;   // (m/s^2)^2
-
 typedef struct
 {
 	int n_used;				// how many bytes have been put through the decoded
@@ -200,7 +213,8 @@ public:
 		this->declare_parameter(REMOTE_IP_PARAMETER_NAME, "192.168.1.111");
 		this->declare_parameter(LOCAL_DATA_PORT_PARAMETER_NAME, 1111);
 		this->declare_parameter(LOCAL_CONFIG_PORT_PARAMETER_NAME, 2222);
-		this->declare_parameter(LOCAL_ODOMETER_PORT_PARAMETER_NAME, 3333);
+		this->declare_parameter(LOCAL_ODOMETER_PORT_PARAMETER_NAME, 3333);		
+		this->declare_parameter(BAUDRATE_PARAMETER_NAME, 230400);
 
 		std::string com_type;
 		this->get_parameter(COM_TYPE_PARAMETER_NAME, com_type);
@@ -209,7 +223,11 @@ public:
 		this->get_parameter(REMOTE_IP_PARAMETER_NAME, config.remote_ip);
 		this->get_parameter(LOCAL_DATA_PORT_PARAMETER_NAME, config.local_data_port);
 		this->get_parameter(LOCAL_CONFIG_PORT_PARAMETER_NAME, config.local_config_port);
-		this->get_parameter(LOCAL_ODOMETER_PORT_PARAMETER_NAME, config.local_odometer_port);
+		this->get_parameter(LOCAL_ODOMETER_PORT_PARAMETER_NAME, config.local_odometer_port);		
+		this->get_parameter(BAUDRATE_PARAMETER_NAME, config.baud_rate);
+
+		RCLCPP_INFO(this->get_logger(), "Using baud_rate=%u", config.baud_rate);
+		
 
 		if (com_type == "UART")
 		{
@@ -699,7 +717,7 @@ private:
 	port_buffer config_port_write_buffer;
 
 	interface_config_t config;
-	
+
 	file_read_buf_t serial_read_buffer;
 	
 	a1buff_t a1buff;

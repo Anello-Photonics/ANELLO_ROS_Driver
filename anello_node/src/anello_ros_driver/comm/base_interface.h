@@ -30,6 +30,7 @@ typedef struct
 	int local_data_port;
 	int local_config_port;
 	int local_odometer_port;
+    uint32_t baud_rate;
 } interface_config_t;
 
 class base_interface
