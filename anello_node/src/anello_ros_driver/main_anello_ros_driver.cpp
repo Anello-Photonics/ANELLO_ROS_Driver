@@ -166,6 +166,7 @@ struct posCovVec
 };
 
 const double PI = 3.14159265;
+const double g_accel = 9.81;
 double d2r = PI/180.0;
 double d2r_squared = d2r*d2r;
 
@@ -688,9 +689,9 @@ void AnelloRosDriver::pubRosImuAndNav(const double decoded_val[])
 	ros_imu_msg.angular_velocity.z = last_angular_vel_.data[2] * static_cast<float>(d2r);
 
 	//Linear acceleration (Imu msg)
-	ros_imu_msg.linear_acceleration.x = last_linear_accel_.data[0];
-	ros_imu_msg.linear_acceleration.y = last_linear_accel_.data[1];
-	ros_imu_msg.linear_acceleration.z = last_linear_accel_.data[2];
+	ros_imu_msg.linear_acceleration.x = last_linear_accel_.data[0] * g_accel;
+	ros_imu_msg.linear_acceleration.y = last_linear_accel_.data[1] * g_accel;
+	ros_imu_msg.linear_acceleration.z = last_linear_accel_.data[2] * g_accel;
 	
 	//Orientation covariance matrix (Imu msg)
 	ros_imu_msg.orientation_covariance[0] = last_orientation_cov_.RollRoll * d2r_squared;
