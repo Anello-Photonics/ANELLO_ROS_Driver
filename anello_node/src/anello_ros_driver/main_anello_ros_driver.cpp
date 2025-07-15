@@ -286,6 +286,15 @@ public:
 	}
 
 private:
+
+	/* pull raw decoded_val[] -> intermediate arrays */
+	void storeLastImuData(const double decoded_val[]);
+	void storeLastCovariances(const double decoded_val[]);
+
+	/* build & publish the ROS Imu + NavSatFix */
+	void pubRosImuAndNav(const double decoded_val[]);
+
+
 	/* Main Decoder loop 
 	* Reads the serial port calls the decoder and publishes the messages
 	* Called via this->timer_
@@ -372,13 +381,7 @@ private:
 						publish_imu(decoded_val, _imu_publisher);
 						_health_msg.add_imu_message(decoded_val);
 						
-						//store vals for standard ROS Imu msg 
-						last_linear_accel_.data[0] = static_cast<float>(decoded_val[1]);
-						last_linear_accel_.data[1] = static_cast<float>(decoded_val[2]);
-						last_linear_accel_.data[2] = static_cast<float>(decoded_val[3]);
-						last_angular_vel_.data[0]  = static_cast<float>(decoded_val[4]);
-						last_angular_vel_.data[1]  = static_cast<float>(decoded_val[5]);
-						last_angular_vel_.data[2]  = static_cast<float>(decoded_val[6]);
+						storeLastImuData(decoded_val);
 #if DEBUG_MAIN
 						printf("APIMUa\n");
 #endif
@@ -400,27 +403,7 @@ private:
 						decode_ascii_cov(val, decoded_val);
 						publish_cov(decoded_val, _apcov_publisher);
 
-						//store orientation covariance vals
-						last_orientation_cov_.RollRoll = decoded_val[13];
-						last_orientation_cov_.RollPitch = decoded_val[17];
-						last_orientation_cov_.RollHeading = decoded_val[18];
-						last_orientation_cov_.PitchRoll = decoded_val[17];
-						last_orientation_cov_.PitchPitch = decoded_val[14];
-						last_orientation_cov_.PitchHeading = decoded_val[19];
-						last_orientation_cov_.HeadingRoll = decoded_val[18];
-						last_orientation_cov_.HeadingPitch = decoded_val[19];
-						last_orientation_cov_.HeadingHeading = decoded_val[15];
-
-						//store position covariance vals
-						last_position_cov_.latlat = decoded_val[1];
-						last_position_cov_.latlon = decoded_val[4];
-						last_position_cov_.latalt = decoded_val[5];
-						last_position_cov_.lonlat = decoded_val[4];
-						last_position_cov_.lonlon = decoded_val[2];
-						last_position_cov_.lonalt = decoded_val[6];
-						last_position_cov_.altlat = decoded_val[5];
-						last_position_cov_.altlon = decoded_val[6];
-						last_position_cov_.altalt = decoded_val[3];
+						storeLastCovariances(decoded_val);
 
 
 #if DEBUG_MAIN
@@ -435,113 +418,7 @@ private:
 						publish_ins(decoded_val, _ins_publisher);
 						_health_msg.add_ins_message(decoded_val);
 						
-						//define ROS standard Imu msg and NavSatFix msg
-						auto ros_imu_msg = sensor_msgs::msg::Imu();
-						auto nav_msg = sensor_msgs::msg::NavSatFix();
-
-						//Conversion
-						double roll_rad = decoded_val[9] * d2r;
-						double pitch_rad = decoded_val[10] * d2r;
-						double heading_rad = decoded_val[11] * d2r;
-
-						double cy = cos(heading_rad * 0.5);
-						double sy = sin(heading_rad * 0.5);
-						double cp = cos(pitch_rad * 0.5);
-						double sp = sin(pitch_rad * 0.5);
-						double cr = cos(roll_rad * 0.5);
-						double sr = sin(roll_rad * 0.5);
-
-						//Stamp and frame
-						ros_imu_msg.header.stamp = this->now();
-						ros_imu_msg.header.frame_id = "anello_link";
-
-						nav_msg.header.stamp = this->now();
-						nav_msg.header.frame_id = "ins_link";
-
-						//Satellite Fix Status (NavSatFix)
-						nav_msg.status.status = sensor_msgs::msg::NavSatStatus::STATUS_FIX;
-						nav_msg.status.service =
-					        sensor_msgs::msg::NavSatStatus::SERVICE_GPS     |
-					        sensor_msgs::msg::NavSatStatus::SERVICE_GLONASS |
-					        sensor_msgs::msg::NavSatStatus::SERVICE_COMPASS |
-					        sensor_msgs::msg::NavSatStatus::SERVICE_GALILEO;
-
-						//Quaternion orientation (Imu msg)
-						ros_imu_msg.orientation.x = sr*cp*cy - cr*sp*sy;
-						ros_imu_msg.orientation.y = cr*sp*cy + sr*cp*sy;
-						ros_imu_msg.orientation.z = cr*cp*sy - sr*sp*cy;
-						ros_imu_msg.orientation.w = cr*cp*cy + sr*sp*sy;
-
-						//Angular velocity (Imu msg)
-						ros_imu_msg.angular_velocity.x = last_angular_vel_.data[0] * static_cast<float>(d2r);
-						ros_imu_msg.angular_velocity.y = last_angular_vel_.data[1] * static_cast<float>(d2r);
-						ros_imu_msg.angular_velocity.z = last_angular_vel_.data[2] * static_cast<float>(d2r);
-
-						//Linear acceleration (Imu msg)
-						ros_imu_msg.linear_acceleration.x = last_linear_accel_.data[0];
-						ros_imu_msg.linear_acceleration.y = last_linear_accel_.data[1];
-						ros_imu_msg.linear_acceleration.z = last_linear_accel_.data[2];
-						
-						//Orientation covariance matrix (Imu msg)
-						ros_imu_msg.orientation_covariance[0] = last_orientation_cov_.RollRoll * d2r_squared;
-						ros_imu_msg.orientation_covariance[1] = last_orientation_cov_.RollPitch * d2r_squared;
-						ros_imu_msg.orientation_covariance[2] = last_orientation_cov_.RollHeading * d2r_squared;
-						ros_imu_msg.orientation_covariance[3] = last_orientation_cov_.PitchRoll * d2r_squared;
-						ros_imu_msg.orientation_covariance[4] = last_orientation_cov_.PitchPitch * d2r_squared;
-						ros_imu_msg.orientation_covariance[5] = last_orientation_cov_.PitchHeading * d2r_squared;
-						ros_imu_msg.orientation_covariance[6] = last_orientation_cov_.HeadingRoll * d2r_squared;
-						ros_imu_msg.orientation_covariance[7] = last_orientation_cov_.HeadingPitch * d2r_squared;
-						ros_imu_msg.orientation_covariance[8] = last_orientation_cov_.HeadingHeading * d2r_squared;
-
-						//Position covariance matrix (NavSatFix)					
-						nav_msg.position_covariance[0] = last_position_cov_.lonlon;   // C_ee
-						nav_msg.position_covariance[1] = last_position_cov_.latlon;    // C_en
-						nav_msg.position_covariance[2] = last_position_cov_.lonalt;   // C_eu
-
-						nav_msg.position_covariance[3] = last_position_cov_.latlon;   // C_ne
-						nav_msg.position_covariance[4] = last_position_cov_.latlat;  // C_nn
-						nav_msg.position_covariance[5] = last_position_cov_.latalt;    // C_nu
-
-						nav_msg.position_covariance[6] = last_position_cov_.lonalt;     // C_ue
-						nav_msg.position_covariance[7] = last_position_cov_.latalt;    // C_un
-						nav_msg.position_covariance[8] = last_position_cov_.altalt;     // C_uu
-
-						nav_msg.position_covariance_type = sensor_msgs::msg::NavSatFix::COVARIANCE_TYPE_KNOWN;
-
-						//Lat, Long, Alt (NavSatFix)
-						nav_msg.latitude = decoded_val[3];
-						nav_msg.longitude = decoded_val[4];
-						nav_msg.altitude = decoded_val[5];
-						
-						//Angular velocity and linear acceleration covariances
-						ros_imu_msg.angular_velocity_covariance[0] = GYRO_VARIANCE;  
-						ros_imu_msg.angular_velocity_covariance[1] = 0.0;
-						ros_imu_msg.angular_velocity_covariance[2] = 0.0;
-
-						ros_imu_msg.angular_velocity_covariance[3] = 0.0;
-						ros_imu_msg.angular_velocity_covariance[4] = GYRO_VARIANCE;  
-						ros_imu_msg.angular_velocity_covariance[5] = 0.0;
-
-						ros_imu_msg.angular_velocity_covariance[6] = 0.0;
-						ros_imu_msg.angular_velocity_covariance[7] = 0.0;
-						ros_imu_msg.angular_velocity_covariance[8] = GYRO_VARIANCE;  
-
-
-						ros_imu_msg.linear_acceleration_covariance[0] = ACCEL_VARIANCE;  
-						ros_imu_msg.linear_acceleration_covariance[1] = 0.0;
-						ros_imu_msg.linear_acceleration_covariance[2] = 0.0;
-
-						ros_imu_msg.linear_acceleration_covariance[3] = 0.0;
-						ros_imu_msg.linear_acceleration_covariance[4] = ACCEL_VARIANCE;  
-						ros_imu_msg.linear_acceleration_covariance[5] = 0.0;
-
-						ros_imu_msg.linear_acceleration_covariance[6] = 0.0;
-						ros_imu_msg.linear_acceleration_covariance[7] = 0.0;
-						ros_imu_msg.linear_acceleration_covariance[8] = ACCEL_VARIANCE;  
-
-						//Publish both messages
-						_ros_imu_pub->publish(ros_imu_msg);
-						_navfix_publisher->publish(nav_msg);
+						pubRosImuAndNav(decoded_val);
 
 #if DEBUG_MAIN
 						printf("APINSa\n");
@@ -560,6 +437,8 @@ private:
 							decode_rtcm_imu_msg(decoded_val, a1buff);
 							publish_imu(decoded_val, _imu_publisher);
 							_health_msg.add_imu_message(decoded_val);
+
+							storeLastImuData(decoded_val);
 
 							isOK = 1;
 						}
@@ -594,6 +473,8 @@ private:
 							publish_ins(decoded_val, _ins_publisher);
 							_health_msg.add_ins_message(decoded_val);
 
+							pubRosImuAndNav(decoded_val);
+
 
 							isOK = 1;
 						}
@@ -604,6 +485,16 @@ private:
 
 							isOK = 1;
 						}
+						else if (a1buff.subtype == 10) /* APCOV */
+						{
+							decode_rtcm_cov_msg(decoded_val, a1buff);
+							publish_cov(decoded_val, _apcov_publisher);
+
+							storeLastCovariances(decoded_val);
+
+							isOK = 1;
+						}
+
 					}
 				}
 
@@ -620,6 +511,8 @@ private:
 			}
 		}
 	}
+
+	
 
 	/* APODO topic callback
 	* Makes APODO message into a string and sends it to the config port
@@ -716,6 +609,130 @@ private:
 
 	size_t count;
 };
+
+void AnelloRosDriver::storeLastImuData(const double decoded_val[])
+{
+	last_linear_accel_.data[0] = static_cast<float>(decoded_val[1]);
+	last_linear_accel_.data[1] = static_cast<float>(decoded_val[2]);
+	last_linear_accel_.data[2] = static_cast<float>(decoded_val[3]);
+	last_angular_vel_.data[0]  = static_cast<float>(decoded_val[4]);
+	last_angular_vel_.data[1]  = static_cast<float>(decoded_val[5]);
+	last_angular_vel_.data[2]  = static_cast<float>(decoded_val[6]);
+}
+
+void AnelloRosDriver::storeLastCovariances(const double decoded_val[])
+{
+	last_orientation_cov_.RollRoll    = decoded_val[13];
+	last_orientation_cov_.RollPitch   = decoded_val[17];
+	last_orientation_cov_.RollHeading = decoded_val[18];
+	last_orientation_cov_.PitchRoll   = decoded_val[17];
+	last_orientation_cov_.PitchPitch  = decoded_val[14];
+	last_orientation_cov_.PitchHeading= decoded_val[19];
+	last_orientation_cov_.HeadingRoll = decoded_val[18];
+	last_orientation_cov_.HeadingPitch= decoded_val[19];
+	last_orientation_cov_.HeadingHeading = decoded_val[15];
+
+	last_position_cov_.latlat = decoded_val[1];
+	last_position_cov_.latlon = decoded_val[4];
+	last_position_cov_.latalt = decoded_val[5];
+	last_position_cov_.lonlat = decoded_val[4];
+	last_position_cov_.lonlon = decoded_val[2];
+	last_position_cov_.lonalt = decoded_val[6];
+	last_position_cov_.altlat = decoded_val[5];
+	last_position_cov_.altlon = decoded_val[6];
+	last_position_cov_.altalt = decoded_val[3];
+}
+
+void AnelloRosDriver::pubRosImuAndNav(const double decoded_val[])
+{
+	//define ROS standard Imu msg and NavSatFix msg
+	auto ros_imu_msg = sensor_msgs::msg::Imu();
+	auto nav_msg = sensor_msgs::msg::NavSatFix();
+
+	//Conversion
+	double roll_rad = decoded_val[9] * d2r;
+	double pitch_rad = decoded_val[10] * d2r;
+	double heading_rad = decoded_val[11] * d2r;
+
+	double cy = cos(heading_rad * 0.5);
+	double sy = sin(heading_rad * 0.5);
+	double cp = cos(pitch_rad * 0.5);
+	double sp = sin(pitch_rad * 0.5);
+	double cr = cos(roll_rad * 0.5);
+	double sr = sin(roll_rad * 0.5);
+
+	//Stamp and frame
+	ros_imu_msg.header.stamp = this->now();
+	ros_imu_msg.header.frame_id = "anello_link";
+
+	nav_msg.header.stamp = this->now();
+	nav_msg.header.frame_id = "ins_link";
+
+	//Satellite Fix Status (NavSatFix)
+	nav_msg.status.status = sensor_msgs::msg::NavSatStatus::STATUS_FIX;
+	nav_msg.status.service =
+		sensor_msgs::msg::NavSatStatus::SERVICE_GPS     |
+		sensor_msgs::msg::NavSatStatus::SERVICE_GLONASS |
+		sensor_msgs::msg::NavSatStatus::SERVICE_COMPASS |
+		sensor_msgs::msg::NavSatStatus::SERVICE_GALILEO;
+
+	//Quaternion orientation (Imu msg)
+	ros_imu_msg.orientation.x = sr*cp*cy - cr*sp*sy;
+	ros_imu_msg.orientation.y = cr*sp*cy + sr*cp*sy;
+	ros_imu_msg.orientation.z = cr*cp*sy - sr*sp*cy;
+	ros_imu_msg.orientation.w = cr*cp*cy + sr*sp*sy;
+
+	//Angular velocity (Imu msg)
+	ros_imu_msg.angular_velocity.x = last_angular_vel_.data[0] * static_cast<float>(d2r);
+	ros_imu_msg.angular_velocity.y = last_angular_vel_.data[1] * static_cast<float>(d2r);
+	ros_imu_msg.angular_velocity.z = last_angular_vel_.data[2] * static_cast<float>(d2r);
+
+	//Linear acceleration (Imu msg)
+	ros_imu_msg.linear_acceleration.x = last_linear_accel_.data[0];
+	ros_imu_msg.linear_acceleration.y = last_linear_accel_.data[1];
+	ros_imu_msg.linear_acceleration.z = last_linear_accel_.data[2];
+	
+	//Orientation covariance matrix (Imu msg)
+	ros_imu_msg.orientation_covariance[0] = last_orientation_cov_.RollRoll * d2r_squared;
+	ros_imu_msg.orientation_covariance[1] = last_orientation_cov_.RollPitch * d2r_squared;
+	ros_imu_msg.orientation_covariance[2] = last_orientation_cov_.RollHeading * d2r_squared;
+	ros_imu_msg.orientation_covariance[3] = last_orientation_cov_.PitchRoll * d2r_squared;
+	ros_imu_msg.orientation_covariance[4] = last_orientation_cov_.PitchPitch * d2r_squared;
+	ros_imu_msg.orientation_covariance[5] = last_orientation_cov_.PitchHeading * d2r_squared;
+	ros_imu_msg.orientation_covariance[6] = last_orientation_cov_.HeadingRoll * d2r_squared;
+	ros_imu_msg.orientation_covariance[7] = last_orientation_cov_.HeadingPitch * d2r_squared;
+	ros_imu_msg.orientation_covariance[8] = last_orientation_cov_.HeadingHeading * d2r_squared;
+
+	//Position covariance matrix (NavSatFix)					
+	nav_msg.position_covariance[0] = last_position_cov_.lonlon;   // C_ee
+	nav_msg.position_covariance[1] = last_position_cov_.latlon;    // C_en
+	nav_msg.position_covariance[2] = last_position_cov_.lonalt;   // C_eu
+
+	nav_msg.position_covariance[3] = last_position_cov_.latlon;   // C_ne
+	nav_msg.position_covariance[4] = last_position_cov_.latlat;  // C_nn
+	nav_msg.position_covariance[5] = last_position_cov_.latalt;    // C_nu
+
+	nav_msg.position_covariance[6] = last_position_cov_.lonalt;     // C_ue
+	nav_msg.position_covariance[7] = last_position_cov_.latalt;    // C_un
+	nav_msg.position_covariance[8] = last_position_cov_.altalt;     // C_uu
+
+	nav_msg.position_covariance_type = sensor_msgs::msg::NavSatFix::COVARIANCE_TYPE_KNOWN;
+
+	//Lat, Long, Alt (NavSatFix)
+	nav_msg.latitude = decoded_val[3];
+	nav_msg.longitude = decoded_val[4];
+	nav_msg.altitude = decoded_val[5];
+	
+	//Angular velocity and linear acceleration covariances
+	for (int i = 0; i < 9; ++i) {
+		ros_imu_msg.angular_velocity_covariance[i]    = (i%4==0 ? GYRO_VARIANCE : 0.0);
+		ros_imu_msg.linear_acceleration_covariance[i] = (i%4==0 ? ACCEL_VARIANCE: 0.0);
+	} 
+
+	//Publish both messages
+	_ros_imu_pub->publish(ros_imu_msg);
+	_navfix_publisher->publish(nav_msg);
+}
 
 int main(int argc, char *argv[])
 {
