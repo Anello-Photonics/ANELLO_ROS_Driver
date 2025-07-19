@@ -50,6 +50,9 @@
 #include "messaging/message_publisher.h"
 #include "messaging/health_message.h"
 
+// anello servies
+#include "anello_interfaces/srv/cmd_and_rsp.hpp"
+
 
 #ifndef NO_GGA
 #define NO_GGA
@@ -274,6 +277,9 @@ public:
 			1, 
 			std::bind(&AnelloRosDriver::odo_callback, this, std::placeholders::_1)
 		);
+
+		// create service server for command callback
+		_srv_send_cmd = this->create_service<anello_interfaces::srv::CmdAndRsp>("send_cmd", std::bind(&AnelloRosDriver::send_command_callback, this, std::placeholders::_1, std::placeholders::_2));
 
 		timer_ = this->create_wall_timer(1us, std::bind(&AnelloRosDriver::mainloop_callback, this));
 		health_message_timer_ = this->create_wall_timer(1s, std::bind(&AnelloRosDriver::health_callback, this));
@@ -513,6 +519,54 @@ private:
 		}
 	}
 
+	void send_command_callback(
+		const std::shared_ptr<anello_interfaces::srv::CmdAndRsp::Request>  req,
+		std::shared_ptr<anello_interfaces::srv::CmdAndRsp::Response>       res)
+	{
+		const int resp_max_data = 512;
+		char read_buf[resp_max_data];
+		std::string response;
+
+		// build the full ASCII command with checksum and terminator
+		std::string body = req->command;  
+		std::string ck   = compute_checksum(body.c_str(), body.size());
+
+		std::string full = "#" + body + "*" + ck + "\r\n";
+
+		// send it
+		config_port->write_data(full.c_str(), (int)full.size());
+
+		// now read until we see "\r\n" or timeout
+		auto start = std::chrono::steady_clock::now();
+		auto timeout = std::chrono::milliseconds(100);
+
+		while (std::chrono::steady_clock::now() - start < timeout) {
+			int n = config_port->get_data(read_buf, resp_max_data - 1);
+			if (n < 0) {
+			RCLCPP_ERROR(this->get_logger(), "send_command: read error");
+			break;
+			}
+			if (n > 0) {
+			read_buf[n] = '\0';
+			response += read_buf;
+			// if we've seen the proper line ending, stop
+			if (response.size() >= 2 &&
+				response.substr(response.size() - 2) == "\r\n")
+			{
+				break;
+			}
+			}
+			// small sleep so we don't spin too tight
+			usleep(2000);  // 2 ms
+		}
+
+		// hand it back
+		res->response = response;
+
+		RCLCPP_DEBUG(this->get_logger(),
+					"send_command: sent='%s' got='%s'",
+					full.c_str(), response.c_str());
+	}
 	
 
 	/* APODO topic callback
@@ -583,6 +637,8 @@ private:
 
 	anello_data_port *data_port;
 	anello_config_port *config_port;
+
+	rclcpp::Service<anello_interfaces::srv::CmdAndRsp>::SharedPtr _srv_send_cmd;
 
 	rclcpp::TimerBase::SharedPtr timer_;
 	rclcpp::TimerBase::SharedPtr health_message_timer_;

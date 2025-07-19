@@ -29,6 +29,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/APODO.msg"
   "msg/APHEALTH.msg"
   "msg/APCOV.msg"
+  "srv/CmdAndRsp.srv"
   DEPENDENCIES std_msgs
 )
 
