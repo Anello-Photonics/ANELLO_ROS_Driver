@@ -103,6 +103,17 @@ void publish_gga(double *gps, gga_pub_t pub, rclcpp::Time time);
  * The publisher is called here
  */
 void publish_health(const health_message *health_msg, health_pub_t pub);
+
+/*
+ * Parameters:
+ * double *gps : Double array at least 18 items long that contains the cov msg fields
+ * apcov_pub_t pub : Publisher used to publish the cov message
+ *
+ * Notes:
+ * The publisher is called here
+ */
+void publish_cov(double *cov, apcov_pub_t pub);
+
 #endif
 
 #endif
