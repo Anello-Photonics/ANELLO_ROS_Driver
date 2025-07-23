@@ -63,6 +63,14 @@ public:
     void port_parse_fail();
     void port_confirm();
 
+    const std::string get_portname() const {
+        if (this->config.type == ETH) {
+            return this->ethernet_port.get_remote_ip(); // Assuming get_remote_ip() exists
+        } else {
+            return this->uart_port.get_portname();
+        }
+    }
+
 };     
 
 #endif // ANELLO_CONFIG_PORT_H

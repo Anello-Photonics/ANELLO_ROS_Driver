@@ -37,6 +37,7 @@ public:
     size_t get_data(char *buf, size_t buf_len);
     size_t get_data(char *buf, size_t buf_len, int timeout_ms);
     void write_data(const char *buf, size_t buf_len);
+    std::string get_remote_ip() const { return remote_ip_address; }
 };
 
 #endif
