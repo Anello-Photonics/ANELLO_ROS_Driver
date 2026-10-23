@@ -1,212 +1,281 @@
-# ANELLO ROS Driver
+# ANELLO Maritime INS ROS Driver
 
-For ROS2 support, see the ```ros2_main``` branch.
+This branch supports the **Maritime INS only**, on ROS 1 (Noetic/Python 3) or
+ROS 2 (tested on Jazzy). It receives NMEA0183 over RS-232 or UDP and publishes
+one decoded, typed topic for every output message in the Maritime firmware.
+The package name remains `anello_ros_driver`. Ground INS support belongs on `main`.
 
-## ANELLO Products Supported
+## Build
 
-The ANELLO ROS driver supports the ANELLO EVK, GNSS INS, and IMU+ running firmware versions >= v1.1.1. 
+Use a separate workspace and terminal for each ROS version. Source the desired
+ROS distribution before building: `ROS_VERSION` selects catkin or ament, including
+conditional dependencies in `package.xml`. Do not mix their build/install spaces.
+Clone this branch into your workspace's `src/` directory before running these commands.
 
-## ANELLO ROS Driver Installation
-
-### Install ROS
-
-Follow the instructions on the [ROS Wiki](http://wiki.ros.org/ROS/Installation) to install ROS on your system.
-
-### Install ANELLO ROS Driver
-
-Clone this repository into your catkin workspace:
+ROS 1:
 
 ```bash
-cd ~/catkin_ws/src
-git clone https://github.com/Anello-Photonics/ANELLO_ROS_Driver.git
-```
-
-### Install ANELLO ROS Driver Dependencies
-
-Install rosdeps for the package:
-
-```bash
-rosdep install --from-paths ~/catkin_ws/src --ignore-src -r -y
-```
-
-### Upgrading from Older ANELLO ROS Driver Versions
-
-If you are upgrading from an older version of the ANELLO ROS driver (<= v1.2.2), please use the following steps to ensure that the new changes are applied. 
-
-1. Ensure that the instance of the ntrip_client previously at ```~/catkin_ws/src/ntrip_client``` is deleted from the workspace. This node has been moved within the anello_ros_driver package src and script directory.
-
-```bash
-rm -rf ~/catkin_ws/src/ntrip_client
-```
-
-2. Update to the latest version:
-
-```bash
-cd ~/catkin_ws/src/ANELLO_ROS_Driver
-git pull
-```
-
-3. Reset compilation:
-
-```bash
+source /opt/ros/noetic/setup.bash
 cd ~/catkin_ws
-rm -rf build/ devel/
+rosdep install --from-paths src --ignore-src -r -y
 catkin_make
+source devel/setup.bash
 ```
 
-## ANELLO ROS Driver Configuration
-
-### Serial Communications
-
-The ANELLO ROS driver defaults serial communications baud rate to 230400. 
-If you are using the ANELLO EVK or have changed the baud rate in the GNSS INS or IMU+, you will need to update the ```BAUDRATE``` in "anello_ros_driver/include/serial_interface.h".
-
-```c++
-#ifndef BAUDRATE
-#define BAUDRATE B230400    //Default baudrate for ANELLO GNSS INS and IMU+
-// #define BAUDRATE B921600    //Default baudrate for ANELLO EVK
-#endif
-```
-
-To set up serial communications:
-
-1. Ensure that the ```anello_com_type``` arg is set to ```UART```.
-2. Leave the UART port name configurations on ```AUTO``` to use the automatic connection procedure, or manually set the path (```/dev/ttyUSB0```).
-
-Launch file sample:
-
-```xml
-    <!-- Set the COM_TYPE to UART or ETH -->
-    <arg name="anello_com_type" default="UART"/>
-
-    <!-- Uart port names -->
-    <arg name="anello_uart_data_port" default="AUTO"/>
-    <arg name="anello_uart_config_port" default="AUTO"/>
-```
-
-### Ethernet Communications
-
-To set up ethernet communications:
-
-1. Ensure that the ```anello_com_type``` arg is set to ```ETH```.
-2. Set the IP address of the ANELLO device in the ```anello_remote_ip``` arg.
-3. Ensure that the IP address of the system running the ROS driver is set in the ANELLO unit's "Computer IP" configuration.
-4. Set the data port, config port, and odometer port in the launch file. Ensure these match the ANELLO unit configuration.
-
-Launch file sample:
-
-```xml
-    <!-- Set the COM_TYPE to UART or ETH -->
-    <arg name="anello_com_type" default="ETH"/>
-```
-
-```xml
-    <!-- Ethernet port names -->
-    <arg name="anello_remote_ip" default="192.168.1.111"/>
-    <arg name="anello_local_data_port" default="1111"/>
-    <arg name="anello_local_config_port" default="2222"/>
-    <arg name="anello_local_odometer_port" default="3333"/>
-```
-
-### Setting Up NTRIP client
-
-Update the NTRIP client parameters in the launch file to point to your NTRIP caster:
-
-```xml
-    <!-- NTRIP CLIENT PARAMTERS -->
-    <arg name="host" value="127.0.0.1"/>
-    <arg name="port" value="1111"/>
-    <arg name="mountpoint" value="AUTO"/>
-    <arg name="authenticate" value="true"/>
-    <arg name="username" value=""/>
-    <arg name="password" value=""/>
-    <arg name="ntrip_version" value=""/>
-    <arg name="ssl" value="false"/>
-    <arg name="cert" value=""/>
-    <arg name="key" value=""/>
-    <arg name="ca_cert" value=""/>
-    <arg name="debug" value="false"/>
-    <arg name="rtcm_message_package" value="mavros_msgs"/>
-```
-
-### Build Code
+ROS 2:
 
 ```bash
-cd ~/catkin_ws
-catkin_make
+source /opt/ros/jazzy/setup.bash
+cd ~/ros2_ws
+rosdep install --from-paths src --ignore-src -r -y
+colcon build --packages-select anello_ros_driver
+source install/setup.bash
 ```
 
-## ANELLO ROS Driver Usage
+## Launch
 
-### Launch ANELLO ROS Driver
+Serial (set the port and baud rate to match your INS):
 
 ```bash
-roslaunch anello_ros_driver anello_ros_driver.launch
+# ROS 1
+roslaunch anello_ros_driver maritime_ins.launch port:=/dev/ttyUSB0 baudrate:=921600
+
+# ROS 2
+ros2 launch anello_ros_driver maritime_ins.launch.py port:=/dev/ttyUSB0 baudrate:=921600
 ```
 
-ANELLO messages will be published to topics (see below). For information on how to view these messages, see the [ROS Wiki](http://wiki.ros.org/ROS/Tutorials/UnderstandingTopics).
+Configure the INS to output NMEA0183 on the connected RS-232 port using
+`NM0183_CFG` (1 or 2), with matching `SER_TEL1_BAUD` or `SER_TEL2_BAUD`.
+Set the desired `NM0183_ODR_*` output rates above zero. The launch baud rate
+is configurable; older units or different port configurations may use 57600.
 
-### Topics
+UDP unicast reception:
 
-#### Published Topics
+```bash
+# ROS 1
+roslaunch anello_ros_driver maritime_ins.launch transport:=udp udp_port:=19550
 
-Topic definitions are defined in the [ANELLO Developer Manual](https://docs-a1.readthedocs.io/en/latest/) by the ASCII message format. Custom message definitions are used for ANELLO messages and can be found in the `/anello_ros_driver/msg` directory.
+# ROS 2
+ros2 launch anello_ros_driver maritime_ins.launch.py transport:=udp udp_port:=19550
+```
 
-* `/APIMU`
-* `/APIM1`
-* `/APINS`
-* `/APGPS`
-* `/APGP2`
-* `/APHDG`
-* `/APHEALTH`
-  * Message Definitions:
-    * `position_acc_flag`
-      * 0 = Centimeter-level accuracy
-      * 1 = Meter-level accuracy
-      * 2 = Poor GPS accuracy (> 1m)
-    * `heading_health_flag`
-      * 0 = Heading stability confirmed (GPS and INS headings match)
-      * 1 = Unable to confirm heading stability (may be due to poor GPS signal or driving too slow to get reliable GPS heading)
-    * `gyro_health_flag`
-      * 0 = Rate sensor stable
-      * 1 = Rate sensor unstable (large discrepancy between optical and MEMS gyros)
-* `/ntrip_client/nmea`
+For multicast, add `multicast_group:=239.1.2.3` (replace with the configured
+INS group). If necessary, set `multicast_interface` to your computer's local
+interface IPv4 address. Configure firmware `NMUDP_EN`, the desired
+`NMUDP_ODR_*` rates, and its multicast (`NMUDP_MC_IP0` ... `3`) or unicast
+(`NMUDP_UC_IP0` ... `3`) destination. These destination settings depend on the
+firmware version; the local firmware supports both. The firmware sends output
+to port 19550; port 19551 is its input port and is not this receiver's default.
 
-#### Subscribed Topics
+The receiver does not configure the INS. See the
+[Maritime communication manual](https://docs-a1.readthedocs.io/en/maritime_ins/communication_messaging.html)
+for device configuration, and use the actual firmware settings for your unit.
 
-Use the custom message and topic below to send odometer speed to the ANELLO unit.
+Both launch files accept:
 
-* `/APODO`
-  * Use the custom message definition found in `/anello_ros_driver/msg/APODO.msg`
-* `/ntrip_client/rtcm_msg`
+| Argument | Default | Meaning |
+| --- | --- | --- |
+| `transport` | `serial` | `serial` or `udp` |
+| `port` | `/dev/ttyUSB0` | Serial device |
+| `baudrate` | `921600` | Serial baud rate, 8N1 |
+| `bind_address` | `0.0.0.0` | Local UDP bind address |
+| `udp_port` | `19550` | UDP receive port |
+| `multicast_group` | empty | Optional IPv4 multicast group to join |
+| `multicast_interface` | `0.0.0.0` | Local interface for multicast membership |
+| `source_ip` | empty | Optional UDP sender IPv4 filter |
+| `frame_id` | `maritime_ins` | Header frame label; does not transform data |
+
+## Saved configuration files
+
+Save device and NTRIP settings in a YAML text file. Copy the appropriate template
+from `config/maritime_ins_ros1.yaml` or `config/maritime_ins_ros2.yaml`, edit it,
+and reference your copy at launch:
+
+```bash
+# ROS 1
+roslaunch anello_ros_driver maritime_ins.launch config_file:=/absolute/path/my_ins_ros1.yaml
+
+# ROS 2
+ros2 launch anello_ros_driver maritime_ins.launch.py config_file:=/absolute/path/my_ins_ros2.yaml
+```
+
+ROS 1 files contain a flat parameter mapping, for example:
+
+```yaml
+transport: serial
+port: /dev/ttyUSB0
+baudrate: 921600
+ntrip_enabled: true
+ntrip_host: caster.example.com
+ntrip_mountpoint: YOUR_MOUNTPOINT
+ntrip_username: YOUR_USERNAME
+ntrip_password: YOUR_PASSWORD
+```
+
+ROS 2 requires the same values nested under the node name and `ros__parameters`:
+
+```yaml
+maritime_ins:
+  ros__parameters:
+    transport: serial
+    port: /dev/ttyUSB0
+    baudrate: 921600
+    ntrip_enabled: true
+    ntrip_host: caster.example.com
+    ntrip_mountpoint: YOUR_MOUNTPOINT
+    ntrip_username: YOUR_USERNAME
+    ntrip_password: YOUR_PASSWORD
+```
+
+Files may contain only the settings you want to change. **File values override
+matching launch arguments**; omitted values use the launch arguments/defaults.
+Without `config_file`, the existing argument-based launch works as before.
+Use YAML booleans/numbers for boolean/numeric parameters, and quote credentials
+that YAML might otherwise interpret as numbers or booleans. The supplied templates
+include all available device and NTRIP settings, with NTRIP disabled initially.
+
+## NTRIP corrections
+
+NTRIP is optional and disabled by default. Enable it in either launch file with
+`ntrip_enabled:=true` and specify your caster and mountpoint. The client uses
+NTRIP 2 requests and accepts HTTP and legacy ICY streams, including HTTP chunked
+encoding. It forwards checksum-valid RTCM3 frames unchanged.
+
+Serial example (ROS 2):
+
+```bash
+ros2 launch anello_ros_driver maritime_ins.launch.py \
+  port:=/dev/ttyUSB0 baudrate:=921600 \
+  ntrip_enabled:=true ntrip_host:=caster.example.com ntrip_port:=2101 \
+  ntrip_mountpoint:=YOUR_MOUNTPOINT \
+  ntrip_username:=YOUR_USERNAME ntrip_password:=YOUR_PASSWORD
+```
+
+RTCM is written through the **same serial connection** receiving NMEA0183; no
+second serial port or ground INS configuration port is opened. Configure that
+INS port for NMEA0183 input/output.
+
+UDP example (ROS 1):
+
+```bash
+roslaunch anello_ros_driver maritime_ins.launch \
+  transport:=udp udp_port:=19550 rtcm_host:=192.168.1.111 rtcm_port:=19552 \
+  ntrip_enabled:=true ntrip_host:=caster.example.com ntrip_port:=2101 \
+  ntrip_mountpoint:=YOUR_MOUNTPOINT \
+  ntrip_username:=YOUR_USERNAME ntrip_password:=YOUR_PASSWORD
+```
+
+Replace `rtcm_host` with the INS address. The receive port remains 19550; RTCM
+is sent to **19552**, not the NMEA input port 19551. Enable the firmware's UDP
+bridge (`NMUDP_EN`) and configure its NMEA output destination/rates separately.
+Each UDP datagram contains one complete RTCM3 frame. `source_ip` filters incoming
+NMEA only; `rtcm_host` explicitly chooses the correction destination.
+
+The examples work on either ROS version by changing the launch command/file.
+No RTCM ROS topic or separate NTRIP node is required. Decoded navigation topics
+remain unchanged. For casters requiring position (such as VRS services), enable
+GGA output on the INS: the client privately sends its latest checksum-valid GGA
+with a nonzero fix and finite position back to the caster. It does not publish
+raw NMEA topics. GGA older than 30 seconds is not sent.
+
+| Argument | Default | Meaning |
+| --- | --- | --- |
+| `ntrip_enabled` | `false` | Start the caster client |
+| `ntrip_host` | empty | Caster hostname/IP (required when enabled) |
+| `ntrip_port` | `2101` | Caster TCP port |
+| `ntrip_mountpoint` | empty | Correction mountpoint (required when enabled) |
+| `ntrip_username`, `ntrip_password` | empty | Optional HTTP Basic credentials |
+| `ntrip_tls` | `false` | TLS with server certificate/hostname verification |
+| `ntrip_ca_cert` | empty | Optional CA file; empty uses system trust |
+| `ntrip_gga_interval` | `5.0` | GGA send interval in seconds; 0 disables feedback |
+| `ntrip_timeout` | `15.0` | Reconnect after this many seconds without valid RTCM |
+| `ntrip_reconnect_delay` | `5.0` | Delay between connection attempts |
+| `rtcm_host` | empty | INS destination IPv4 address/hostname; required for UDP NTRIP |
+| `rtcm_port` | `19552` | INS UDP RTCM input port; unused for serial |
+
+Caster connections run in a background worker. Device writes run in the receive
+loop, with a bounded queue and a two-second correction age limit, so disconnections
+do not accumulate old corrections. Failed caster connections retry automatically.
+Credentials are never included in driver logs; as with other ROS parameters, they
+are accessible to tools that can inspect the node's parameters.
+
+## Topics
+
+The topics and field definitions are identical in ROS 1 and ROS 2. ROS 1 type
+names use `anello_ros_driver/MaritimeGGA`; ROS 2 uses
+`anello_ros_driver/msg/MaritimeGGA`, and likewise for the other types.
+
+| Topic | Message | Contents |
+| --- | --- | --- |
+| `/maritime_ins/GGA` | `MaritimeGGA` | UTC, position, fix quality, satellites, HDOP, MSL altitude, geoid separation |
+| `/maritime_ins/RMC` | `MaritimeRMC` | UTC/date, status, position, speed and course over ground |
+| `/maritime_ins/HDT` | `MaritimeHDT` | True heading |
+| `/maritime_ins/XDR` | `MaritimeXDR` | Heading, roll, pitch |
+| `/maritime_ins/ZDA` | `MaritimeZDA` | UTC date/time and optional zone fields |
+| `/maritime_ins/PAPIMU` | `MaritimePAPIMU` | Accelerometer, MEMS and three SiPhOG rates, magnetometer, temperature, status |
+| `/maritime_ins/PAPINS` | `MaritimePAPINS` | Navigation status, position, NED velocity, attitude |
+| `/maritime_ins/PAPACC` | `MaritimePAPACC` | Position, velocity and attitude accuracy |
+
+All publishers exist at startup, but publish only when the matching sentence
+arrives. Standard sentences are routed by formatter (e.g. `GPGGA` and `GNGGA`
+use `GGA`); `sentence_id` retains the original identifier. Topic names are
+private to the node and follow its name/namespace if remapped.
+
+```bash
+rostopic echo /maritime_ins/PAPINS          # ROS 1
+ros2 topic echo /maritime_ins/PAPINS       # ROS 2
+```
+
+Only decoded messages are published. Checksum failures, malformed fields,
+unsupported sentences and unexpected field counts are rejected. Serial reads
+can split sentences at arbitrary byte boundaries. UDP datagrams are independent;
+multiple sentences per datagram are supported. Connections retry on I/O errors.
+
+### Units and missing data
+
+The `.msg` files document units. Latitude/longitude are decimal degrees; GGA/RMC
+coordinates are converted from NMEA degrees/minutes. Other values preserve
+firmware units: acceleration in g, angular rates in degrees/second, magnetic
+field in gauss, speed in knots for RMC, and NED velocity in meters/second for INS.
+There is no NED-to-ENU or body-frame conversion.
+
+Empty floating-point fields become NaN, empty integer fields become -1, and empty
+text fields stay empty. Navigation warnings and invalid fixes are still published
+with their status intact. ZDA includes `local_zone_valid` because -1 can also be
+a real time-zone hour offset. PAPINS currently leaves ZUPT empty.
+
+`header.stamp` is host processing time in the selected ROS clock, not sensor
+measurement time. `time_ms` and IMU `sync_time_ms` are device times in milliseconds
+since boot. PAPINS/PAPACC `utc_time_s` is Unix UTC seconds (firmware sends zero if
+unavailable); standard sentence UTC fields retain their NMEA text format.
+
+Layouts follow `PX4-Autopilot/src/drivers/nmea0183/NMEAOutput.cpp`. In particular,
+PAPACC emits position accuracy, then velocity accuracy, then attitude accuracy;
+its source comment lists a different order. PAPINS has no extra height field
+between ellipsoid altitude and north velocity. These distinctions are tested.
+
+## Tests and scope
+
+From the repository root, run the ROS-independent parser, schema, routing,
+localhost UDP and pseudo-terminal serial tests:
+
+```bash
+PYTHONPATH=src python3 -m unittest discover -s tests -p 'test_maritime*.py' -v
+```
+
+After building and sourcing the ROS 2 install, test the installed launch and
+all eight topics plus NTRIP correction routing and GGA feedback (starts and stops
+its own node and test caster, using temporary local ports):
+
+```bash
+python3 tests/ros2_smoke.py
+```
+
+ROS 2 Jazzy interface generation, build/install, and launch/subscriber integration
+have been tested. ROS 1 runtime/build and physical INS operation have not been
+verified in this environment. NTRIP correction forwarding is supported over the shared serial port or the
+dedicated UDP RTCM port. Configuration services and ground INS protocols are not included.
 
 ## License
 
-MIT License
-
-```text
-Copyright (c) 2023 ANELLO Photonics
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-
-```
-
-## Author Information
-
-This driver was created in 2023 by [ANELLO Photonics](https://www.anellophotonics.com/).
+MIT; see [LICENSE](LICENSE). Original driver by ANELLO Photonics.

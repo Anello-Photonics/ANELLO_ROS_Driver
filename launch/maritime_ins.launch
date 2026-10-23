@@ -1,0 +1,51 @@
+<launch>
+  <arg name="config_file" default=""/>
+  <arg name="transport" default="serial"/>
+  <arg name="port" default="/dev/ttyUSB0"/>
+  <arg name="baudrate" default="921600"/>
+  <arg name="bind_address" default="0.0.0.0"/>
+  <arg name="udp_port" default="19550"/>
+  <arg name="multicast_group" default=""/>
+  <arg name="multicast_interface" default="0.0.0.0"/>
+  <arg name="source_ip" default=""/>
+  <arg name="frame_id" default="maritime_ins"/>
+  <arg name="ntrip_enabled" default="false"/>
+  <arg name="ntrip_host" default=""/>
+  <arg name="ntrip_port" default="2101"/>
+  <arg name="ntrip_mountpoint" default=""/>
+  <arg name="ntrip_username" default=""/>
+  <arg name="ntrip_password" default=""/>
+  <arg name="ntrip_tls" default="false"/>
+  <arg name="ntrip_ca_cert" default=""/>
+  <arg name="ntrip_gga_interval" default="5.0"/>
+  <arg name="ntrip_timeout" default="15.0"/>
+  <arg name="ntrip_reconnect_delay" default="5.0"/>
+  <arg name="rtcm_host" default=""/>
+  <arg name="rtcm_port" default="19552"/>
+  <node pkg="anello_ros_driver" type="maritime_ins_node.py" name="maritime_ins" output="screen" required="true">
+    <param name="transport" value="$(arg transport)"/>
+    <param name="port" value="$(arg port)"/>
+    <param name="baudrate" value="$(arg baudrate)"/>
+    <param name="bind_address" value="$(arg bind_address)"/>
+    <param name="udp_port" value="$(arg udp_port)"/>
+    <param name="multicast_group" value="$(arg multicast_group)"/>
+    <param name="multicast_interface" value="$(arg multicast_interface)"/>
+    <param name="source_ip" value="$(arg source_ip)"/>
+    <param name="frame_id" value="$(arg frame_id)"/>
+    <param name="ntrip_enabled" type="bool" value="$(arg ntrip_enabled)"/>
+    <param name="ntrip_host" type="str" value="$(arg ntrip_host)"/>
+    <param name="ntrip_port" type="int" value="$(arg ntrip_port)"/>
+    <param name="ntrip_mountpoint" type="str" value="$(arg ntrip_mountpoint)"/>
+    <param name="ntrip_username" type="str" value="$(arg ntrip_username)"/>
+    <param name="ntrip_password" type="str" value="$(arg ntrip_password)"/>
+    <param name="ntrip_tls" type="bool" value="$(arg ntrip_tls)"/>
+    <param name="ntrip_ca_cert" type="str" value="$(arg ntrip_ca_cert)"/>
+    <param name="ntrip_gga_interval" type="double" value="$(arg ntrip_gga_interval)"/>
+    <param name="ntrip_timeout" type="double" value="$(arg ntrip_timeout)"/>
+    <param name="ntrip_reconnect_delay" type="double" value="$(arg ntrip_reconnect_delay)"/>
+    <param name="rtcm_host" type="str" value="$(arg rtcm_host)"/>
+    <param name="rtcm_port" type="int" value="$(arg rtcm_port)"/>
+    <!-- Load last: values in the file override overlapping launch arguments. -->
+    <rosparam if="$(eval arg('config_file') != '')" command="load" file="$(arg config_file)"/>
+  </node>
+</launch>

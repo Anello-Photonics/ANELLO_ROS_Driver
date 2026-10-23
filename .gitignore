@@ -9,3 +9,7 @@ build/
 launch/internal_*
 
 TODO.txt
+# Local ROS 2 workspace outputs and desktop metadata
+install/
+log/
+.DS_Store

@@ -1,0 +1,26 @@
+# Copy and edit for your device and NTRIP caster.
+# File values override overlapping launch arguments.
+maritime_ins:
+  ros__parameters:
+    transport: serial
+    port: /dev/ttyUSB0
+    baudrate: 921600
+    bind_address: 0.0.0.0
+    udp_port: 19550
+    multicast_group: ''
+    multicast_interface: 0.0.0.0
+    source_ip: ''
+    frame_id: maritime_ins
+    ntrip_enabled: false
+    ntrip_host: ''
+    ntrip_port: 2101
+    ntrip_mountpoint: ''
+    ntrip_username: ''
+    ntrip_password: ''
+    ntrip_tls: false
+    ntrip_ca_cert: ''
+    ntrip_gga_interval: 5.0
+    ntrip_timeout: 15.0
+    ntrip_reconnect_delay: 5.0
+    rtcm_host: ''
+    rtcm_port: 19552
