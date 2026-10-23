@@ -22,3 +22,4 @@ ntrip_timeout: 15.0
 ntrip_reconnect_delay: 5.0
 rtcm_host: ''
 rtcm_port: 19552
+ntrip_connect_timeout: 3.0

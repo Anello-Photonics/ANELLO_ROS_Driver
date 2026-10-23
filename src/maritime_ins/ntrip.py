@@ -11,7 +11,7 @@ from .parser import decode, SentenceError
 DEFAULTS = dict(ntrip_enabled=False, ntrip_host='', ntrip_port=2101,
                 ntrip_mountpoint='', ntrip_username='', ntrip_password='',
                 ntrip_tls=False, ntrip_ca_cert='', ntrip_gga_interval=5.0,
-                ntrip_timeout=15.0, ntrip_reconnect_delay=5.0,
+                ntrip_timeout=15.0, ntrip_reconnect_delay=5.0, ntrip_connect_timeout=3.0,
                 rtcm_host='', rtcm_port=19552)
 
 
@@ -144,7 +144,7 @@ class NtripClient:
                 raise ValueError('Invalid RTCM destination port')
             if not 1 <= o['ntrip_port'] <= 65535:
                 raise ValueError('Invalid caster port')
-            if min(o['ntrip_timeout'], o['ntrip_reconnect_delay']) <= 0 or o['ntrip_gga_interval'] < 0:
+            if min(o['ntrip_timeout'], o['ntrip_reconnect_delay'], o['ntrip_connect_timeout']) <= 0 or o['ntrip_gga_interval'] < 0:
                 raise ValueError('Invalid NTRIP timeout/interval')
 
     def start(self):
@@ -203,7 +203,7 @@ class NtripClient:
 
     def session(self):
         o = self.options
-        self.connection = socket.create_connection((o['ntrip_host'], o['ntrip_port']), timeout=3.0)
+        self.connection = socket.create_connection((o['ntrip_host'], o['ntrip_port']), timeout=o['ntrip_connect_timeout'])
         if o['ntrip_tls']:
             context = ssl.create_default_context(cafile=o['ntrip_ca_cert'] or None)
             self.connection = context.wrap_socket(self.connection, server_hostname=o['ntrip_host'])
@@ -243,4 +243,4 @@ class NtripClient:
             except OSError:
                 pass
         if self.thread is not None:
-            self.thread.join(timeout=7.0)
+            self.thread.join(timeout=2 * self.options['ntrip_connect_timeout'] + 1.0)

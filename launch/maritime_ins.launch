@@ -18,6 +18,7 @@
   <arg name="ntrip_tls" default="false"/>
   <arg name="ntrip_ca_cert" default=""/>
   <arg name="ntrip_gga_interval" default="5.0"/>
+  <arg name="ntrip_connect_timeout" default="3.0"/>
   <arg name="ntrip_timeout" default="15.0"/>
   <arg name="ntrip_reconnect_delay" default="5.0"/>
   <arg name="rtcm_host" default=""/>
@@ -41,6 +42,7 @@
     <param name="ntrip_tls" type="bool" value="$(arg ntrip_tls)"/>
     <param name="ntrip_ca_cert" type="str" value="$(arg ntrip_ca_cert)"/>
     <param name="ntrip_gga_interval" type="double" value="$(arg ntrip_gga_interval)"/>
+    <param name="ntrip_connect_timeout" type="double" value="$(arg ntrip_connect_timeout)"/>
     <param name="ntrip_timeout" type="double" value="$(arg ntrip_timeout)"/>
     <param name="ntrip_reconnect_delay" type="double" value="$(arg ntrip_reconnect_delay)"/>
     <param name="rtcm_host" type="str" value="$(arg rtcm_host)"/>

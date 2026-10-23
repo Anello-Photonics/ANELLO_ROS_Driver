@@ -188,6 +188,7 @@ raw NMEA topics. GGA older than 30 seconds is not sent.
 | `ntrip_tls` | `false` | TLS with server certificate/hostname verification |
 | `ntrip_ca_cert` | empty | Optional CA file; empty uses system trust |
 | `ntrip_gga_interval` | `5.0` | GGA send interval in seconds; 0 disables feedback |
+| `ntrip_connect_timeout` | `3.0` | TCP/TLS connection timeout in seconds |
 | `ntrip_timeout` | `15.0` | Reconnect after this many seconds without valid RTCM |
 | `ntrip_reconnect_delay` | `5.0` | Delay between connection attempts |
 | `rtcm_host` | empty | INS destination IPv4 address/hostname; required for UDP NTRIP |

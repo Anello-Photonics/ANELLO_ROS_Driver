@@ -13,3 +13,6 @@ TODO.txt
 install/
 log/
 .DS_Store
+
+# Local HIL profiles may contain NTRIP credentials.
+/hil_config/
