@@ -1,0 +1,62 @@
+import socket
+import unittest
+from types import SimpleNamespace
+from unittest.mock import patch
+from maritime_ins.vbw import encode_vbw, VBWInput
+from maritime_ins.transport import UDPReceiver, SerialReceiver
+
+
+def message(**kw):
+    values = dict(water_longitudinal_knots=0., water_transverse_knots=0., water_valid=False,
+                  ground_longitudinal_knots=2., ground_transverse_knots=-1., ground_valid=True)
+    values.update(kw)
+    return SimpleNamespace(**values)
+
+
+class VBWTests(unittest.TestCase):
+    def test_sentence(self):
+        data = encode_vbw(message())
+        body, check = data[1:].strip().split(b'*')
+        self.assertEqual(body, b'VMVBW,,,V,2.000,-1.000,A')
+        checksum = 0
+        for byte in body: checksum ^= byte
+        self.assertEqual(int(check, 16), checksum)
+        self.assertTrue(data.endswith(b'\r\n'))
+
+    def test_invalid(self):
+        for value in [float('nan'), float('inf'), 1000.]:
+            with self.assertRaises(ValueError):
+                encode_vbw(message(ground_longitudinal_knots=value))
+        self.assertIn(b',,,V', encode_vbw(message(ground_valid=False, ground_longitudinal_knots=float('nan'))))
+
+    def test_latest_and_expiry(self):
+        sent = []
+        receiver = SimpleNamespace(write_nmea=sent.append)
+        inp = VBWInput(lambda msg: None)
+        with patch('maritime_ins.vbw.time.monotonic', return_value=10.):
+            inp.submit(message())
+            inp.submit(message(ground_longitudinal_knots=3.))
+            inp.drain(receiver)
+            inp.drain(receiver)
+            inp.submit(message())
+        with patch('maritime_ins.vbw.time.monotonic', return_value=12.):
+            inp.drain(receiver)
+        self.assertEqual(len(sent), 1)
+        self.assertIn(b'3.000', sent[0])
+
+    def test_udp_route(self):
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as target:
+            target.bind(('127.0.0.1', 0))
+            target.settimeout(1.)
+            receiver = UDPReceiver(port=0, rtcm_host='127.0.0.1', nmea_port=target.getsockname()[1])
+            try:
+                data = encode_vbw(message())
+                receiver.write_nmea(data)
+                self.assertEqual(target.recv(1024), data)
+            finally:
+                receiver.close()
+
+    def test_serial_partial_write(self):
+        receiver = SerialReceiver.__new__(SerialReceiver)
+        receiver.serial = SimpleNamespace(write=lambda data: len(data)-1)
+        with self.assertRaises(OSError): receiver.write_nmea(b'test')

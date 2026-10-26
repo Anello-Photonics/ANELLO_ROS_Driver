@@ -5,9 +5,10 @@ from .parser import Framer
 
 class UDPReceiver:
     def __init__(self, bind_address='0.0.0.0', port=19550, multicast_group='',
-                 multicast_interface='0.0.0.0', source_ip='', rtcm_host='', rtcm_port=19552):
+                 multicast_interface='0.0.0.0', source_ip='', rtcm_host='', rtcm_port=19552, nmea_host='', nmea_port=19551):
         self.source_ip = source_ip
         self.rtcm_destination = (rtcm_host, rtcm_port)
+        self.nmea_destination = (nmea_host or rtcm_host, nmea_port)
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         try:
             self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -34,6 +35,11 @@ class UDPReceiver:
         # different senders or recover a truncated datagram using the next one.
         return list(Framer().feed(data + b'\n'))
 
+    def write_nmea(self, sentence):
+        if not self.nmea_destination[0]:
+            raise OSError('VBW UDP requires nmea_host or rtcm_host')
+        self.socket.sendto(sentence, self.nmea_destination)
+
     def write_rtcm(self, frame):
         if not self.rtcm_destination[0]:
             raise ValueError('UDP NTRIP routing requires rtcm_host (INS IPv4 address)')
@@ -55,6 +61,10 @@ class SerialReceiver:
     def write_rtcm(self, frame):
         if self.serial.write(frame) != len(frame):
             raise OSError('Incomplete RTCM serial write')
+
+    def write_nmea(self, sentence):
+        if self.serial.write(sentence) != len(sentence):
+            raise OSError("Incomplete VBW serial write")
 
     def close(self):
         self.serial.close()

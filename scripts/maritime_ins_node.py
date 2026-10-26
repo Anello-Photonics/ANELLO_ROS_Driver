@@ -5,6 +5,7 @@ import rospy
 from anello_ros_driver import msg as messages
 from maritime_ins.parser import KINDS, SentenceError, decode
 from maritime_ins.ntrip import DEFAULTS, NtripClient
+from maritime_ins.vbw import VBWInput
 from maritime_ins.transport import SerialReceiver, UDPReceiver
 
 
@@ -54,8 +55,17 @@ def main():
                        multicast_group=rospy.get_param('~multicast_group', ''),
                        multicast_interface=rospy.get_param('~multicast_interface', '0.0.0.0'),
                        source_ip=rospy.get_param('~source_ip', ''),
-                       rtcm_host=ntrip_options['rtcm_host'], rtcm_port=ntrip_options['rtcm_port'])
+                       rtcm_host=ntrip_options['rtcm_host'], rtcm_port=ntrip_options['rtcm_port'],
+                       nmea_host=rospy.get_param('~nmea_host', ''),
+                       nmea_port=int(rospy.get_param('~nmea_port', 19551)))
         factory = lambda: UDPReceiver(**options)
+    vbw = VBWInput(lambda text: rospy.logwarn_throttle(5.0, text))
+    def submit_vbw(message):
+        if transport == 'udp' and not (options['nmea_host'] or options['rtcm_host']):
+            rospy.logwarn_throttle(5.0, 'VBW UDP input requires nmea_host or rtcm_host')
+            return
+        vbw.submit(message)
+    subscriber = rospy.Subscriber('~vbw_input', messages.MaritimeVBW, submit_vbw, queue_size=1)
     ntrip.start()
     rospy.on_shutdown(ntrip.close)
     while not rospy.is_shutdown():
@@ -68,6 +78,7 @@ def main():
                     publisher.publish(sentence)
                     ntrip.observe(sentence)
                 ntrip.drain(receiver)
+                vbw.drain(receiver)
         except errors as exc:
             rospy.logwarn_throttle(5.0, 'Maritime %s connection failed: %s; retrying', transport, str(exc))
             # Wall clock retry also works while /use_sim_time has no clock.

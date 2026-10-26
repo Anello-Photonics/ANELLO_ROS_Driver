@@ -1,5 +1,7 @@
 <launch>
   <arg name="config_file" default=""/>
+  <arg name="nmea_host" default=""/>
+  <arg name="nmea_port" default="19551"/>
   <arg name="transport" default="serial"/>
   <arg name="port" default="/dev/ttyUSB0"/>
   <arg name="baudrate" default="921600"/>
@@ -24,6 +26,8 @@
   <arg name="rtcm_host" default=""/>
   <arg name="rtcm_port" default="19552"/>
   <node pkg="anello_ros_driver" type="maritime_ins_node.py" name="maritime_ins" output="screen" required="true">
+    <param name="nmea_host" type="str" value="$(arg nmea_host)"/>
+    <param name="nmea_port" type="int" value="$(arg nmea_port)"/>
     <param name="transport" value="$(arg transport)"/>
     <param name="port" value="$(arg port)"/>
     <param name="baudrate" value="$(arg baudrate)"/>
@@ -47,7 +51,8 @@
     <param name="ntrip_reconnect_delay" type="double" value="$(arg ntrip_reconnect_delay)"/>
     <param name="rtcm_host" type="str" value="$(arg rtcm_host)"/>
     <param name="rtcm_port" type="int" value="$(arg rtcm_port)"/>
-    <!-- Load last: values in the file override overlapping launch arguments. -->
-    <rosparam if="$(eval arg('config_file') != '')" command="load" file="$(arg config_file)"/>
   </node>
+  <!-- Load after the node: ROS 1 applies its private param tags at node close. -->
+  <!-- File values override launch arguments; omitted values retain their defaults. -->
+  <rosparam if="$(eval arg('config_file') != '')" command="load" ns="maritime_ins" file="$(arg config_file)"/>
 </launch>

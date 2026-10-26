@@ -7,6 +7,7 @@ from rclpy.executors import ExternalShutdownException
 from anello_ros_driver import msg as messages
 from maritime_ins.parser import KINDS, SentenceError, decode
 from maritime_ins.ntrip import DEFAULTS, NtripClient
+from maritime_ins.vbw import VBWInput
 from maritime_ins.transport import SerialReceiver, UDPReceiver
 
 
@@ -15,7 +16,7 @@ class MaritimeNode(Node):
         super().__init__('maritime_ins')
         defaults = dict(transport='serial', port='/dev/ttyUSB0', baudrate=921600,
                         bind_address='0.0.0.0', udp_port=19550, multicast_group='',
-                        multicast_interface='0.0.0.0', source_ip='', frame_id='maritime_ins')
+                        multicast_interface='0.0.0.0', source_ip='', nmea_host='', nmea_port=19551, frame_id='maritime_ins')
         defaults.update(DEFAULTS)
         self.options = {key: self.declare_parameter(key, value).value for key, value in defaults.items()}
         transport = self.options['transport'].lower()
@@ -36,13 +37,23 @@ class MaritimeNode(Node):
             self.factory = lambda: UDPReceiver(
                 self.options['bind_address'], self.options['udp_port'],
                 self.options['multicast_group'], self.options['multicast_interface'], self.options['source_ip'],
-                self.options['rtcm_host'], self.options['rtcm_port'])
+                self.options['rtcm_host'], self.options['rtcm_port'],
+                self.options['nmea_host'], self.options['nmea_port'])
+        self.vbw = VBWInput(self.get_logger().warning)
+        self.vbw_subscriber = self.create_subscription(
+            messages.MaritimeVBW, '~/vbw_input', self.submit_vbw, 1)
         self.ntrip.start()
         self.receiver = None
         self.retry_after = 0.0
         # Reads have a bounded 0.2 s timeout; no background thread is required.
         self.timer = self.create_timer(0.001, self.receive,
                                        clock=Clock(clock_type=ClockType.STEADY_TIME))
+
+    def submit_vbw(self, message):
+        if self.options['transport'].lower() == 'udp' and not (self.options['nmea_host'] or self.options['rtcm_host']):
+            self.get_logger().warning('VBW UDP input requires nmea_host or rtcm_host', throttle_duration_sec=5.0)
+            return
+        self.vbw.submit(message)
 
     def receive(self):
         import time
@@ -68,6 +79,7 @@ class MaritimeNode(Node):
                     setattr(message, name, value)
                 self.publishers_by_kind[kind].publish(message)
             self.ntrip.drain(self.receiver)
+            self.vbw.drain(self.receiver)
         except self.connection_errors as exc:
             self.get_logger().warning('Maritime connection failed: ' + str(exc), throttle_duration_sec=5.0)
             self.close_receiver()

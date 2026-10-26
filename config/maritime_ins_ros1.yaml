@@ -23,3 +23,7 @@ ntrip_reconnect_delay: 5.0
 rtcm_host: ''
 rtcm_port: 19552
 ntrip_connect_timeout: 3.0
+
+# VBW input destination; empty host uses rtcm_host. Serial ignores these.
+nmea_host: ""
+nmea_port: 19551

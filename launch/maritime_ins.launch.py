@@ -11,7 +11,7 @@ from maritime_ins.ntrip import DEFAULTS as NTRIP_DEFAULTS
 def generate_launch_description():
     defaults = dict(transport='serial', port='/dev/ttyUSB0', baudrate=921600,
                     bind_address='0.0.0.0', udp_port=19550, multicast_group='',
-                    multicast_interface='0.0.0.0', source_ip='', frame_id='maritime_ins')
+                    multicast_interface='0.0.0.0', source_ip='', nmea_host='', nmea_port=19551, frame_id='maritime_ins')
     defaults.update(NTRIP_DEFAULTS)
     parameters = {name: ParameterValue(LaunchConfiguration(name), value_type=type(value))
                   for name, value in defaults.items()}

@@ -8,6 +8,7 @@ if("$ENV{ROS_VERSION}" STREQUAL "2")
   find_package(rosidl_default_generators REQUIRED)
   find_package(std_msgs REQUIRED)
   rosidl_generate_interfaces(${PROJECT_NAME}
+    "msg/MaritimeVBW.msg"
     "msg/MaritimeGGA.msg"
     "msg/MaritimeRMC.msg"
     "msg/MaritimeHDT.msg"
@@ -42,6 +43,7 @@ endif()
 find_package(catkin REQUIRED COMPONENTS rospy std_msgs message_generation)
 catkin_python_setup()
 add_message_files(FILES
+  MaritimeVBW.msg
   MaritimeGGA.msg
   MaritimeRMC.msg
   MaritimeHDT.msg
