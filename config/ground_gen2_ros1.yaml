@@ -8,7 +8,7 @@ udp_port: 19550
 multicast_group: ''
 multicast_interface: 0.0.0.0
 source_ip: ''
-frame_id: maritime_ins
+frame_id: ground_gen2
 ntrip_enabled: false
 ntrip_host: ''
 ntrip_port: 2101

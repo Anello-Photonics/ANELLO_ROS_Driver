@@ -2,7 +2,7 @@
 <package format="3">
   <name>anello_ros_driver</name>
   <version>1.3.9</version>
-  <description>ANELLO Maritime INS NMEA0183 driver for ROS 1 and ROS 2.</description>
+  <description>ANELLO Ground Gen2 INS NMEA0183 driver for ROS 1 and ROS 2.</description>
   <maintainer email="austin.johnson@anellophotonics.com">Austin Johnson</maintainer>
   <author email="austin.johnson@anellophotonics.com">Austin Johnson</author>
   <license>MIT</license>

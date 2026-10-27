@@ -2,8 +2,8 @@ import socket
 import unittest
 from types import SimpleNamespace
 from unittest.mock import patch
-from maritime_ins.vbw import encode_vbw, VBWInput
-from maritime_ins.transport import UDPReceiver, SerialReceiver
+from ground_gen2.vbw import encode_vbw, VBWInput
+from ground_gen2.transport import UDPReceiver, SerialReceiver
 
 
 def message(**kw):
@@ -33,13 +33,13 @@ class VBWTests(unittest.TestCase):
         sent = []
         receiver = SimpleNamespace(write_nmea=sent.append)
         inp = VBWInput(lambda msg: None)
-        with patch('maritime_ins.vbw.time.monotonic', return_value=10.):
+        with patch('ground_gen2.vbw.time.monotonic', return_value=10.):
             inp.submit(message())
             inp.submit(message(ground_longitudinal_knots=3.))
             inp.drain(receiver)
             inp.drain(receiver)
             inp.submit(message())
-        with patch('maritime_ins.vbw.time.monotonic', return_value=12.):
+        with patch('ground_gen2.vbw.time.monotonic', return_value=12.):
             inp.drain(receiver)
         self.assertEqual(len(sent), 1)
         self.assertIn(b'3.000', sent[0])

@@ -5,13 +5,13 @@ from pathlib import Path
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 from launch_ros.parameter_descriptions import ParameterValue
-from maritime_ins.ntrip import DEFAULTS as NTRIP_DEFAULTS
+from ground_gen2.ntrip import DEFAULTS as NTRIP_DEFAULTS
 
 
 def generate_launch_description():
     defaults = dict(transport='serial', port='/dev/ttyUSB0', baudrate=921600,
                     bind_address='0.0.0.0', udp_port=19550, multicast_group='',
-                    multicast_interface='0.0.0.0', source_ip='', nmea_host='', nmea_port=19551, frame_id='maritime_ins')
+                    multicast_interface='0.0.0.0', source_ip='', nmea_host='', nmea_port=19551, frame_id='ground_gen2')
     defaults.update(NTRIP_DEFAULTS)
     parameters = {name: ParameterValue(LaunchConfiguration(name), value_type=type(value))
                   for name, value in defaults.items()}
@@ -26,8 +26,8 @@ def generate_launch_description():
                 raise ValueError('Configuration file does not exist: ' + str(path))
             # Last parameter source wins, matching the ROS 1 launch file.
             node_parameters.append(str(path))
-        return [Node(package='anello_ros_driver', executable='maritime_ins_ros2.py',
-                     name='maritime_ins', output='screen', parameters=node_parameters)]
+        return [Node(package='anello_ros_driver', executable='ground_gen2_ros2.py',
+                     name='ground_gen2', output='screen', parameters=node_parameters)]
 
     return LaunchDescription([
         *arguments,

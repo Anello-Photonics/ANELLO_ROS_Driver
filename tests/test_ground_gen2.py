@@ -9,8 +9,8 @@ import types
 import unittest
 from unittest.mock import patch
 
-from maritime_ins.parser import Framer, KINDS, SentenceError, decode
-from maritime_ins.transport import SerialReceiver, UDPReceiver
+from ground_gen2.parser import Framer, KINDS, SentenceError, decode
+from ground_gen2.transport import SerialReceiver, UDPReceiver
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -41,7 +41,7 @@ class ParserTest(unittest.TestCase):
             with self.subTest(kind=kind):
                 actual, fields = decode(sentence(body))
                 self.assertEqual(kind, actual)
-                schema = (ROOT / 'msg' / ('Maritime' + kind + '.msg')).read_text()
+                schema = (ROOT / 'msg' / ('GroundGen2' + kind + '.msg')).read_text()
                 expected = {line.split('#')[0].split()[1] for line in schema.splitlines()
                             if line.split('#')[0].strip()} - {'header'}
                 self.assertEqual(expected, set(fields))
@@ -198,21 +198,21 @@ class PublisherTest(unittest.TestCase):
         def initialize(self):
             self.header = types.SimpleNamespace(stamp=None, frame_id=None)
         for kind in KINDS:
-            schema = (ROOT / 'msg' / ('Maritime' + kind + '.msg')).read_text()
+            schema = (ROOT / 'msg' / ('GroundGen2' + kind + '.msg')).read_text()
             slots = [s.split('#')[0].split()[1] for s in schema.splitlines() if s.split('#')[0].strip()]
-            setattr(msgs, 'Maritime' + kind, type('Maritime' + kind, (), {'__slots__': slots, '__init__': initialize}))
+            setattr(msgs, 'GroundGen2' + kind, type('GroundGen2' + kind, (), {'__slots__': slots, '__init__': initialize}))
         package = types.ModuleType('anello_ros_driver')
         package.msg = msgs
         with patch.dict(sys.modules, {'rospy': ros, 'anello_ros_driver': package, 'anello_ros_driver.msg': msgs}):
-            spec = importlib.util.spec_from_file_location('maritime_node', ROOT / 'scripts/maritime_ins_node.py')
+            spec = importlib.util.spec_from_file_location('ground_gen2_node', ROOT / 'scripts/ground_gen2_node.py')
             node = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(node)
-            publisher = node.MaritimePublisher()
+            publisher = node.GroundGen2Publisher()
             for kind, body in BODIES.items():
                 self.assertTrue(publisher.publish(sentence(body)))
                 value = pubs['~' + kind].values[0]
                 self.assertEqual(value.header.stamp, 123)
-                self.assertEqual(value.header.frame_id, 'maritime_ins')
+                self.assertEqual(value.header.frame_id, 'ground_gen2')
             self.assertFalse(publisher.publish(b'$GPHDT,1,T*00'))
             self.assertTrue(all(len(pub.values) == 1 for pub in pubs.values()))
 

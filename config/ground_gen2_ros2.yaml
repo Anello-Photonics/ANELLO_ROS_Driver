@@ -1,6 +1,6 @@
 # Copy and edit for your device and NTRIP caster.
 # File values override overlapping launch arguments.
-maritime_ins:
+ground_gen2:
   ros__parameters:
     transport: serial
     port: /dev/ttyUSB0
@@ -10,7 +10,7 @@ maritime_ins:
     multicast_group: ''
     multicast_interface: 0.0.0.0
     source_ip: ''
-    frame_id: maritime_ins
+    frame_id: ground_gen2
     ntrip_enabled: false
     ntrip_host: ''
     ntrip_port: 2101

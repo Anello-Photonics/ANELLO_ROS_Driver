@@ -1,4 +1,4 @@
-"""NMEA receive and RTCM transmit serial and UDP connections for Maritime NMEA0183 output."""
+"""NMEA receive and RTCM transmit serial and UDP connections for GroundGen2 NMEA0183 output."""
 import socket
 from .parser import Framer
 

@@ -149,7 +149,7 @@ class NtripClient:
 
     def start(self):
         if self.options['ntrip_enabled']:
-            self.thread = threading.Thread(target=self.run, name='maritime_ntrip', daemon=True)
+            self.thread = threading.Thread(target=self.run, name='ground_gen2_ntrip', daemon=True)
             self.thread.start()
 
     def observe(self, sentence):
@@ -170,7 +170,7 @@ class NtripClient:
         o = self.options
         mount = quote(o['ntrip_mountpoint'].lstrip('/'), safe='/')
         request = ('GET /%s HTTP/1.1\r\nHost: %s:%s\r\n'
-                   'Ntrip-Version: Ntrip/2.0\r\nUser-Agent: NTRIP MaritimeINS/1.0\r\n'
+                   'Ntrip-Version: Ntrip/2.0\r\nUser-Agent: NTRIP GroundGen2INS/1.0\r\n'
                    'Connection: close\r\n' % (mount, o['ntrip_host'], o['ntrip_port']))
         if o['ntrip_username'] or o['ntrip_password']:
             token = base64.b64encode((o['ntrip_username'] + ':' + o['ntrip_password']).encode()).decode()

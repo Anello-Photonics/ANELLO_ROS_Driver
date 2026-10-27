@@ -1,4 +1,4 @@
-# Decoded Maritime INS NMEA0183. Empty floats are NaN; no axis/unit conversion.
+# Decoded Ground Gen2 INS NMEA0183. Empty floats are NaN; no axis/unit conversion.
 std_msgs/Header header # Host receipt time; frame_id from launch configuration
 string sentence_id # Original identifier without dollar sign
 float64 time_ms # Device sample time since boot, milliseconds

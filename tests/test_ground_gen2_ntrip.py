@@ -7,9 +7,9 @@ import threading
 import time
 import unittest
 
-from maritime_ins.ntrip import CasterStream, NtripClient, RTCMFramer, crc24q
-from maritime_ins.transport import SerialReceiver, UDPReceiver
-from test_maritime import BODIES, sentence
+from ground_gen2.ntrip import CasterStream, NtripClient, RTCMFramer, crc24q
+from ground_gen2.transport import SerialReceiver, UDPReceiver
+from test_ground_gen2 import BODIES, sentence
 
 
 def rtcm(payload=b'\x3e\xd0\x00\xff\x80\x13'):

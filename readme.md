@@ -1,9 +1,10 @@
-# ANELLO Maritime INS ROS Driver
+# ANELLO Ground Gen2 INS ROS Driver
 
-This branch supports the **Maritime INS only**, on ROS 1 (Noetic/Python 3) or
+This branch supports the **Ground Gen2 INS only**, on ROS 1 (Noetic/Python 3) or
 ROS 2 (tested on Jazzy). It receives NMEA0183 over RS-232 or UDP and publishes
-one decoded, typed topic for every output message in the Maritime firmware.
-The package name remains `anello_ros_driver`. Ground INS support belongs on `main`.
+one decoded, typed topic for every output message in the firmware.
+The package name remains `anello_ros_driver`. The original Ground INS driver remains on `main`. This branch is a naming adaptation
+of `Maritime_INS`; message decoding and transport behavior are unchanged.
 
 ## Build
 
@@ -38,10 +39,10 @@ Serial (set the port and baud rate to match your INS):
 
 ```bash
 # ROS 1
-roslaunch anello_ros_driver maritime_ins.launch port:=/dev/ttyUSB0 baudrate:=921600
+roslaunch anello_ros_driver ground_gen2.launch port:=/dev/ttyUSB0 baudrate:=921600
 
 # ROS 2
-ros2 launch anello_ros_driver maritime_ins.launch.py port:=/dev/ttyUSB0 baudrate:=921600
+ros2 launch anello_ros_driver ground_gen2.launch.py port:=/dev/ttyUSB0 baudrate:=921600
 ```
 
 Configure the INS to output NMEA0183 on the connected RS-232 port using
@@ -53,10 +54,10 @@ UDP unicast reception:
 
 ```bash
 # ROS 1
-roslaunch anello_ros_driver maritime_ins.launch transport:=udp udp_port:=19550
+roslaunch anello_ros_driver ground_gen2.launch transport:=udp udp_port:=19550
 
 # ROS 2
-ros2 launch anello_ros_driver maritime_ins.launch.py transport:=udp udp_port:=19550
+ros2 launch anello_ros_driver ground_gen2.launch.py transport:=udp udp_port:=19550
 ```
 
 For multicast, add `multicast_group:=239.1.2.3` (replace with the configured
@@ -68,7 +69,7 @@ firmware version; the local firmware supports both. The firmware sends output
 to port 19550; port 19551 is its input port and is not this receiver's default.
 
 The receiver does not configure the INS. See the
-[Maritime communication manual](https://docs-a1.readthedocs.io/en/maritime_ins/communication_messaging.html)
+[GroundGen2 communication manual](https://docs-a1.readthedocs.io/en/ground_gen2/communication_messaging.html)
 for device configuration, and use the actual firmware settings for your unit.
 
 Both launch files accept:
@@ -83,20 +84,20 @@ Both launch files accept:
 | `multicast_group` | empty | Optional IPv4 multicast group to join |
 | `multicast_interface` | `0.0.0.0` | Local interface for multicast membership |
 | `source_ip` | empty | Optional UDP sender IPv4 filter |
-| `frame_id` | `maritime_ins` | Header frame label; does not transform data |
+| `frame_id` | `ground_gen2` | Header frame label; does not transform data |
 
 ## Saved configuration files
 
 Save device and NTRIP settings in a YAML text file. Copy the appropriate template
-from `config/maritime_ins_ros1.yaml` or `config/maritime_ins_ros2.yaml`, edit it,
+from `config/ground_gen2_ros1.yaml` or `config/ground_gen2_ros2.yaml`, edit it,
 and reference your copy at launch:
 
 ```bash
 # ROS 1
-roslaunch anello_ros_driver maritime_ins.launch config_file:=/absolute/path/my_ins_ros1.yaml
+roslaunch anello_ros_driver ground_gen2.launch config_file:=/absolute/path/my_ins_ros1.yaml
 
 # ROS 2
-ros2 launch anello_ros_driver maritime_ins.launch.py config_file:=/absolute/path/my_ins_ros2.yaml
+ros2 launch anello_ros_driver ground_gen2.launch.py config_file:=/absolute/path/my_ins_ros2.yaml
 ```
 
 ROS 1 files contain a flat parameter mapping, for example:
@@ -115,7 +116,7 @@ ntrip_password: YOUR_PASSWORD
 ROS 2 requires the same values nested under the node name and `ros__parameters`:
 
 ```yaml
-maritime_ins:
+ground_gen2:
   ros__parameters:
     transport: serial
     port: /dev/ttyUSB0
@@ -144,7 +145,7 @@ encoding. It forwards checksum-valid RTCM3 frames unchanged.
 Serial example (ROS 2):
 
 ```bash
-ros2 launch anello_ros_driver maritime_ins.launch.py \
+ros2 launch anello_ros_driver ground_gen2.launch.py \
   port:=/dev/ttyUSB0 baudrate:=921600 \
   ntrip_enabled:=true ntrip_host:=caster.example.com ntrip_port:=2101 \
   ntrip_mountpoint:=YOUR_MOUNTPOINT \
@@ -158,7 +159,7 @@ INS port for NMEA0183 input/output.
 UDP example (ROS 1):
 
 ```bash
-roslaunch anello_ros_driver maritime_ins.launch \
+roslaunch anello_ros_driver ground_gen2.launch \
   transport:=udp udp_port:=19550 rtcm_host:=192.168.1.111 rtcm_port:=19552 \
   ntrip_enabled:=true ntrip_host:=caster.example.com ntrip_port:=2101 \
   ntrip_mountpoint:=YOUR_MOUNTPOINT \
@@ -203,19 +204,19 @@ are accessible to tools that can inspect the node's parameters.
 ## Topics
 
 The topics and field definitions are identical in ROS 1 and ROS 2. ROS 1 type
-names use `anello_ros_driver/MaritimeGGA`; ROS 2 uses
-`anello_ros_driver/msg/MaritimeGGA`, and likewise for the other types.
+names use `anello_ros_driver/GroundGen2GGA`; ROS 2 uses
+`anello_ros_driver/msg/GroundGen2GGA`, and likewise for the other types.
 
 | Topic | Message | Contents |
 | --- | --- | --- |
-| `/maritime_ins/GGA` | `MaritimeGGA` | UTC, position, fix quality, satellites, HDOP, MSL altitude, geoid separation |
-| `/maritime_ins/RMC` | `MaritimeRMC` | UTC/date, status, position, speed and course over ground |
-| `/maritime_ins/HDT` | `MaritimeHDT` | True heading |
-| `/maritime_ins/XDR` | `MaritimeXDR` | Heading, roll, pitch |
-| `/maritime_ins/ZDA` | `MaritimeZDA` | UTC date/time and optional zone fields |
-| `/maritime_ins/PAPIMU` | `MaritimePAPIMU` | Accelerometer, MEMS and three SiPhOG rates, magnetometer, temperature, status |
-| `/maritime_ins/PAPINS` | `MaritimePAPINS` | Navigation status, position, NED velocity, attitude |
-| `/maritime_ins/PAPACC` | `MaritimePAPACC` | Position, velocity and attitude accuracy |
+| `/ground_gen2/GGA` | `GroundGen2GGA` | UTC, position, fix quality, satellites, HDOP, MSL altitude, geoid separation |
+| `/ground_gen2/RMC` | `GroundGen2RMC` | UTC/date, status, position, speed and course over ground |
+| `/ground_gen2/HDT` | `GroundGen2HDT` | True heading |
+| `/ground_gen2/XDR` | `GroundGen2XDR` | Heading, roll, pitch |
+| `/ground_gen2/ZDA` | `GroundGen2ZDA` | UTC date/time and optional zone fields |
+| `/ground_gen2/PAPIMU` | `GroundGen2PAPIMU` | Accelerometer, MEMS and three SiPhOG rates, magnetometer, temperature, status |
+| `/ground_gen2/PAPINS` | `GroundGen2PAPINS` | Navigation status, position, NED velocity, attitude |
+| `/ground_gen2/PAPACC` | `GroundGen2PAPACC` | Position, velocity and attitude accuracy |
 
 All publishers exist at startup, but publish only when the matching sentence
 arrives. Standard sentences are routed by formatter (e.g. `GPGGA` and `GNGGA`
@@ -223,8 +224,8 @@ use `GGA`); `sentence_id` retains the original identifier. Topic names are
 private to the node and follow its name/namespace if remapped.
 
 ```bash
-rostopic echo /maritime_ins/PAPINS          # ROS 1
-ros2 topic echo /maritime_ins/PAPINS       # ROS 2
+rostopic echo /ground_gen2/PAPINS          # ROS 1
+ros2 topic echo /ground_gen2/PAPINS       # ROS 2
 ```
 
 Only decoded messages are published. Checksum failures, malformed fields,
@@ -261,7 +262,7 @@ From the repository root, run the ROS-independent parser, schema, routing,
 localhost UDP and pseudo-terminal serial tests:
 
 ```bash
-PYTHONPATH=src python3 -m unittest discover -s tests -p 'test_maritime*.py' -v
+PYTHONPATH=src python3 -m unittest discover -s tests -p 'test_ground_gen2*.py' -v
 ```
 
 After building and sourcing the ROS 2 install, test the installed launch and
@@ -283,8 +284,8 @@ MIT; see [LICENSE](LICENSE). Original driver by ANELLO Photonics.
 
 ## VBW speed input (ROS 1 and ROS 2)
 
-Publish `anello_ros_driver/MaritimeVBW` (ROS 2: `anello_ros_driver/msg/MaritimeVBW`)
-to `/maritime_ins/vbw_input`. Speeds are signed vessel-axis longitudinal and
+Publish `anello_ros_driver/GroundGen2VBW` (ROS 2: `anello_ros_driver/msg/GroundGen2VBW`)
+to `/ground_gen2/vbw_input`. Speeds are signed vessel-axis longitudinal and
 transverse values in **knots**, matching NMEA VBW; no coordinate transform is
 performed. Convert m/s to knots before publishing. Only mark a water or ground
 pair valid when both measurements are available. Invalid pairs are encoded as
@@ -303,11 +304,11 @@ Bench example: 2 knots longitudinal ground speed, no water measurement (Ctrl+C t
 
 ```bash
 # ROS 1
-rostopic pub -r 10 /maritime_ins/vbw_input anello_ros_driver/MaritimeVBW \
+rostopic pub -r 10 /ground_gen2/vbw_input anello_ros_driver/GroundGen2VBW \
   '{water_longitudinal_knots: 0.0, water_transverse_knots: 0.0, water_valid: false, ground_longitudinal_knots: 2.0, ground_transverse_knots: 0.0, ground_valid: true}'
 
 # ROS 2
-ros2 topic pub -r 10 /maritime_ins/vbw_input anello_ros_driver/msg/MaritimeVBW \
+ros2 topic pub -r 10 /ground_gen2/vbw_input anello_ros_driver/msg/GroundGen2VBW \
   '{water_longitudinal_knots: 0.0, water_transverse_knots: 0.0, water_valid: false, ground_longitudinal_knots: 2.0, ground_transverse_knots: 0.0, ground_valid: true}'
 ```
 

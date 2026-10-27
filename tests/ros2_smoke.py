@@ -10,8 +10,8 @@ import sys
 
 import rclpy
 from anello_ros_driver import msg
-from test_maritime import BODIES, sentence
-from test_maritime_ntrip import FakeCaster, rtcm, until
+from test_ground_gen2 import BODIES, sentence
+from test_ground_gen2_ntrip import FakeCaster, rtcm, until
 
 
 def main():
@@ -25,21 +25,21 @@ def main():
     correction_sink.bind(('127.0.0.1', 0))
     correction_sink.settimeout(3)
     rclpy.init()
-    node = rclpy.create_node('maritime_smoke_test')
+    node = rclpy.create_node('ground_gen2_smoke_test')
     received = {}
     subscriptions = [node.create_subscription(
-        getattr(msg, 'Maritime' + kind), '/maritime_ins/' + kind,
+        getattr(msg, 'GroundGen2' + kind), '/ground_gen2/' + kind,
         lambda value, k=kind: received.__setitem__(k, value), 100) for kind in BODIES]
     sender = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     with tempfile.TemporaryFile(mode='w+') as log, tempfile.NamedTemporaryFile(mode='w+', suffix='.yaml') as config:
         command = [
-            'ros2', 'launch', 'anello_ros_driver', 'maritime_ins.launch.py',
+            'ros2', 'launch', 'anello_ros_driver', 'ground_gen2.launch.py',
             'transport:=udp', 'bind_address:=127.0.0.1', 'udp_port:=' + str(port),
             'ntrip_enabled:=true', 'ntrip_host:=127.0.0.1', 'ntrip_port:=' + str(caster.port),
             'ntrip_mountpoint:=TEST', 'rtcm_host:=127.0.0.1',
             'rtcm_port:=' + str(correction_sink.getsockname()[1])]
         if '--config-file' in sys.argv:
-            config.write('maritime_ins:\n  ros__parameters:\n')
+            config.write('ground_gen2:\n  ros__parameters:\n')
             for argument in command[4:]:
                 name, value = argument.split(':=', 1)
                 config.write('    %s: %s\n' % (name, value))
@@ -60,7 +60,7 @@ def main():
             assert received['PAPACC'].velocity_north_accuracy_m_s == 3.0
             assert received['PAPIMU'].siphog_rate_z_deg_s == 6.6
             assert received['PAPINS'].zupt == -1
-            assert all(value.header.frame_id == 'maritime_ins' for value in received.values())
+            assert all(value.header.frame_id == 'ground_gen2' for value in received.values())
             assert correction_sink.recv(2048) == rtcm(), 'RTCM routing mismatch'
             assert until(lambda: b'$GPGGA' in caster.gga), 'Caster did not receive GGA'
             print('ROS 2 launch integration: all 8 topics, NTRIP-to-UDP RTCM, and GGA feedback verified')

@@ -1,22 +1,22 @@
 #!/usr/bin/env python3
-"""ROS 2 adapter for the shared Maritime INS decoder and receiver."""
+"""ROS 2 adapter for the shared Ground Gen2 INS decoder and receiver."""
 import rclpy
 from rclpy.node import Node
 from rclpy.clock import Clock, ClockType
 from rclpy.executors import ExternalShutdownException
 from anello_ros_driver import msg as messages
-from maritime_ins.parser import KINDS, SentenceError, decode
-from maritime_ins.ntrip import DEFAULTS, NtripClient
-from maritime_ins.vbw import VBWInput
-from maritime_ins.transport import SerialReceiver, UDPReceiver
+from ground_gen2.parser import KINDS, SentenceError, decode
+from ground_gen2.ntrip import DEFAULTS, NtripClient
+from ground_gen2.vbw import VBWInput
+from ground_gen2.transport import SerialReceiver, UDPReceiver
 
 
-class MaritimeNode(Node):
+class GroundGen2Node(Node):
     def __init__(self):
-        super().__init__('maritime_ins')
+        super().__init__('ground_gen2')
         defaults = dict(transport='serial', port='/dev/ttyUSB0', baudrate=921600,
                         bind_address='0.0.0.0', udp_port=19550, multicast_group='',
-                        multicast_interface='0.0.0.0', source_ip='', nmea_host='', nmea_port=19551, frame_id='maritime_ins')
+                        multicast_interface='0.0.0.0', source_ip='', nmea_host='', nmea_port=19551, frame_id='ground_gen2')
         defaults.update(DEFAULTS)
         self.options = {key: self.declare_parameter(key, value).value for key, value in defaults.items()}
         transport = self.options['transport'].lower()
@@ -25,7 +25,7 @@ class MaritimeNode(Node):
         if self.options['ntrip_enabled'] and transport == 'udp' and not self.options['rtcm_host']:
             raise ValueError('UDP NTRIP requires rtcm_host (INS address)')
         self.ntrip = NtripClient(self.options, self.get_logger().warning)
-        self.types = {kind: getattr(messages, 'Maritime' + kind) for kind in KINDS}
+        self.types = {kind: getattr(messages, 'GroundGen2' + kind) for kind in KINDS}
         self.publishers_by_kind = {kind: self.create_publisher(self.types[kind], '~/' + kind, 100)
                                    for kind in KINDS}
         if transport == 'serial':
@@ -41,7 +41,7 @@ class MaritimeNode(Node):
                 self.options['nmea_host'], self.options['nmea_port'])
         self.vbw = VBWInput(self.get_logger().warning)
         self.vbw_subscriber = self.create_subscription(
-            messages.MaritimeVBW, '~/vbw_input', self.submit_vbw, 1)
+            messages.GroundGen2VBW, '~/vbw_input', self.submit_vbw, 1)
         self.ntrip.start()
         self.receiver = None
         self.retry_after = 0.0
@@ -62,14 +62,14 @@ class MaritimeNode(Node):
         try:
             if self.receiver is None:
                 self.receiver = self.factory()
-                self.get_logger().info('Receiving Maritime INS over ' + self.options['transport'])
+                self.get_logger().info('Receiving Ground Gen2 INS over ' + self.options['transport'])
             for sentence in self.receiver.read():
                 self.ntrip.observe(sentence)
                 stamp = self.get_clock().now().to_msg()
                 try:
                     kind, fields = decode(sentence)
                 except SentenceError as exc:
-                    self.get_logger().warning('Discarding Maritime NMEA sentence: ' + str(exc),
+                    self.get_logger().warning('Discarding GroundGen2 NMEA sentence: ' + str(exc),
                                               throttle_duration_sec=5.0)
                     continue
                 message = self.types[kind]()
@@ -81,7 +81,7 @@ class MaritimeNode(Node):
             self.ntrip.drain(self.receiver)
             self.vbw.drain(self.receiver)
         except self.connection_errors as exc:
-            self.get_logger().warning('Maritime connection failed: ' + str(exc), throttle_duration_sec=5.0)
+            self.get_logger().warning('GroundGen2 connection failed: ' + str(exc), throttle_duration_sec=5.0)
             self.close_receiver()
             self.retry_after = time.monotonic() + 1.0
 
@@ -100,7 +100,7 @@ def main(args=None):
     rclpy.init(args=args)
     node = None
     try:
-        node = MaritimeNode()
+        node = GroundGen2Node()
         rclpy.spin(node)
     except (KeyboardInterrupt, ExternalShutdownException):
         pass
