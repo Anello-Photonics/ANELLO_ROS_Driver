@@ -313,5 +313,4 @@ ros2 topic pub -r 10 /ground_gen2/vbw_input anello_ros_driver/msg/GroundGen2VBW 
 ```
 
 Use `listener sensor_water_speed_generic -n 5` in the PX4 shell to verify reception;
-this example should produce ground_speed_x about 1.029 m/s. Reception does not
-by itself establish that the navigation filter is fusing the speed measurement.
+this example should produce ground_speed_x about 1.029 m/s.
