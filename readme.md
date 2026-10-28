@@ -276,7 +276,7 @@ python3 tests/ros2_smoke.py
 ROS 2 Jazzy interface generation, build/install, and launch/subscriber integration
 have been tested. ROS 1 runtime/build and physical INS operation have not been
 verified in this environment. NTRIP correction forwarding is supported over the shared serial port or the
-dedicated UDP RTCM port. Configuration services and ground INS protocols are not included.
+dedicated UDP RTCM port. GPS control is available through the service documented below.
 
 ## License
 
@@ -314,3 +314,27 @@ ros2 topic pub -r 10 /ground_gen2/vbw_input anello_ros_driver/msg/GroundGen2VBW 
 
 Use `listener sensor_water_speed_generic -n 5` in the PX4 shell to verify reception;
 this example should produce ground_speed_x about 1.029 m/s.
+
+## GPS control service
+
+`/ground_gen2/gps_cntrl` uses `anello_ros_driver/GPSControl` (ROS 2:
+`anello_ros_driver/srv/GPSControl`) to send `$PAPGPSCTRL,x*hh` with a checksum
+and CRLF. Commands: **0 disables all GNSS; 1 enables all GNSS; 2 disables
+internal GNSS only**. Other values are rejected without transmission.
+
+It shares the serial connection, or uses the VBW UDP destination (`nmea_host`,
+falling back to `rtcm_host`, and `nmea_port`, default 19551). Success means the
+transport write completed, not that the INS acknowledged or applied the command.
+Disconnected commands fail immediately and are not queued for reconnect.
+Rebuild and restart the driver after adding this service.
+
+```bash
+# ROS 2: enable all GNSS
+ros2 service call /ground_gen2/gps_cntrl anello_ros_driver/srv/GPSControl '{command: 1}'
+
+# ROS 1: enable all GNSS
+rosservice call /ground_gen2/gps_cntrl '{command: 1}'
+```
+
+Use `command: 0` to disable all GNSS or `command: 2` to disable internal GNSS.
+To verify command reception in the PX4 shell: `listener nmea_gps_cntrl -n 1`.

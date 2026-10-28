@@ -3,6 +3,7 @@
 import time
 import rospy
 from anello_ros_driver import msg as messages
+from ground_gen2.gps_control import GPSControlSender
 from ground_gen2.parser import KINDS, SentenceError, decode
 from ground_gen2.ntrip import DEFAULTS, NtripClient
 from ground_gen2.vbw import VBWInput
@@ -33,6 +34,7 @@ class GroundGen2Publisher:
 
 
 def main():
+    from anello_ros_driver.srv import GPSControl, GPSControlResponse
     rospy.init_node('ground_gen2')
     publisher = GroundGen2Publisher()
     transport = rospy.get_param('~transport', 'serial').lower()
@@ -66,26 +68,35 @@ def main():
             return
         vbw.submit(message)
     subscriber = rospy.Subscriber('~vbw_input', messages.GroundGen2VBW, submit_vbw, queue_size=1)
+    gps_control = GPSControlSender()
+    def send_gps_control(request):
+        return GPSControlResponse(*gps_control.send(request.command))
+    gps_service = rospy.Service('~gps_cntrl', GPSControl, send_gps_control)
     ntrip.start()
     rospy.on_shutdown(ntrip.close)
     while not rospy.is_shutdown():
         receiver = None
         try:
             receiver = factory()
+            with gps_control.lock:
+                gps_control.receiver = receiver
             rospy.loginfo('Receiving Ground Gen2 INS NMEA0183 over %s', transport)
             while not rospy.is_shutdown():
                 for sentence in receiver.read():
                     publisher.publish(sentence)
                     ntrip.observe(sentence)
-                ntrip.drain(receiver)
-                vbw.drain(receiver)
+                with gps_control.lock:
+                    ntrip.drain(receiver)
+                    vbw.drain(receiver)
         except errors as exc:
             rospy.logwarn_throttle(5.0, 'GroundGen2 %s connection failed: %s; retrying', transport, str(exc))
             # Wall clock retry also works while /use_sim_time has no clock.
             time.sleep(1.0)
         finally:
-            if receiver is not None:
-                receiver.close()
+            with gps_control.lock:
+                gps_control.receiver = None
+                if receiver is not None:
+                    receiver.close()
 
 
 if __name__ == '__main__':

@@ -8,6 +8,7 @@ if("$ENV{ROS_VERSION}" STREQUAL "2")
   find_package(rosidl_default_generators REQUIRED)
   find_package(std_msgs REQUIRED)
   rosidl_generate_interfaces(${PROJECT_NAME}
+    "srv/GPSControl.srv"
     "msg/GroundGen2VBW.msg"
     "msg/GroundGen2GGA.msg"
     "msg/GroundGen2RMC.msg"
@@ -52,6 +53,7 @@ add_message_files(FILES
   GroundGen2PAPIMU.msg
   GroundGen2PAPINS.msg
   GroundGen2PAPACC.msg)
+add_service_files(FILES GPSControl.srv)
 generate_messages(DEPENDENCIES std_msgs)
 catkin_package(CATKIN_DEPENDS rospy std_msgs message_runtime)
 catkin_install_python(PROGRAMS scripts/ground_gen2_node.py

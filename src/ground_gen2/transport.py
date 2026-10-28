@@ -37,7 +37,7 @@ class UDPReceiver:
 
     def write_nmea(self, sentence):
         if not self.nmea_destination[0]:
-            raise OSError('VBW UDP requires nmea_host or rtcm_host')
+            raise OSError('NMEA UDP requires nmea_host or rtcm_host')
         self.socket.sendto(sentence, self.nmea_destination)
 
     def write_rtcm(self, frame):
@@ -64,7 +64,7 @@ class SerialReceiver:
 
     def write_nmea(self, sentence):
         if self.serial.write(sentence) != len(sentence):
-            raise OSError("Incomplete VBW serial write")
+            raise OSError("Incomplete NMEA serial write")
 
     def close(self):
         self.serial.close()

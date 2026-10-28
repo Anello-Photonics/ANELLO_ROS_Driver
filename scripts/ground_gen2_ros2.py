@@ -5,6 +5,8 @@ from rclpy.node import Node
 from rclpy.clock import Clock, ClockType
 from rclpy.executors import ExternalShutdownException
 from anello_ros_driver import msg as messages
+from anello_ros_driver.srv import GPSControl
+from ground_gen2.gps_control import GPSControlSender
 from ground_gen2.parser import KINDS, SentenceError, decode
 from ground_gen2.ntrip import DEFAULTS, NtripClient
 from ground_gen2.vbw import VBWInput
@@ -44,10 +46,16 @@ class GroundGen2Node(Node):
             messages.GroundGen2VBW, '~/vbw_input', self.submit_vbw, 1)
         self.ntrip.start()
         self.receiver = None
+        self.gps_control = GPSControlSender()
+        self.gps_service = self.create_service(GPSControl, '~/gps_cntrl', self.send_gps_control)
         self.retry_after = 0.0
         # Reads have a bounded 0.2 s timeout; no background thread is required.
         self.timer = self.create_timer(0.001, self.receive,
                                        clock=Clock(clock_type=ClockType.STEADY_TIME))
+
+    def send_gps_control(self, request, response):
+        response.success, response.message = self.gps_control.send(request.command)
+        return response
 
     def submit_vbw(self, message):
         if self.options['transport'].lower() == 'udp' and not (self.options['nmea_host'] or self.options['rtcm_host']):
@@ -62,6 +70,7 @@ class GroundGen2Node(Node):
         try:
             if self.receiver is None:
                 self.receiver = self.factory()
+                self.gps_control.receiver = self.receiver
                 self.get_logger().info('Receiving Ground Gen2 INS over ' + self.options['transport'])
             for sentence in self.receiver.read():
                 self.ntrip.observe(sentence)
@@ -86,9 +95,11 @@ class GroundGen2Node(Node):
             self.retry_after = time.monotonic() + 1.0
 
     def close_receiver(self):
-        if self.receiver is not None:
-            self.receiver.close()
-            self.receiver = None
+        with self.gps_control.lock:
+            self.gps_control.receiver = None
+            if self.receiver is not None:
+                self.receiver.close()
+                self.receiver = None
 
     def destroy_node(self):
         self.ntrip.close()
