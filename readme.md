@@ -287,10 +287,11 @@ MIT; see [LICENSE](LICENSE). Original driver by ANELLO Photonics.
 Publish `anello_ros_driver/GroundGen2VBW` (ROS 2: `anello_ros_driver/msg/GroundGen2VBW`)
 to `/ground_gen2/vbw_input`. Speeds are signed vessel-axis longitudinal and
 transverse values in **knots**, matching NMEA VBW; no coordinate transform is
-performed. Convert m/s to knots before publishing. Only mark a water or ground
-pair valid when both measurements are available. Invalid pairs are encoded as
-empty fields with status V. Valid pairs use status A. Nonfinite valid values and
-magnitudes above 999.999 knots are rejected.
+performed. Convert m/s to knots before publishing. Use NaN for each unknown component. A source marked valid with at least one
+finite component uses status A; unknown components become empty NMEA fields.
+Invalid sources and pairs with both components NaN use status V with empty fields.
+Infinity and finite magnitudes above 999.999 knots in valid sources are rejected.
+Partial speed input requires firmware support; older firmware rejects incomplete pairs.
 
 Serial sends VBW on the same open NMEA serial connection as RTCM. UDP sends to
 `nmea_host:19551` (port configurable with `nmea_port`). An empty `nmea_host`
@@ -338,3 +339,20 @@ rosservice call /ground_gen2/gps_cntrl '{command: 1}'
 
 Use `command: 0` to disable all GNSS or `command: 2` to disable internal GNSS.
 To verify command reception in the PX4 shell: `listener nmea_gps_cntrl -n 1`.
+
+### Longitudinal-only ground speed
+
+Publish the three unknown components as `.nan`, with `ground_valid: true`:
+
+```bash
+# ROS 2
+ros2 topic pub -r 10 /ground_gen2/vbw_input anello_ros_driver/msg/GroundGen2VBW \
+  '{water_longitudinal_knots: .nan, water_transverse_knots: .nan, water_valid: false, ground_longitudinal_knots: 2.0, ground_transverse_knots: .nan, ground_valid: true}'
+
+# ROS 1
+rostopic pub -r 10 /ground_gen2/vbw_input anello_ros_driver/GroundGen2VBW \
+  '{water_longitudinal_knots: .nan, water_transverse_knots: .nan, water_valid: false, ground_longitudinal_knots: 2.0, ground_transverse_knots: .nan, ground_valid: true}'
+```
+
+This sends the body `VMVBW,,,V,2.000,,A` with checksum and CRLF. An unknown
+transverse speed is not replaced by zero. Firmware changes are maintained separately.

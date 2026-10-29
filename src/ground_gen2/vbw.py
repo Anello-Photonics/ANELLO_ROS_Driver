@@ -10,10 +10,12 @@ def encode_vbw(message):
         valid = getattr(message, source + '_valid')
         values = [getattr(message, source + '_' + axis + '_knots')
                   for axis in ('longitudinal', 'transverse')]
-        if valid and not all(math.isfinite(v) and abs(v) <= 999.999 for v in values):
-            raise ValueError('Valid VBW speeds must be finite and within +/-999.999 knots')
-        fields.extend([format(v, '.3f') for v in values] if valid else ['', ''])
-        fields.append('A' if valid else 'V')
+        if valid and any(not math.isnan(v) and (not math.isfinite(v) or abs(v) > 999.999)
+                         for v in values):
+            raise ValueError('VBW speeds must be NaN (unknown) or finite within +/-999.999 knots')
+        fields.extend([format(v, '.3f') if not math.isnan(v) else ''
+                       for v in values] if valid else ['', ''])
+        fields.append('A' if valid and any(math.isfinite(v) for v in values) else 'V')
     body = ('VMVBW,' + ','.join(fields)).encode('ascii')
     checksum = 0
     for byte in body:
