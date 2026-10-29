@@ -3,8 +3,7 @@
 This branch supports the **Ground Gen2 INS only**, on ROS 1 (Noetic/Python 3) or
 ROS 2 (tested on Jazzy). It receives NMEA0183 over RS-232 or UDP and publishes
 one decoded, typed topic for every output message in the firmware.
-The package name remains `anello_ros_driver`. The original Ground INS driver remains on `main`. This branch is a naming adaptation
-of `Maritime_INS`; message decoding and transport behavior are unchanged.
+The package name remains `anello_ros_driver`. The original Ground INS driver remains on `main`.
 
 ## Build
 
