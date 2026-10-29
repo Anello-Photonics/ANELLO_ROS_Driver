@@ -29,4 +29,4 @@ class GPSControlSender:
                 self.receiver.write_nmea(sentence)
             except (OSError, ValueError) as exc:
                 return False, 'Transport write failed: ' + str(exc)
-        return True, 'GPS control command sent; INS acknowledgement is not available'
+        return True, 'GPS control command sent'
