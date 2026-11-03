@@ -63,9 +63,7 @@ For multicast, add `multicast_group:=239.1.2.3` (replace with the configured
 INS group). If necessary, set `multicast_interface` to your computer's local
 interface IPv4 address. Configure firmware `NMUDP_EN`, the desired
 `NMUDP_ODR_*` rates, and its multicast (`NMUDP_MC_IP0` ... `3`) or unicast
-(`NMUDP_UC_IP0` ... `3`) destination. These destination settings depend on the
-firmware version; the local firmware supports both. The firmware sends output
-to port 19550; port 19551 is its input port and is not this receiver's default.
+(`NMUDP_UC_IP0` ... `3`) destination.
 
 The receiver does not configure the INS. See the
 [GroundGen2 communication manual](https://docs-a1.readthedocs.io/en/ground_gen2/communication_messaging.html)
@@ -250,10 +248,6 @@ measurement time. `time_ms` and IMU `sync_time_ms` are device times in milliseco
 since boot. PAPINS/PAPACC `utc_time_s` is Unix UTC seconds (firmware sends zero if
 unavailable); standard sentence UTC fields retain their NMEA text format.
 
-Layouts follow `PX4-Autopilot/src/drivers/nmea0183/NMEAOutput.cpp`. In particular,
-PAPACC emits position accuracy, then velocity accuracy, then attitude accuracy;
-its source comment lists a different order. PAPINS has no extra height field
-between ellipsoid altitude and north velocity. These distinctions are tested.
 
 ## Tests and scope
 
@@ -290,7 +284,6 @@ performed. Convert m/s to knots before publishing. Use NaN for each unknown comp
 finite component uses status A; unknown components become empty NMEA fields.
 Invalid sources and pairs with both components NaN use status V with empty fields.
 Infinity and finite magnitudes above 999.999 knots in valid sources are rejected.
-Partial speed input requires firmware support; older firmware rejects incomplete pairs.
 
 Serial sends VBW on the same open NMEA serial connection as RTCM. UDP sends to
 `nmea_host:19551` (port configurable with `nmea_port`). An empty `nmea_host`
@@ -298,22 +291,7 @@ uses `rtcm_host`; if both are empty, input is rejected with a warning.
 This destination is separate from the RTCM port 19552 and receive port 19550.
 Publish at your sensor rate: the driver keeps only the newest pending sample,
 drops samples pending for over one second, and does not repeat a sample.
-ROS 1 and ROS 2 require rebuilding after adding this message type.
 
-Bench example: 2 knots longitudinal ground speed, no water measurement (Ctrl+C to stop):
-
-```bash
-# ROS 1
-rostopic pub -r 10 /ground_gen2/vbw_input anello_ros_driver/GroundGen2VBW \
-  '{water_longitudinal_knots: 0.0, water_transverse_knots: 0.0, water_valid: false, ground_longitudinal_knots: 2.0, ground_transverse_knots: 0.0, ground_valid: true}'
-
-# ROS 2
-ros2 topic pub -r 10 /ground_gen2/vbw_input anello_ros_driver/msg/GroundGen2VBW \
-  '{water_longitudinal_knots: 0.0, water_transverse_knots: 0.0, water_valid: false, ground_longitudinal_knots: 2.0, ground_transverse_knots: 0.0, ground_valid: true}'
-```
-
-Use `listener sensor_water_speed_generic -n 5` in the PX4 shell to verify reception;
-this example should produce ground_speed_x about 1.029 m/s.
 
 ## GPS control service
 
@@ -354,4 +332,4 @@ rostopic pub -r 10 /ground_gen2/vbw_input anello_ros_driver/GroundGen2VBW \
 ```
 
 This sends the body `VMVBW,,,V,2.000,,A` with checksum and CRLF. An unknown
-transverse speed is not replaced by zero. Firmware changes are maintained separately.
+transverse speed is not replaced by zero.
